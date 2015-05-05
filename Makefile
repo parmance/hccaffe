@@ -216,15 +216,19 @@ endif
 
 # Linux
 ifeq ($(LINUX), 1)
-	CXX ?= /usr/bin/g++
-	GCCVERSION := $(shell $(CXX) -dumpversion | cut -f1,2 -d.)
-	# older versions of gcc are too dumb to build boost with -Wuninitalized
-	ifeq ($(shell echo $(GCCVERSION) \< 4.6 | bc), 1)
-		WARNINGS += -Wno-uninitialized
-	endif
+  ifeq ($(USE_CPPAMP), 1)
+    CXX := /opt/clamp/bin/clang++
+  else
+    CXX ?= /usr/bin/g++
+    GCCVERSION := $(shell $(CXX) -dumpversion | cut -f1,2 -d.)
+	  # older versions of gcc are too dumb to build boost with -Wuninitalized
+    ifeq ($(shell echo $(GCCVERSION) \< 4.6 | bc), 1)
+      WARNINGS += -Wno-uninitialized
+    endif
+  endif
 	# boost::thread is reasonably called boost_thread (compare OS X)
-	# We will also explicitly add stdc++ to the link target.
-	LIBRARIES += boost_thread stdc++
+  # We will also explicitly add stdc++ to the link target.
+  LIBRARIES += boost_thread stdc++
 endif
 
 # OS X:
@@ -252,6 +256,12 @@ else
 	ORIGIN := \$$ORIGIN
 endif
 
+ifeq ($(USE_CPPAMP), 1)
+  CLAMP_PREFIX=/opt/clamp
+  #COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --cxxflags)
+  #COMMON_FLAGS += -std=c++amp -I/opt/clamp/include
+  COMMON_FLAGS += -std=c++amp
+endif
 # Custom compiler
 ifdef CUSTOM_CXX
 	CXX := $(CUSTOM_CXX)
