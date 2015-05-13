@@ -3,12 +3,13 @@
 #include "amp_math.h"
 using namespace concurrency;
 
-#define TILESIZE 1
 
-void caffe_amp_abs(const int N, float* a, float* y);
-void caffe_amp_abs(const int N, float* a, float* y) {
-  array_view<float, 1> aView(N, a);
-  array_view<float, 1> yView(N, y);
+namespace caffe {
+
+template <>
+void caffe_amp_abs<float>(const int n, float* a, float* y) {
+  array_view<float, 1> aView(n, a);
+  array_view<float, 1> yView(n, y);
   parallel_for_each(
     yView.get_extent(),
     [=](index<1> idx) restrict(amp)
@@ -17,4 +18,17 @@ void caffe_amp_abs(const int N, float* a, float* y) {
   }
   );
 }
-
+template <>
+void caffe_amp_mul<float>(const int n, const float* a, const float* b, float* y){
+  /*array_view<float, 1> aView(N, a);
+  array_view<float, 1> bView(N, b);
+  array_view<float, 1> yView(N, y);
+  parallel_for_each(
+    yView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+  {
+    yView[idx] = (aView[idx] * bView[idx]);
+  }
+  );*/
+}
+}  // namespace caffe
