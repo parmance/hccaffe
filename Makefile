@@ -262,9 +262,7 @@ endif
 
 ifeq ($(USE_CPPAMP), 1)
   CLAMP_PREFIX=/opt/clamp
-  AMP_COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --cxxflags)
-  #AMP_COMMON_FLAGS += -std=c++amp -I/opt/clamp/include
-  #AMP_COMMON_FLAGS += -std=c++amp
+  AMP_COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --cxxflags --ldflags)
 endif
 # Custom compiler
 ifdef CUSTOM_CXX
@@ -367,9 +365,8 @@ MATLAB_CXXFLAGS := $(CXXFLAGS) -Wno-uninitialized
 LINKFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
 
 ifeq ($(USE_CPPAMP), 1)
-	#LINKFLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --ldflags)
-  LINKFLAGS += -std=c++amp -L/opt/clamp/lib -Wl,--rpath=/opt/clamp/lib -lc++ -lcxxrt -ldl -lpthread -Wl,--whole-archive -lmcwamp -Wl,--no-whole-archive  
-  #LINKFLAGS += -std=c++amp -Wl, -lc++ -lcxxrt -ldl -lpthread -Wl,--whole-archive -lmcwamp -Wl,--no-whole-archive  
+	LINKFLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --ldflags)
+  #LINKFLAGS += -std=c++amp -L/opt/clamp/lib -Wl,--rpath=/opt/clamp/lib -lc++ -lcxxrt -ldl -lpthread -Wl,--whole-archive -lmcwamp -Wl,--no-whole-archive  
 endif
 
 USE_PKG_CONFIG ?= 0
