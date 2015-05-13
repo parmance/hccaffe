@@ -32,6 +32,8 @@ DYNAMIC_NAME := $(LIB_BUILD_DIR)/lib$(PROJECT).so
 CXX_SRCS := $(shell find src/$(PROJECT) ! -name "test_*.cpp" -name "*.cpp")
 # CU_SRCS are the cuda source files
 CU_SRCS := $(shell find src/$(PROJECT) ! -name "test_*.cu" -name "*.cu")
+# CXX AMP_SRCS are the source files excluding the test ones.
+CXXAMP_SRCS := $(shell find src/$(PROJECT) -name "*.cxx")
 # TEST_SRCS are the test source files
 TEST_MAIN_SRC := src/$(PROJECT)/test/test_caffe_main.cpp
 TEST_SRCS := $(shell find src/$(PROJECT) -name "test_*.cpp")
@@ -97,7 +99,8 @@ PROTO_GEN_PY := $(foreach file,${PROTO_SRCS:.proto=_pb2.py}, \
 CXX_OBJS := $(addprefix $(BUILD_DIR)/, ${CXX_SRCS:.cpp=.o})
 CU_OBJS := $(addprefix $(BUILD_DIR)/cuda/, ${CU_SRCS:.cu=.o})
 PROTO_OBJS := ${PROTO_GEN_CC:.cc=.o}
-OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CU_OBJS)
+CXXAMP_OBJS := $(addprefix $(BUILD_DIR)/, ${CXXAMP_SRCS:.cxx=.o})
+OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CU_OBJS) $(CXXAMP_OBJS)
 # tool, example, and test objects
 TOOL_OBJS := $(addprefix $(BUILD_DIR)/, ${TOOL_SRCS:.cpp=.o})
 TOOL_BUILD_DIR := $(BUILD_DIR)/tools
@@ -110,7 +113,7 @@ GTEST_OBJ := $(addprefix $(BUILD_DIR)/, ${GTEST_SRC:.cpp=.o})
 EXAMPLE_OBJS := $(addprefix $(BUILD_DIR)/, ${EXAMPLE_SRCS:.cpp=.o})
 # Output files for automatic dependency generation
 DEPS := ${CXX_OBJS:.o=.d} ${CU_OBJS:.o=.d} ${TEST_CXX_OBJS:.o=.d} \
-	${TEST_CU_OBJS:.o=.d}
+	${TEST_CU_OBJS:.o=.d} ${CXXAMP_OBJS:.o=.d}
 # tool, example, and test bins
 TOOL_BINS := ${TOOL_OBJS:.o=.bin}
 EXAMPLE_BINS := ${EXAMPLE_OBJS:.o=.bin}
@@ -132,11 +135,12 @@ TEST_ALL_BIN := $(TEST_BIN_DIR)/test_all.testbin
 WARNS_EXT := warnings.txt
 CXX_WARNS := $(addprefix $(BUILD_DIR)/, ${CXX_SRCS:.cpp=.o.$(WARNS_EXT)})
 CU_WARNS := $(addprefix $(BUILD_DIR)/cuda/, ${CU_SRCS:.cu=.o.$(WARNS_EXT)})
+CXXAMP_WARNS := $(addprefix $(BUILD_DIR)/, ${CXXAMP_SRCS:.cpp=.o.$(WARNS_EXT)})
 TOOL_WARNS := $(addprefix $(BUILD_DIR)/, ${TOOL_SRCS:.cpp=.o.$(WARNS_EXT)})
 EXAMPLE_WARNS := $(addprefix $(BUILD_DIR)/, ${EXAMPLE_SRCS:.cpp=.o.$(WARNS_EXT)})
 TEST_WARNS := $(addprefix $(BUILD_DIR)/, ${TEST_SRCS:.cpp=.o.$(WARNS_EXT)})
 TEST_CU_WARNS := $(addprefix $(BUILD_DIR)/cuda/, ${TEST_CU_SRCS:.cu=.o.$(WARNS_EXT)})
-ALL_CXX_WARNS := $(CXX_WARNS) $(TOOL_WARNS) $(EXAMPLE_WARNS) $(TEST_WARNS)
+ALL_CXX_WARNS := $(CXX_WARNS) $(TOOL_WARNS) $(EXAMPLE_WARNS) $(TEST_WARNS) $(CXXAMP_WARNS)
 ALL_CU_WARNS := $(CU_WARNS) $(TEST_CU_WARNS)
 ALL_WARNS := $(ALL_CXX_WARNS) $(ALL_CU_WARNS)
 
@@ -258,9 +262,9 @@ endif
 
 ifeq ($(USE_CPPAMP), 1)
   CLAMP_PREFIX=/opt/clamp
-  #COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --cxxflags)
-  #COMMON_FLAGS += -std=c++amp -I/opt/clamp/include
-  COMMON_FLAGS += -std=c++amp
+  AMP_COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --cxxflags)
+  #AMP_COMMON_FLAGS += -std=c++amp -I/opt/clamp/include
+  #AMP_COMMON_FLAGS += -std=c++amp
 endif
 # Custom compiler
 ifdef CUSTOM_CXX
@@ -280,9 +284,11 @@ endif
 # Debugging
 ifeq ($(DEBUG), 1)
 	COMMON_FLAGS += -DDEBUG -g -O0
+	AMP_COMMON_FLAGS += -DDEBUG -g -O0
 	NVCCFLAGS += -G
 else
 	COMMON_FLAGS += -DNDEBUG -O2
+	AMP_COMMON_FLAGS += -DNDEBUG -O2
 endif
 
 # cuDNN acceleration configuration.
@@ -293,12 +299,13 @@ endif
 
 # CPU-only configuration
 ifeq ($(CPU_ONLY), 1)
-	OBJS := $(PROTO_OBJS) $(CXX_OBJS)
+	OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CXXAMP_OBJS)
 	TEST_OBJS := $(TEST_CXX_OBJS)
 	TEST_BINS := $(TEST_CXX_BINS)
 	ALL_WARNS := $(ALL_CXX_WARNS)
 	TEST_FILTER := --gtest_filter="-*GPU*"
 	COMMON_FLAGS += -DCPU_ONLY
+	AMP_COMMON_FLAGS += -DCPU_ONLY
 endif
 
 # Python layer support
@@ -347,14 +354,23 @@ LIBRARY_DIRS += $(LIB_BUILD_DIR)
 
 # Automatic dependency generation (nvcc is handled separately)
 CXXFLAGS += -MMD -MP
+AMPCXXFLAGS += -MMD -MP
 
 # Complete build flags.
 COMMON_FLAGS += $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
+AMP_COMMON_FLAGS += $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
 CXXFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
+AMPCXXFLAGS += -fPIC $(AMP_COMMON_FLAGS) $(WARNINGS)
 NVCCFLAGS += -ccbin=$(CXX) -Xcompiler -fPIC $(COMMON_FLAGS)
 # mex may invoke an older gcc that is too liberal with -Wuninitalized
 MATLAB_CXXFLAGS := $(CXXFLAGS) -Wno-uninitialized
 LINKFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
+
+ifeq ($(USE_CPPAMP), 1)
+	#LINKFLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --ldflags)
+  LINKFLAGS += -std=c++amp -L/opt/clamp/lib -Wl,--rpath=/opt/clamp/lib -lc++ -lcxxrt -ldl -lpthread -Wl,--whole-archive -lmcwamp -Wl,--no-whole-archive  
+  #LINKFLAGS += -std=c++amp -Wl, -lc++ -lcxxrt -ldl -lpthread -Wl,--whole-archive -lmcwamp -Wl,--no-whole-archive  
+endif
 
 USE_PKG_CONFIG ?= 0
 ifeq ($(USE_PKG_CONFIG), 1)
@@ -513,6 +529,13 @@ $(BUILD_DIR)/%.o: %.cpp | $(ALL_BUILD_DIRS)
 		|| (cat $@.$(WARNS_EXT); exit 1)
 	@ cat $@.$(WARNS_EXT)
 
+ifeq ($(USE_CPPAMP), 1)
+$(BUILD_DIR)/%.o: %.cxx | $(ALL_BUILD_DIRS)
+	@ echo CXXAMP $<
+	$(Q)$(CXX) $< $(AMPCXXFLAGS) -c -o $@ 2> $@.$(WARNS_EXT) \
+		|| (cat $@.$(WARNS_EXT); exit 1)
+	@ cat $@.$(WARNS_EXT)
+endif
 $(PROTO_BUILD_DIR)/%.pb.o: $(PROTO_BUILD_DIR)/%.pb.cc $(PROTO_GEN_HEADER) \
 		| $(PROTO_BUILD_DIR)
 	@ echo CXX $<
