@@ -1,5 +1,5 @@
 #ifndef CPU_ONLY  // CPU-GPU test
-
+#ifndef USE_CPPAMP
 #include <cstring>
 
 #include "gtest/gtest.h"
@@ -130,5 +130,5 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
 }
 
 }  // namespace caffe
-
+#endif  //USE_CPPAMP
 #endif  // CPU_ONLY

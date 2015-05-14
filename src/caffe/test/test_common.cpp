@@ -13,13 +13,13 @@ namespace caffe {
 class CommonTest : public ::testing::Test {};
 
 #ifndef CPU_ONLY  // GPU Caffe singleton test.
-
+#ifndef USE_CPPAMP
 TEST_F(CommonTest, TestCublasHandlerGPU) {
   int cuda_device_id;
   CUDA_CHECK(cudaGetDevice(&cuda_device_id));
   EXPECT_TRUE(Caffe::cublas_handle());
 }
-
+#endif//USE_CPPAMP
 #endif
 
 TEST_F(CommonTest, TestBrewMode) {
@@ -45,7 +45,7 @@ TEST_F(CommonTest, TestRandSeedCPU) {
 }
 
 #ifndef CPU_ONLY  // GPU Caffe singleton test.
-
+#ifndef USE_CPPAMP
 TEST_F(CommonTest, TestRandSeedGPU) {
   SyncedMemory data_a(10 * sizeof(unsigned int));
   SyncedMemory data_b(10 * sizeof(unsigned int));
@@ -60,7 +60,7 @@ TEST_F(CommonTest, TestRandSeedGPU) {
         ((const unsigned int*)(data_b.cpu_data()))[i]);
   }
 }
-
+#endif
 #endif
 
 }  // namespace caffe

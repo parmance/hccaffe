@@ -173,7 +173,11 @@ void caffe_gpu_set(const int N, const Dtype alpha, Dtype *X);
 
 inline void caffe_gpu_memset(const size_t N, const int alpha, void* X) {
 #ifndef CPU_ONLY
+#ifdef USE_CPPAMP
+  memset(X,alpha,N);
+#else
   CUDA_CHECK(cudaMemset(X, alpha, N));  // NOLINT(caffe/alt_fn)
+#endif
 #else
   NO_GPU;
 #endif
@@ -247,6 +251,7 @@ void caffe_gpu_fabs(const int n, const Dtype* x, Dtype* y);
 template <typename Dtype>
 void caffe_gpu_scale(const int n, const Dtype alpha, const Dtype *x, Dtype* y);
 
+#ifndef CPP_AMP
 #define DEFINE_AND_INSTANTIATE_GPU_UNARY_FUNC(name, operation) \
 template<typename Dtype> \
 __global__ void name##_kernel(const int n, const Dtype* x, Dtype* y) { \
@@ -266,7 +271,7 @@ void caffe_gpu_##name<double>(const int n, const double* x, double* y) { \
   name##_kernel<double><<<CAFFE_GET_BLOCKS(n), CAFFE_CUDA_NUM_THREADS>>>( \
       n, x, y); \
 }
-
+#endif
 #endif  // !CPU_ONLY
 
 #ifdef USE_CPPAMP

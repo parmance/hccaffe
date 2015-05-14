@@ -14,7 +14,9 @@
 namespace caffe {
 
 #ifndef CPU_ONLY
+#ifndef USE_CPPAMP
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
+#endif
 #endif
 
 template <typename TypeParam>
@@ -59,7 +61,9 @@ TYPED_TEST(InnerProductLayerTest, TestForward) {
   typedef typename TypeParam::Dtype Dtype;
   bool IS_VALID_CUDA = false;
 #ifndef CPU_ONLY
+#ifndef USE_CPPAMP
   IS_VALID_CUDA = CAFFE_TEST_CUDA_PROP.major >= 2;
+#endif
 #endif
   if (Caffe::mode() == Caffe::CPU ||
       sizeof(Dtype) == 4 || IS_VALID_CUDA) {
@@ -89,7 +93,9 @@ TYPED_TEST(InnerProductLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   bool IS_VALID_CUDA = false;
 #ifndef CPU_ONLY
+#ifndef USE_CPPAMP
   IS_VALID_CUDA = CAFFE_TEST_CUDA_PROP.major >= 2;
+#endif
 #endif
   if (Caffe::mode() == Caffe::CPU ||
       sizeof(Dtype) == 4 || IS_VALID_CUDA) {

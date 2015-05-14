@@ -52,9 +52,17 @@ void EltwiseLayer<Dtype>::Forward_cpu(
   Dtype* top_data = top[0]->mutable_cpu_data();
   switch (op_) {
   case EltwiseParameter_EltwiseOp_PROD:
+#ifdef USE_CPPAMP    
+    caffe_amp_mul(count, (float*)bottom[0]->cpu_data(), (float*)bottom[1]->cpu_data(), (float*)top_data);
+#else    
     caffe_mul(count, bottom[0]->cpu_data(), bottom[1]->cpu_data(), top_data);
+#endif
     for (int i = 2; i < bottom.size(); ++i) {
+#ifdef USE_CPPAMP    
+      caffe_amp_mul(count, (float*)top_data, (float*)bottom[i]->cpu_data(), (float*)top_data);
+#else
       caffe_mul(count, top_data, bottom[i]->cpu_data(), top_data);
+#endif
     }
     break;
   case EltwiseParameter_EltwiseOp_SUM:

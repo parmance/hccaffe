@@ -83,7 +83,46 @@ void* Caffe::RNG::generator() {
 }
 
 #else  // Normal GPU + CPU Caffe.
+#ifdef USE_CPPAMP
+Caffe::Caffe()
+    : random_generator_(), mode_(Caffe::CPU) { }
 
+Caffe::~Caffe() { }
+
+void Caffe::set_random_seed(const unsigned int seed) {
+  // RNG seed
+  Get().random_generator_.reset(new RNG(seed));
+}
+
+void Caffe::SetDevice(const int device_id) {
+}
+
+void Caffe::DeviceQuery() {
+}
+
+
+class Caffe::RNG::Generator {
+ public:
+  Generator() : rng_(new caffe::rng_t(cluster_seedgen())) {}
+  explicit Generator(unsigned int seed) : rng_(new caffe::rng_t(seed)) {}
+  caffe::rng_t* rng() { return rng_.get(); }
+ private:
+  shared_ptr<caffe::rng_t> rng_;
+};
+
+Caffe::RNG::RNG() : generator_(new Generator()) { }
+
+Caffe::RNG::RNG(unsigned int seed) : generator_(new Generator(seed)) { }
+
+Caffe::RNG& Caffe::RNG::operator=(const RNG& other) {
+  generator_ = other.generator_;
+  return *this;
+}
+
+void* Caffe::RNG::generator() {
+  return static_cast<void*>(generator_->rng());
+}
+#else
 Caffe::Caffe()
     : cublas_handle_(NULL), curand_generator_(NULL), random_generator_(),
     mode_(Caffe::CPU) {
@@ -128,6 +167,7 @@ void Caffe::set_random_seed(const unsigned int seed) {
 
 void Caffe::SetDevice(const int device_id) {
   int current_device;
+
   CUDA_CHECK(cudaGetDevice(&current_device));
   if (current_device == device_id) {
     return;
@@ -265,7 +305,7 @@ const char* curandGetErrorString(curandStatus_t error) {
   }
   return "Unknown curand status";
 }
-
+#endif //USE_CPPAMP
 #endif  // CPU_ONLY
 
 }  // namespace caffe

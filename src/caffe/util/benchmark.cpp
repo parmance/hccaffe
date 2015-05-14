@@ -15,8 +15,10 @@ Timer::Timer()
 Timer::~Timer() {
   if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
+#ifndef USE_CPPAMP
     CUDA_CHECK(cudaEventDestroy(start_gpu_));
     CUDA_CHECK(cudaEventDestroy(stop_gpu_));
+#endif
 #else
     NO_GPU;
 #endif
@@ -27,7 +29,11 @@ void Timer::Start() {
   if (!running()) {
     if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
+#ifdef USE_CPPAMP
+      start_gpu_ = boost::posix_time::microsec_clock::local_time();
+#else
       CUDA_CHECK(cudaEventRecord(start_gpu_, 0));
+#endif
 #else
       NO_GPU;
 #endif
@@ -43,8 +49,12 @@ void Timer::Stop() {
   if (running()) {
     if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
+#ifdef USE_CPPAMP
+      stop_gpu_ = boost::posix_time::microsec_clock::local_time();
+#else
       CUDA_CHECK(cudaEventRecord(stop_gpu_, 0));
       CUDA_CHECK(cudaEventSynchronize(stop_gpu_));
+#endif
 #else
       NO_GPU;
 #endif
@@ -66,10 +76,14 @@ float Timer::MicroSeconds() {
   }
   if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
+#ifdef USE_CPPAMP
+    elapsed_microseconds_ = (stop_cpu_ - start_cpu_).total_microseconds();
+#else
     CUDA_CHECK(cudaEventElapsedTime(&elapsed_milliseconds_, start_gpu_,
                                     stop_gpu_));
     // Cuda only measure milliseconds
     elapsed_microseconds_ = elapsed_milliseconds_ * 1000;
+#endif
 #else
       NO_GPU;
 #endif
@@ -89,8 +103,12 @@ float Timer::MilliSeconds() {
   }
   if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
+#ifdef USE_CPPAMP
+    elapsed_milliseconds_ = (stop_cpu_ - start_cpu_).total_milliseconds();
+#else
     CUDA_CHECK(cudaEventElapsedTime(&elapsed_milliseconds_, start_gpu_,
                                     stop_gpu_));
+#endif //USE_CPPAMP
 #else
       NO_GPU;
 #endif
@@ -108,8 +126,10 @@ void Timer::Init() {
   if (!initted()) {
     if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
+#ifndef USE_CPPAMP
       CUDA_CHECK(cudaEventCreate(&start_gpu_));
       CUDA_CHECK(cudaEventCreate(&stop_gpu_));
+#endif
 #else
       NO_GPU;
 #endif
