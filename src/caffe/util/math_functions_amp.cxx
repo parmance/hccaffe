@@ -32,5 +32,32 @@ void caffe_amp_mul<float>(const int n, const float* a, const float* b, float* y)
   }
   );*/
 }
+
+template <typename Dtype>
+void set_kernel(const int N, const Dtype alpha, Dtype* y) {
+  array_view<Dtype, 1> outView(N, y);
+  parallel_for_each(
+    outView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+    {
+      outView[idx] = alpha;
+    }
+  );
+}
+
+template <typename Dtype>
+void caffe_gpu_set(const int N, const Dtype alpha, Dtype* Y) {
+  if (alpha == 0) {
+    memset(Y, 0, sizeof(Dtype) * N);
+    return;
+  }
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  set_kernel(N, alpha, Y);
+}
+
+//template void caffe_gpu_set<int>(const int N, const int alpha, int* Y);
+//template void caffe_gpu_set<float>(const int N, const float alpha, float* Y);
+//template void caffe_gpu_set<double>(const int N, const double alpha, double* Y);
+
 #endif //USE_CPPAMP
 }  // namespace caffe
