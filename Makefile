@@ -161,9 +161,11 @@ CUDA_LIB_DIR += $(CUDA_DIR)/lib
 
 INCLUDE_DIRS += $(BUILD_INCLUDE_DIR) ./src ./include
 ifneq ($(CPU_ONLY), 1)
-	INCLUDE_DIRS += $(CUDA_INCLUDE_DIR)
-	LIBRARY_DIRS += $(CUDA_LIB_DIR)
-	LIBRARIES := cudart cublas curand
+  ifneq ($(USE_CPPAMP), 1)
+	  INCLUDE_DIRS += $(CUDA_INCLUDE_DIR)
+ 	  LIBRARY_DIRS += $(CUDA_LIB_DIR)
+	  LIBRARIES := cudart cublas curand
+  endif
 endif
 LIBRARIES += glog gflags protobuf leveldb snappy \
 	lmdb boost_system hdf5_hl hdf5 m \
@@ -240,15 +242,15 @@ endif
 # libstdc++ for NVCC compatibility on OS X >= 10.9 with CUDA < 7.0
 ifeq ($(OSX), 1)
 	CXX := /usr/bin/clang++
-	ifneq ($(CPU_ONLY), 1)
+  ifneq ($(CPU_ONLY), 1)
 		CUDA_VERSION := $(shell $(CUDA_DIR)/bin/nvcc -V | grep -o 'release \d' | grep -o '\d')
-		ifeq ($(shell echo $(CUDA_VERSION) \< 7.0 | bc), 1)
+    ifeq ($(shell echo $(CUDA_VERSION) \< 7.0 | bc), 1)
 			CXXFLAGS += -stdlib=libstdc++
 			LINKFLAGS += -stdlib=libstdc++
-		endif
+    endif
 		# clang throws this warning for cuda headers
 		WARNINGS += -Wno-unneeded-internal-declaration
-	endif
+  endif
 	# gtest needs to use its own tuple to not conflict with clang
 	COMMON_FLAGS += -DGTEST_USE_OWN_TR1_TUPLE=1
 	# boost::thread is called boost_thread-mt to mark multithreading on OS X
@@ -260,9 +262,11 @@ else
 	ORIGIN := \$$ORIGIN
 endif
 
-ifeq ($(USE_CPPAMP), 1)
-  CLAMP_PREFIX=/opt/clamp
-  AMP_COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --cxxflags --ldflags)
+ifneq ($(CPU_ONLY), 1)
+  ifeq ($(USE_CPPAMP), 1)
+    CLAMP_PREFIX=/opt/clamp
+    AMP_COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --cxxflags --ldflags)
+  endif
 endif
 # Custom compiler
 ifdef CUSTOM_CXX
@@ -297,13 +301,18 @@ endif
 
 # CPU-only configuration
 ifeq ($(CPU_ONLY), 1)
-	OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CXXAMP_OBJS)
+	OBJS := $(PROTO_OBJS) $(CXX_OBJS)
 	TEST_OBJS := $(TEST_CXX_OBJS)
 	TEST_BINS := $(TEST_CXX_BINS)
 	ALL_WARNS := $(ALL_CXX_WARNS)
 	TEST_FILTER := --gtest_filter="-*GPU*"
 	COMMON_FLAGS += -DCPU_ONLY
-	AMP_COMMON_FLAGS += -DCPU_ONLY
+else
+  ifeq ($(USE_CPPAMP), 1)
+	  OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CXXAMP_OBJS)
+	  AMP_COMMON_FLAGS += -DCPU_ONLY
+	  AMP_COMMON_FLAGS += -DUSE_CPPAMP
+  endif
 endif
 
 # Python layer support
@@ -364,11 +373,11 @@ NVCCFLAGS += -ccbin=$(CXX) -Xcompiler -fPIC $(COMMON_FLAGS)
 MATLAB_CXXFLAGS := $(CXXFLAGS) -Wno-uninitialized
 LINKFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
 
-ifeq ($(USE_CPPAMP), 1)
-	LINKFLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --ldflags)
-  #LINKFLAGS += -std=c++amp -L/opt/clamp/lib -Wl,--rpath=/opt/clamp/lib -lc++ -lcxxrt -ldl -lpthread -Wl,--whole-archive -lmcwamp -Wl,--no-whole-archive  
+ifneq ($(CPU_ONLY), 1)
+  ifeq ($(USE_CPPAMP), 1)
+	  LINKFLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --ldflags)
+  endif
 endif
-
 USE_PKG_CONFIG ?= 0
 ifeq ($(USE_PKG_CONFIG), 1)
 	PKG_CONFIG := $(shell pkg-config opencv --libs)
@@ -526,12 +535,14 @@ $(BUILD_DIR)/%.o: %.cpp | $(ALL_BUILD_DIRS)
 		|| (cat $@.$(WARNS_EXT); exit 1)
 	@ cat $@.$(WARNS_EXT)
 
+ifneq ($(CPU_ONLY), 1)
 ifeq ($(USE_CPPAMP), 1)
-$(BUILD_DIR)/%.o: %.cxx | $(ALL_BUILD_DIRS)
+  $(BUILD_DIR)/%.o: %.cxx | $(ALL_BUILD_DIRS)
 	@ echo CXXAMP $<
 	$(Q)$(CXX) $< $(AMPCXXFLAGS) -c -o $@ 2> $@.$(WARNS_EXT) \
 		|| (cat $@.$(WARNS_EXT); exit 1)
 	@ cat $@.$(WARNS_EXT)
+endif
 endif
 $(PROTO_BUILD_DIR)/%.pb.o: $(PROTO_BUILD_DIR)/%.pb.cc $(PROTO_GEN_HEADER) \
 		| $(PROTO_BUILD_DIR)

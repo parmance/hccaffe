@@ -6,6 +6,7 @@ using namespace concurrency;
 
 namespace caffe {
 
+#ifdef USE_CPPAMP
 template <>
 void caffe_amp_abs<float>(const int n, float* a, float* y) {
   array_view<float, 1> aView(n, a);
@@ -31,4 +32,5 @@ void caffe_amp_mul<float>(const int n, const float* a, const float* b, float* y)
   }
   );*/
 }
+#endif //USE_CPPAMP
 }  // namespace caffe
