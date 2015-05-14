@@ -100,7 +100,7 @@ CXX_OBJS := $(addprefix $(BUILD_DIR)/, ${CXX_SRCS:.cpp=.o})
 CU_OBJS := $(addprefix $(BUILD_DIR)/cuda/, ${CU_SRCS:.cu=.o})
 PROTO_OBJS := ${PROTO_GEN_CC:.cc=.o}
 CXXAMP_OBJS := $(addprefix $(BUILD_DIR)/, ${CXXAMP_SRCS:.cxx=.o})
-OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CU_OBJS) $(CXXAMP_OBJS)
+OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CU_OBJS)
 # tool, example, and test objects
 TOOL_OBJS := $(addprefix $(BUILD_DIR)/, ${TOOL_SRCS:.cpp=.o})
 TOOL_BUILD_DIR := $(BUILD_DIR)/tools
@@ -313,7 +313,6 @@ else
 	  TEST_OBJS := $(TEST_CXX_OBJS)
 	  TEST_BINS := $(TEST_CXX_BINS)
 	  COMMON_FLAGS += -DUSE_CPPAMP
-	  AMP_COMMON_FLAGS += -DCPU_ONLY
 	  AMP_COMMON_FLAGS += -DUSE_CPPAMP
   endif
 endif
