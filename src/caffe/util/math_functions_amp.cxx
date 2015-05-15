@@ -1,16 +1,19 @@
 #include "caffe/util/math_functions.hpp"
 #include "amp.h"
 #include "amp_math.h"
+
+#include "cppamp/ampblaslib.h"
+
 using namespace concurrency;
 
 
 namespace caffe {
 
 #ifdef USE_CPPAMP
-template <>
-void caffe_amp_abs<float>(const int n, float* a, float* y) {
-  array_view<float, 1> aView(n, a);
-  array_view<float, 1> yView(n, y);
+template <typename Dtype>
+void caffe_amp_abs(const int N, Dtype* a, Dtype* y) {
+  array_view<Dtype, 1> aView(N, a);
+  array_view<Dtype, 1> yView(N, y);
   parallel_for_each(
     yView.get_extent(),
     [=](index<1> idx) restrict(amp)
@@ -19,18 +22,46 @@ void caffe_amp_abs<float>(const int n, float* a, float* y) {
   }
   );
 }
-template <>
-void caffe_amp_mul<float>(const int n, const float* a, const float* b, float* y){
-  /*array_view<float, 1> aView(N, a);
-  array_view<float, 1> bView(N, b);
-  array_view<float, 1> yView(N, y);
+template <typename Dtype>
+void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y){
+  array_view<Dtype, 1> aView(N, a);
+  array_view<Dtype, 1> bView(N, b);
+  array_view<Dtype, 1> yView(N, y);
   parallel_for_each(
     yView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
     yView[idx] = (aView[idx] * bView[idx]);
   }
-  );*/
+  );
+}
+
+template <typename Dtype>
+void div_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
+  array_view<Dtype, 1> aView(N, a);
+  array_view<Dtype, 1> bView(N, b);
+  array_view<Dtype, 1> yView(N, y);
+  parallel_for_each(
+    yView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+    {
+      yView[idx] = (aView[idx] / bView[idx]);
+    }
+  );
+}
+
+template <typename Dtype>
+void sub_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
+  array_view<Dtype, 1> aView(N, a);
+  array_view<Dtype, 1> bView(N, b);
+  array_view<Dtype, 1> yView(N, y);
+  parallel_for_each(
+    yView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+    {
+      yView[idx] = (aView[idx] - bView[idx]);
+    }
+  );
 }
 
 template <typename Dtype>
@@ -55,9 +86,22 @@ void caffe_gpu_set(const int N, const Dtype alpha, Dtype* Y) {
   set_kernel(N, alpha, Y);
 }
 
-//template void caffe_gpu_set<int>(const int N, const int alpha, int* Y);
-//template void caffe_gpu_set<float>(const int N, const float alpha, float* Y);
-//template void caffe_gpu_set<double>(const int N, const double alpha, double* Y);
+template <>
+void caffe_gpu_scale<float>(const int n, const float alpha, const float *x,
+                                float* y)
+{
+  amp_copy(n, const_cast <float*>(x), y);
+  amp_scale(n, alpha, y);
+}
+
+template <>
+void caffe_gpu_scale<double>(const int n, const double alpha, const double *x,
+                                 double* y) {
+  amp_copy(n, const_cast <double*>(x), y);
+  amp_scale(n, alpha, y);
+}
+
 
 #endif //USE_CPPAMP
 }  // namespace caffe
+
