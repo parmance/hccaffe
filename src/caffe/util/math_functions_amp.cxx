@@ -12,12 +12,13 @@ void caffe_amp_abs(const int N, Dtype* a, Dtype* y) {
   array_view<Dtype, 1> aView(N, a);
   array_view<Dtype, 1> yView(N, y);
   parallel_for_each(
-    yView.extent,
+    yView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
     yView[idx] = aView[idx] >= 0 ? aView[idx] : -1 * aView[idx];
   }
   );
+  yView.synchronize();
 }                                                                                                                                                
 
 template <typename Dtype>
@@ -25,12 +26,13 @@ void caffe_amp_sign(const int N, Dtype* a, Dtype* y) {
   array_view<Dtype, 1> aView(N, a);
   array_view<Dtype, 1> yView(N, y);
   parallel_for_each(
-    yView.extent,
+    yView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
     yView[idx] = aView[idx] == 0 ? 0 : (aView[idx] < 0 ? -1 : 1);
   }
   );
+  yView.synchronize();
 }
 
 template <typename Dtype>
@@ -39,12 +41,13 @@ void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y) {
   array_view<Dtype, 1> bView(N, b);
   array_view<Dtype, 1> yView(N, y);
   parallel_for_each(
-    yView.extent,
+    yView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
     yView[idx] = (aView[idx] * bView[idx]);
   }
   );
+  yView.synchronize();
 }
 template <typename Dtype>
 void set_kernel(const int N, const Dtype alpha, Dtype* y) {

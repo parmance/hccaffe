@@ -24,6 +24,7 @@ void TanHForward(const int N, Dtype* in, Dtype* out) {
     outView[idx] = Concurrency::fast_math::tanh(inView[idx]);
   }
   );
+  outView.synchronize();
 }
 
 template <typename Dtype>
@@ -40,6 +41,7 @@ void TanHBackward(const int N, Dtype* in_diff,
     out_diffView[idx] = in_diffView[idx] * (1 - tanhx * tanhx);
   }
   );
+  out_diffView.synchronize();
 }
 
 template <typename Dtype>
