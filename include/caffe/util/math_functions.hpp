@@ -171,6 +171,9 @@ void caffe_gpu_memcpy(const size_t N, const void *X, void *Y);
 template <typename Dtype>
 void caffe_gpu_set(const int N, const Dtype alpha, Dtype *X);
 
+template <typename Dtype>
+void caffe_amp_sign(const int N, Dtype* a, Dtype* y);
+
 inline void caffe_gpu_memset(const size_t N, const int alpha, void* X) {
 #ifndef CPU_ONLY
 #ifdef USE_CPPAMP
@@ -278,7 +281,7 @@ void caffe_gpu_##name<double>(const int n, const double* x, double* y) { \
 template <typename Dtype>
 void caffe_amp_abs(const int n, Dtype* a, Dtype* y);
 template <typename Dtype>
-void caffe_amp_mul(const int N, const Dtype* a, const Dtype* b, Dtype* y);
+void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y);
 #endif  //USE_CPPAMP
 }  // namespace caffe
 
