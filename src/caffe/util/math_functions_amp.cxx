@@ -82,6 +82,20 @@ void div_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
   yView.synchronize();
 }
 
+template <>
+void caffe_gpu_div<float>(const int N, const float* a,
+  const float* b, float* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  div_kernel(N, const_cast <float*>(a), const_cast <float*>(b), y);
+}
+
+template <>
+void caffe_gpu_div<double>(const int N, const double* a,
+  const double* b, double* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  div_kernel(N, const_cast <double*>(a), const_cast <double*>(b), y);
+}
+
 template <typename Dtype>
 void sub_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
   array_view<Dtype, 1> aView(N, a);
@@ -161,6 +175,31 @@ void caffe_gpu_exp<double>(const int N, const double* a, double* y) {
 }
 
 template <typename Dtype>
+void add_scalar_kernel(const int N, const Dtype alpha, Dtype* y) {
+  array_view<Dtype, 1> outView(N, y);
+  parallel_for_each(
+    outView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+    {
+      outView[idx] += alpha;
+    }
+  );
+  outView.synchronize();
+}
+
+template <>
+void caffe_gpu_add_scalar<float>(const int N, const float alpha, float* Y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  add_scalar_kernel(N, alpha, Y);
+}
+
+template <>
+void caffe_gpu_add_scalar<double>(const int N, const double alpha, double* Y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  add_scalar_kernel(N, alpha, Y);
+}
+
+template <typename Dtype>
 void powx_kernel(const int N, Dtype* a, Dtype alpha, Dtype* y) {
   array_view<Dtype, 1> aView(N, a);
   array_view<Dtype, 1> yView(N, y);
@@ -223,6 +262,20 @@ void caffe_gpu_scal<float>(const int N, const float alpha, float *X) {
 template <>
 void caffe_gpu_scal<double>(const int N, const double alpha, double *X) {
   amp_scale(N, alpha, X);
+}
+
+template <>
+void caffe_gpu_axpby<float>(const int N, const float alpha, const float* X,
+  const float beta, float* Y) {
+  caffe_gpu_scal<float>(N, beta, Y);
+  caffe_gpu_axpy<float>(N, alpha, X, Y);
+}
+
+template <>
+void caffe_gpu_axpby<double>(const int N, const double alpha, const double* X,
+  const double beta, double* Y) {
+  caffe_gpu_scal<double>(N, beta, Y);
+  caffe_gpu_axpy<double>(N, alpha, X, Y);
 }
 
 template <>
