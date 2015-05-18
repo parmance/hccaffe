@@ -227,6 +227,22 @@ void caffe_gpu_powx<double>(const int N, const double* a,
   powx_kernel(N, const_cast <double*>(a), alpha, y);
 }
 
+
+
+template <>
+void caffe_gpu_dot<float>(const int n, const float* x, const float* y,
+  float* out) {
+  //todo cpu version
+  cblas_sdot(n, x, 1, y, 1);
+}
+
+template <>
+void caffe_gpu_dot<double>(const int n, const double* x, const double* y,
+  double * out) {
+  //todo cpu version
+  cblas_ddot(n, x, 1, y, 1);
+}
+
 template <>
 void caffe_gpu_axpy<float>(const int N, const float alpha, const float* X,
         float* Y) {
