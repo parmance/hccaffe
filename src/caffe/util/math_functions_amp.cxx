@@ -105,6 +105,46 @@ void caffe_gpu_set(const int N, const Dtype alpha, Dtype* Y) {
   set_kernel(N, alpha, Y);
 }
 
+template <typename Dtype>
+void exp_kernel(const int N, Dtype* a, Dtype* y) {
+  array_view<Dtype, 1> aView(N, a);
+  array_view<Dtype, 1> yView(N, y);
+  parallel_for_each(
+    yView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+    {
+      yView[idx] = Concurrency::fast_math::exp(aView[idx]);
+    }
+  );
+  yView.synchronize();
+}
+
+template <>
+void caffe_gpu_mul<float>(const int N, const float* a,
+  const float* b, float* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  caffe_amp_mul(N, const_cast <float*>(a), const_cast <float*>(b), y);
+}
+
+template <>
+void caffe_gpu_mul<double>(const int N, const double* a,
+  const double* b, double* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  caffe_amp_mul(N, const_cast <double*>(a), const_cast <double*>(b), y);
+}
+
+template <>
+void caffe_gpu_exp<float>(const int N, const float* a, float* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  exp_kernel(N, const_cast <float*>(a), y);
+}
+
+template <>
+void caffe_gpu_exp<double>(const int N, const double* a, double* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  exp_kernel(N, const_cast <double*>(a), y);
+}
+
 template <>
 void caffe_gpu_scale<float>(const int n, const float alpha, const float *x,
                                 float* y)
@@ -120,6 +160,15 @@ void caffe_gpu_scale<double>(const int n, const double alpha, const double *x,
   amp_scale(n, alpha, y);
 }
 
+template <>
+void caffe_gpu_scal<float>(const int N, const float alpha, float *X) {
+  amp_scale(N, alpha, X);
+}
+
+template <>
+void caffe_gpu_scal<double>(const int N, const double alpha, double *X) {
+  amp_scale(N, alpha, X);
+}
 
 #endif //USE_CPPAMP
 }  // namespace caffe
