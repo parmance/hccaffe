@@ -360,7 +360,9 @@ INCLUDE_DIRS += $(BLAS_INCLUDE)
 LIBRARY_DIRS += $(BLAS_LIB)
 
 LIBRARY_DIRS += $(LIB_BUILD_DIR)
-
+# boost lib
+BOOST_LIB := ./lib/x86_64-linux-gnu
+LIBRARY_DIRS += $(BOOST_LIB)
 # Automatic dependency generation (nvcc is handled separately)
 CXXFLAGS += -MMD -MP
 AMPCXXFLAGS += -MMD -MP
