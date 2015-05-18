@@ -10,6 +10,8 @@
 #define AMPBLAS_LIB_H
 
 #include<iostream>
+//todo cpu version
+#include<cblas.h>
 
 #include "amp.h"
 #include "amp_math.h"
@@ -58,5 +60,28 @@ void amp_scale(const int N, const Dtype value, Dtype* x)
   );
   xView.synchronize();
 }
+
+/*
+void amp_sgemv(const enum CBLAS_TRANSPOSE type,
+  const int M, const int N,
+  const float alpha, float *A, const int N,
+  float *X, const long xOffset,
+  const float beta,
+  float *Y,const long yOffset)
+{
+  return;
+}
+
+void amp_dgemv(const enum CBLAS_TRANSPOSE type,
+  const int M, const int N,
+  const double alpha, double *A, const int N,
+  double *X, const long xOffset,
+  const float beta,
+  double *Y,const long yOffset)
+{
+  return;
+}
+*/
+
 
 #endif

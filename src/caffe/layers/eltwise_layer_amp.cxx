@@ -4,7 +4,9 @@
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
-#include "cppamp/ampblaslib.h"
+#include "amp.h"
+#include "amp_math.h"
+using namespace concurrency;
 
 namespace caffe {
 
@@ -58,7 +60,7 @@ void EltwiseLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     caffe_gpu_set(count, Dtype(0.), top_data);
     // TODO(shelhamer) does cuBLAS optimize to sum for coeff = 1?
     for (int i = 0; i < bottom.size(); ++i) {
-      amp_axpy(count, coeffs_[i], const_cast <Dtype*>(bottom[i]->gpu_data()), top_data);
+      caffe_gpu_axpy(count, coeffs_[i], const_cast <Dtype*>(bottom[i]->gpu_data()), top_data);
     }
     break;
   case EltwiseParameter_EltwiseOp_MAX:

@@ -53,6 +53,20 @@ void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y) {
   yView.synchronize();
 }
 
+template <>
+void caffe_gpu_mul<float>(const int N, const float* a,
+  const float* b, float* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  caffe_amp_mul(N, const_cast <float*>(a), const_cast <float*>(b), y);
+}
+
+template <>
+void caffe_gpu_mul<double>(const int N, const double* a,
+  const double* b, double* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  caffe_amp_mul(N, const_cast <double*>(a), const_cast <double*>(b), y);
+}
+
 template <typename Dtype>
 void div_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
   array_view<Dtype, 1> aView(N, a);
@@ -82,6 +96,21 @@ void sub_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
   );
   yView.synchronize();
 }
+
+template <>
+void caffe_gpu_sub<float>(const int N, const float* a, const float* b,
+  float* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  sub_kernel(N, const_cast <float*>(a), const_cast <float*>(b), y);
+}
+
+template <>
+void caffe_gpu_sub<double>(const int N, const double* a, const double* b,
+  double* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  sub_kernel(N, const_cast <double*>(a), const_cast <double*>(b), y);
+}
+
 template <typename Dtype>
 void set_kernel(const int N, const Dtype alpha, Dtype* y) {
   array_view<Dtype, 1> outView(N, y);
@@ -120,20 +149,6 @@ void exp_kernel(const int N, Dtype* a, Dtype* y) {
 }
 
 template <>
-void caffe_gpu_mul<float>(const int N, const float* a,
-  const float* b, float* y) {
-  // NOLINT_NEXT_LINE(whitespace/operators)
-  caffe_amp_mul(N, const_cast <float*>(a), const_cast <float*>(b), y);
-}
-
-template <>
-void caffe_gpu_mul<double>(const int N, const double* a,
-  const double* b, double* y) {
-  // NOLINT_NEXT_LINE(whitespace/operators)
-  caffe_amp_mul(N, const_cast <double*>(a), const_cast <double*>(b), y);
-}
-
-template <>
 void caffe_gpu_exp<float>(const int N, const float* a, float* y) {
   // NOLINT_NEXT_LINE(whitespace/operators)
   exp_kernel(N, const_cast <float*>(a), y);
@@ -143,6 +158,46 @@ template <>
 void caffe_gpu_exp<double>(const int N, const double* a, double* y) {
   // NOLINT_NEXT_LINE(whitespace/operators)
   exp_kernel(N, const_cast <double*>(a), y);
+}
+
+template <typename Dtype>
+void powx_kernel(const int N, Dtype* a, Dtype alpha, Dtype* y) {
+  array_view<Dtype, 1> aView(N, a);
+  array_view<Dtype, 1> yView(N, y);
+  parallel_for_each(
+    yView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+    {
+      yView[idx] = Concurrency::fast_math::pow(aView[idx], alpha);
+    }
+  );
+  yView.synchronize();
+}
+
+template <>
+void caffe_gpu_powx<float>(const int N, const float* a,
+  const float alpha, float* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  powx_kernel(N, const_cast <float*>(a), alpha, y);
+}
+
+template <>
+void caffe_gpu_powx<double>(const int N, const double* a,
+  const double alpha, double* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  powx_kernel(N, const_cast <double*>(a), alpha, y);
+}
+
+template <>
+void caffe_gpu_axpy<float>(const int N, const float alpha, const float* X,
+        float* Y) {
+  amp_axpy(N, alpha, const_cast <float*>(X), Y);
+}
+
+template <>
+void caffe_gpu_axpy<double>(const int N, const double alpha, const double* X,
+        double* Y) {
+  amp_axpy(N, alpha, const_cast <double*>(X), Y);
 }
 
 template <>
@@ -168,6 +223,24 @@ void caffe_gpu_scal<float>(const int N, const float alpha, float *X) {
 template <>
 void caffe_gpu_scal<double>(const int N, const double alpha, double *X) {
   amp_scale(N, alpha, X);
+}
+
+template <>
+void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
+  const int N, const float alpha, const float* A, const float* x,
+  const float beta, float* y) {
+  const enum CBLAS_ORDER Order=CblasRowMajor;
+  //todo cpu version
+  cblas_sgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
+}
+
+template <>
+void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
+  const int N, const double alpha, const double* A, const double* x,
+  const double beta, double* y) {
+  const enum CBLAS_ORDER Order=CblasRowMajor;
+  //todo cpu version
+  cblas_dgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
 }
 
 #endif //USE_CPPAMP
