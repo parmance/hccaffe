@@ -97,6 +97,33 @@ void caffe_gpu_div<double>(const int N, const double* a,
 }
 
 template <typename Dtype>
+void add_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
+  array_view<Dtype, 1> aView(N, a);
+  array_view<Dtype, 1> bView(N, b);
+  array_view<Dtype, 1> yView(N, y);
+  parallel_for_each(
+    yView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+    {
+      yView[idx] = (aView[idx] + bView[idx]);
+    }
+  );
+  yView.synchronize();
+}
+
+template <>
+void caffe_gpu_add<float>(const int N, const float* a, const float* b, float* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  add_kernel(N, const_cast <float*>(a), const_cast <float*>(b), y);
+}
+
+template <>
+void caffe_gpu_add<double>(const int N, const double* a, const double* b, double* y) {
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  add_kernel(N, const_cast <double*>(a), const_cast <double*>(b), y);
+}
+
+template <typename Dtype>
 void sub_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
   array_view<Dtype, 1> aView(N, a);
   array_view<Dtype, 1> bView(N, b);
@@ -310,6 +337,31 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   const enum CBLAS_ORDER Order=CblasRowMajor;
   //todo cpu version
   cblas_dgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
+}
+
+
+template <>
+void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
+  const CBLAS_TRANSPOSE TransB, const int M, const int N, const int K,
+  const float alpha, const float* A, const float* B, const float beta, float* C) {
+  const enum CBLAS_ORDER Order=CblasRowMajor;
+  // Note that cublas follows fortran order.
+  // todo cpu version
+  int lda = (TransA == CblasNoTrans) ? K : M;
+  int ldb = (TransB == CblasNoTrans) ? N : K;
+  cblas_sgemm(Order, TransA, TransB, M, N, K, alpha, B, ldb, A, lda, beta, C, N);
+}
+
+template <>
+void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
+  const CBLAS_TRANSPOSE TransB, const int M, const int N, const int K,
+  const double alpha, const double* A, const double* B, const double beta, double* C) {
+  const enum CBLAS_ORDER Order=CblasRowMajor;
+  // Note that cublas follows fortran order.
+  // todo cpu version
+  int lda = (TransA == CblasNoTrans) ? K : M;
+  int ldb = (TransB == CblasNoTrans) ? N : K;
+  cblas_dgemm(Order, TransA, TransB, M, N, K, alpha, B, ldb, A, lda, beta, C, N);
 }
 
 #endif //USE_CPPAMP
