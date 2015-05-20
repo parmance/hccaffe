@@ -21,6 +21,7 @@ void SigmoidForward(const int N, Dtype* in, Dtype* out) {
        outView[idx] = 1 / (1 + Concurrency::fast_math::exp(-inView[idx]));
      }
   );
+  outView.synchronize();
 }
 
 //template void SigmoidForward<int>(const int N, const int* in, int* out);
@@ -50,6 +51,7 @@ void SigmoidBackward(const int N, Dtype* in_diff, Dtype* out_data, Dtype* out_di
       out_diffView[idx] = in_diffView[idx] * sigmoid_x * (1 - sigmoid_x);
     }
   );
+  out_diffView.synchronize();
 }
 
 template <typename Dtype>

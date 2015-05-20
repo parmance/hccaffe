@@ -31,6 +31,7 @@ void kernel_channel_max(const int N, const int channels,
       outView[idx] = maxval;
     }
   );
+  outView.synchronize();
 }
 
 template <typename Dtype>
@@ -47,6 +48,7 @@ void kernel_channel_subtract(const int N, const int num, const int channels,
       dataView[idx] -= channel_maxView[n * spatial_dim + s];
     }
   );
+  dataView.synchronize();
 }
 
 template <typename Dtype>
@@ -60,6 +62,7 @@ void kernel_exp(const int N, Dtype* data, Dtype* out) {
       outView[idx] = Concurrency::fast_math::exp(dataView[idx]);
     }
   );
+  dataView.synchronize();
 }
 
 template <typename Dtype>
@@ -80,6 +83,7 @@ void kernel_channel_sum(const int N, const int channels,
       channel_sumView[idx] = sum;
     }
   );
+  channel_sumView.synchronize();
 }
 
 template <typename Dtype>
@@ -96,6 +100,7 @@ void kernel_channel_div(const int N, const int num, const int channels,
       dataView[idx] /= channel_sumView[n * spatial_dim + s];
     }
   );
+  dataView.synchronize();
 }
 
 template <typename Dtype>
@@ -118,6 +123,7 @@ void kernel_channel_dot(const int N, const int channels, const int spatial_dim,
       channel_dotView[idx] = dot;
     }
   );
+  channel_dotView.synchronize();
 }
 
 template <typename Dtype>

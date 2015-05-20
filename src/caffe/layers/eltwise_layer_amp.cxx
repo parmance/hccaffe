@@ -96,6 +96,7 @@ void MaxBackward(const int N, Dtype* top_diff,
       bottom_diffView[idx] = gradient;
     }
   );
+  bottom_diffView.synchronize();
 }
 
 template <typename Dtype>
