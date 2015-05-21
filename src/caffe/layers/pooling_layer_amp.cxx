@@ -50,7 +50,7 @@ void MaxPoolForward( int nthreads,  Dtype* bottom_data,
         topDataView[index] = aveval / pool_size;
     }
     );
-     topDataView.synchronize();
+    topDataView.synchronize();
 }
 template <typename Dtype>
 void AvePoolForward(const int nthreads, Dtype* bottom_data,
@@ -138,7 +138,7 @@ void StoPoolForwardTrain(const int nthreads,
         }
     }
     );
-    topDataView.synchronize();   
+    topDataView.synchronize();
 }
 template <typename Dtype>
 void StoPoolForwardTest(const int nthreads,
