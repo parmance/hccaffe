@@ -7,7 +7,7 @@
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
-
+#ifdef USE_CPPAMP
 template <typename Dtype>
 void kernel_channel_max(const int N, const int channels,
   const int spatial_dim, Dtype* data, Dtype* out);
@@ -103,3 +103,4 @@ INSTANTIATE_LAYER_GPU_FUNCS(SoftmaxLayer);
 
 
 }  // namespace caffe
+#endif
