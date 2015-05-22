@@ -4,43 +4,18 @@
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
-#include "amp.h"
-#include "amp_math.h"
-using namespace concurrency;
+
+
+template <typename Dtype>
+void MaxForward(const int N, Dtype* a, Dtype* b, const int blob_idx, Dtype* y, int* mask);
+
+template <typename Dtype>
+void MaxBackward(const int N, Dtype* top_diff, int blob_idx, int* mask, Dtype* bottom_diff);
+
+
 
 namespace caffe {
 
-template <typename Dtype>
-void MaxForward(const int N, Dtype* a, Dtype* b,
-  const int blob_idx, Dtype* y, int* mask) {
-  array_view<Dtype, 1> aView(N, a);
-  array_view<Dtype, 1> bView(N, b);
-  array_view<Dtype, 1> yView(N, y);
-  array_view<int, 1> maskView(N, mask);
-  parallel_for_each(
-    yView.get_extent(),
-    [=] (concurrency::index<1> idx) restrict(amp)
-    {
-      Dtype maxval = -FLT_MAX;
-      int maxidx = -1;
-      if (aView[idx] > bView[idx]) {
-        if (blob_idx == 0) {
-          maxval = aView[idx];
-          yView[idx] = maxval;
-          maxidx = blob_idx;
-          maskView[idx] = maxidx;
-        }
-      }
-      else {
-        maxval = bView[idx];
-        yView[idx] = maxval;
-        maxidx = blob_idx + 1;
-        maskView[idx] = maxidx;
-      }
-    }
-  );
-  yView.synchronize();
-}
 
 template <typename Dtype>
 void EltwiseLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
@@ -77,26 +52,6 @@ void EltwiseLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   default:
     LOG(FATAL) << "Unknown elementwise operation.";
   }
-}
-
-template <typename Dtype>
-void MaxBackward(const int N, Dtype* top_diff,
-  int blob_idx, int* mask, Dtype* bottom_diff) {
-  array_view<Dtype, 1> top_diffView(N, top_diff);
-  array_view<Dtype, 1> bottom_diffView(N, bottom_diff);
-  array_view<int, 1> maskView(N, mask);
-  parallel_for_each(
-    bottom_diffView.get_extent(),
-    [=] (concurrency::index<1> idx) restrict(amp)
-    {
-      Dtype gradient = 0;
-      if (maskView[idx] == blob_idx) {
-        gradient += top_diffView[idx];
-      }
-      bottom_diffView[idx] = gradient;
-    }
-  );
-  bottom_diffView.synchronize();
 }
 
 template <typename Dtype>

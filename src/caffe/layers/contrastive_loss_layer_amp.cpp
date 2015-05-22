@@ -6,9 +6,13 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
 
-#include "amp.h"
-#include "amp_math.h"
-using namespace concurrency;
+
+
+
+template <typename Dtype>
+void CLLForward(const int N, const int channels, const Dtype margin, const Dtype alpha,
+    Dtype* y, Dtype* diff, Dtype* dist_sq, Dtype* bottom_diff);
+
 
 namespace caffe {
 
@@ -46,34 +50,6 @@ void ContrastiveLossLayer<Dtype>::Forward_gpu(
   }
   loss = loss / static_cast<Dtype>(bottom[0]->num()) / Dtype(2);
   top[0]->mutable_cpu_data()[0] = loss;
-}
-
-template <typename Dtype>
-void CLLForward(const int N, const int channels, const Dtype margin, const Dtype alpha,
-    Dtype* y, Dtype* diff, Dtype* dist_sq, Dtype* bottom_diff) {
-  array_view<Dtype, 1> yView(N, y);
-  array_view<Dtype, 1> diffView(N, diff);
-  array_view<Dtype, 1> dist_sqView(N, dist_sq);
-  array_view<Dtype, 1> bottom_diffView(N, bottom_diff);
-  parallel_for_each(
-    bottom_diffView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      int n = idx[0] / channels;  // the num index, to access y and dist_sq
-      if (static_cast<int>(yView[n])) {  // similar pairsS
-        bottom_diffView[idx] = alpha * diffView[idx];
-      }
-      else {  // dissimilar pairs
-        if ((margin - dist_sqView[n]) > 0) {
-          bottom_diffView[idx] = -alpha * diffView[idx];
-        }
-        else {
-          bottom_diffView[idx] = 0;
-        }
-      }
-    }
-  );
-  bottom_diffView.synchronize();
 }
 
 template <typename Dtype>

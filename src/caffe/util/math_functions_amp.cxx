@@ -165,10 +165,20 @@ void set_kernel(const int N, const Dtype alpha, Dtype* y) {
   outView.synchronize();
 }
 
-template <typename Dtype>
-void caffe_gpu_set(const int N, const Dtype alpha, Dtype* Y) {
+template <>
+void caffe_gpu_set<float>(const int N, const float alpha, float* Y) {
   if (alpha == 0) {
-    memset(Y, 0, sizeof(Dtype) * N);
+    memset(Y, 0, sizeof(float) * N);
+    return;
+  }
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  set_kernel(N, alpha, Y);
+}
+
+template <>
+void caffe_gpu_set<double>(const int N, const double alpha, double* Y) {
+  if (alpha == 0) {
+    memset(Y, 0, sizeof(double) * N);
     return;
   }
   // NOLINT_NEXT_LINE(whitespace/operators)
