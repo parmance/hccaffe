@@ -246,7 +246,14 @@ void caffe_rng_uniform(const int n, const Dtype a, const Dtype b, Dtype* r) {
     r[i] = variate_generator();
   }
 }
-
+void caffe_rng_uniform(const int n, unsigned int* r) {
+  boost::uniform_real<int> random_distribution(0, caffe_nextafter<int>(0));
+  boost::variate_generator<caffe::rng_t*, boost::uniform_real<int> >
+      variate_generator(caffe_rng(), random_distribution);
+  for (int i = 0; i < n; ++i) {
+       r[i] = variate_generator();
+  }
+}
 template
 void caffe_rng_uniform<float>(const int n, const float a, const float b,
                               float* r);

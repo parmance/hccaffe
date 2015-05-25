@@ -1,7 +1,11 @@
+#include <boost/math/special_functions/next.hpp>
+#include <boost/random.hpp>
+
+#include <limits>
 #include "caffe/util/math_functions.hpp"
 #include "amp.h"
 #include "amp_math.h"
-
+#include "caffe/common.hpp"
 #include "cppamp/ampblaslib.h"
 
 using namespace concurrency;
@@ -403,6 +407,19 @@ template <>
 void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
   *y = cblas_dasum(n, x, 1);
 }
+void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
+} 
+template <>
+void caffe_gpu_rng_uniform<float>(const int n, const float a, const float b,
+                                  float* r) {
+  caffe_rng_uniform(n, a, b, r);
+};
+template <>
+void caffe_gpu_rng_uniform<double>(const int n, const double a, const double b,
+                                   double* r) {
+
+  caffe_rng_uniform(n, a, b, r);
+};
 void caffe_gpu_memcpy(const size_t N, const void *X, void *Y)
 {
   memcpy(Y,X,N);
