@@ -5,7 +5,7 @@
 
 #include "caffe/common.hpp"
 #include "caffe/util/im2col.hpp"
-using namespace Concurrency;
+
 
 #ifdef USE_CPPAMP
 
