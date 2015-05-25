@@ -210,7 +210,7 @@ void caffe_gpu_abs(const int n, const Dtype* a, Dtype* y);
 template <typename Dtype>
 void caffe_gpu_exp(const int n, const Dtype* a, Dtype* y);
 
-template <typename Dtype>
+template <typename Dtype>caffe_amp_mul
 void caffe_gpu_powx(const int n, const Dtype* a, const Dtype b, Dtype* y);
 
 // caffe_gpu_rng_uniform with two arguments generates integers in the range
@@ -279,7 +279,9 @@ void caffe_gpu_##name<double>(const int n, const double* x, double* y) { \
 
 #ifdef USE_CPPAMP
 template <typename Dtype>
-void caffe_amp_abs(const int n, Dtype* a, Dtype* y);
+void caffe_amp_abs(const int N, Dtype* a, Dtype* y);
+template <typename Dtype>
+void caffe_amp_sign(const int N, Dtype* a, Dtype* y);
 template <typename Dtype>
 void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y);
 #endif  //USE_CPPAMP
