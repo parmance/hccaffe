@@ -5,8 +5,6 @@
 
 #include "caffe/common.hpp"
 #include "caffe/util/im2col.hpp"
-#include "amp.h"
-#include "amp_math.h"
 using namespace Concurrency;
 
 #ifdef USE_CPPAMP
