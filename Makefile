@@ -223,7 +223,7 @@ endif
 # Linux
 ifeq ($(LINUX), 1)
   ifeq ($(USE_CPPAMP), 1)
-    CXX := /opt/clamp/bin/clang++
+    CXX := /opt/kalmar/bin/clang++
   else
     CXX ?= /usr/bin/g++
     GCCVERSION := $(shell $(CXX) -dumpversion | cut -f1,2 -d.)
@@ -264,7 +264,7 @@ endif
 #CPPAMP Build Option
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(USE_CPPAMP), 1)
-    CLAMP_PREFIX=/opt/clamp
+    CLAMP_PREFIX=/opt/kalmar
     AMP_COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --cxxflags --ldflags)
   endif
 endif
