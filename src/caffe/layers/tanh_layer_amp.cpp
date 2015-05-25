@@ -9,40 +9,18 @@
 #include "amp.h"
 #include "amp_math.h"
 
-using namespace Concurrency;
-
-namespace caffe {
+#ifdef USE_CPPAMP
 
 template <typename Dtype>
-void TanHForward(const int N, Dtype* in, Dtype* out) {
-  array_view<Dtype, 1> inView(N, in);
-  array_view<Dtype, 1> outView(N, out);
-  parallel_for_each(
-    outView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-  {
-    outView[idx] = Concurrency::fast_math::tanh(inView[idx]);
-  }
-  );
-  outView.synchronize();
-}
+void TanHForward(const int N, Dtype* in, Dtype* out);
 
 template <typename Dtype>
 void TanHBackward(const int N, Dtype* in_diff,
-  Dtype* out_data, Dtype* out_diff) {
-  array_view<Dtype, 1> in_diffView(N, in_diff);
-  array_view<Dtype, 1> out_diffView(N, out_diff);
-  array_view<Dtype, 1> out_dataView(N, out_data);
-  parallel_for_each(
-    out_dataView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-  {
-    Dtype tanhx = out_dataView[idx];
-    out_diffView[idx] = in_diffView[idx] * (1 - tanhx * tanhx);
-  }
-  );
-  out_diffView.synchronize();
-}
+  Dtype* out_data, Dtype* out_diff);
+
+using namespace Concurrency;
+
+namespace caffe {
 
 template <typename Dtype>
 void TanHLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
@@ -71,3 +49,4 @@ INSTANTIATE_LAYER_GPU_FUNCS(TanHLayer);
 
 
 }  // namespace caffe
+#endif
