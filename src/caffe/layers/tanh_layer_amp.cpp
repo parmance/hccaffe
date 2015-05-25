@@ -6,8 +6,6 @@
 
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
-#include "amp.h"
-#include "amp_math.h"
 
 #ifdef USE_CPPAMP
 
@@ -18,7 +16,6 @@ template <typename Dtype>
 void TanHBackward(const int N, Dtype* in_diff,
   Dtype* out_data, Dtype* out_diff);
 
-using namespace Concurrency;
 
 namespace caffe {
 
