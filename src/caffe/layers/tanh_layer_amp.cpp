@@ -6,8 +6,6 @@
 
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
-#include "amp.h"
-#include "amp_math.h"
 
 #ifdef USE_CPPAMP
 
