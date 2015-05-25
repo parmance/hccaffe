@@ -8,6 +8,14 @@
 
 using namespace Concurrency;
 
+template <typename Dtype>
+void ReLUForward(const int N, Dtype* in, Dtype* out,
+  Dtype negative_slope);
+
+template <typename Dtype>
+void ReLUBackward(const int N, Dtype* in_diff,
+  Dtype* in_data, Dtype* out_diff, Dtype negative_slope);
+
 
 template <>
 void ReLUForward(const int N, float* in, float* out,
