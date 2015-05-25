@@ -373,7 +373,10 @@ void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
   int ldb = (TransB == CblasNoTrans) ? N : K;
   cblas_dgemm(Order, TransA, TransB, M, N, K, alpha, B, ldb, A, lda, beta, C, N);
 }
-
+void caffe_gpu_memcpy(const size_t N, const void *X, void *Y)
+{
+  memcpy(Y,X,N);
+}
 #endif //USE_CPPAMP
 }  // namespace caffe
 
