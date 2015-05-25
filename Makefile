@@ -261,7 +261,7 @@ ifeq ($(OSX), 1)
 else
 	ORIGIN := \$$ORIGIN
 endif
-
+#CPPAMP Build Option
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(USE_CPPAMP), 1)
     CLAMP_PREFIX=/opt/clamp
@@ -541,7 +541,7 @@ $(BUILD_DIR)/%.o: %.cpp | $(ALL_BUILD_DIRS)
 
 ifneq ($(CPU_ONLY), 1)
 ifeq ($(USE_CPPAMP), 1)
-  $(BUILD_DIR)/%.o: %.cxx | $(ALL_BUILD_DIRS)
+$(BUILD_DIR)/%.o: %.cxx | $(ALL_BUILD_DIRS)
 	@ echo CXXAMP $<
 	$(Q)$(CXX) $< $(AMPCXXFLAGS) -c -o $@ 2> $@.$(WARNS_EXT) \
 		|| (cat $@.$(WARNS_EXT); exit 1)
