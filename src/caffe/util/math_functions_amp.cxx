@@ -373,6 +373,14 @@ void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
   int ldb = (TransB == CblasNoTrans) ? N : K;
   cblas_dgemm(Order, TransA, TransB, M, N, K, alpha, B, ldb, A, lda, beta, C, N);
 }
+template <>
+void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
+  *y = cblas_sasum(n, x, 1);
+}
+template <>
+void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
+  *y = cblas_dasum(n, x, 1);
+}
 void caffe_gpu_memcpy(const size_t N, const void *X, void *Y)
 {
   memcpy(Y,X,N);
