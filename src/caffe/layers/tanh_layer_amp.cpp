@@ -16,7 +16,6 @@ template <typename Dtype>
 void TanHBackward(const int N, Dtype* in_diff,
   Dtype* out_data, Dtype* out_diff);
 
-using namespace Concurrency;
 
 namespace caffe {
 
