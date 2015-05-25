@@ -54,6 +54,28 @@ void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y) {
 }
 
 template <>
+void caffe_amp_abs<float>(const int N, float* a, float* y) {
+  caffe_amp_abs(N, const_cast <float*>(a), y);
+}
+
+template <>
+void caffe_amp_abs<double>(const int N, double* a, double* y) {
+  caffe_amp_abs(N, const_cast <double*>(a), y);
+}
+
+template <>
+void caffe_amp_sign<float>(const int N, float* a, float* y) {
+  caffe_amp_sign(N, const_cast <float*>(a), y);
+}
+
+template <>
+void caffe_amp_sign<double>(const int N, double* a, double* y) {
+  caffe_amp_sign(N, const_cast <double*>(a), y);
+}
+
+
+
+template <>
 void caffe_gpu_mul<float>(const int N, const float* a,
   const float* b, float* y) {
   // NOLINT_NEXT_LINE(whitespace/operators)
