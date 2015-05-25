@@ -1,13 +1,13 @@
 #include <algorithm>
 #include <limits>
 #include <vector>
+#include <amp.h>
 
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/syncedmem.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
-#include "amp.h"
 using namespace Concurrency;
 template <typename Dtype>
 void DropoutForward(int n, Dtype* in,
@@ -17,7 +17,7 @@ template <typename Dtype>
 void DropoutBackward(int n, Dtype* in_diff,
                      unsigned int* mask, int threshold, float scale,
                      Dtype* out_diff);
-template <typename Dtype>
+template <>
 void DropoutForward(int n,  float* in,
                     unsigned int* mask,int threshold, float scale,
                     float* out) {
