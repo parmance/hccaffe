@@ -55,60 +55,22 @@ void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y) {
 
 template <>
 void caffe_gpu_abs<float>(const int N, float* a, float* y) {
-  array_view<float, 1> aView(N, a);
-  array_view<float, 1> yView(N, y);
-  parallel_for_each(
-    yView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-  {
-    yView[idx] = aView[idx] >= 0 ? aView[idx] : -1 * aView[idx];
-  }
-  );
-  yView.synchronize();
-}                       
+  caffe_amp_abs(N, const_cast <float*>(a), y);
 }
 
 template <>
 void caffe_gpu_abs<double>(const int N, double* a, double* y) {
-  array_view<double, 1> aView(N, a);
-  array_view<double, 1> yView(N, y);
-  parallel_for_each(
-    yView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-  {
-    yView[idx] = aView[idx] >= 0 ? aView[idx] : -1 * aView[idx];
-  }
-  );
-  yView.synchronize();
-}                       
+  caffe_amp_abs(N, const_cast <double*>(a), y);
 }
 
 template <>
 void caffe_gpu_sign<float>(const int N, float* a, float* y) {
-  array_view<float, 1> aView(N, a);
-  array_view<float, 1> yView(N, y);
-  parallel_for_each(
-    yView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-  {
-    yView[idx] = aView[idx] == 0 ? 0 : (aView[idx] < 0 ? -1 : 1);
-  }
-  );
-  yView.synchronize();
+  caffe_amp_sign(N, const_cast <float*>(a), y);
 }
 
 template <>
 void caffe_gpu_sign<double>(const int N, double* a, double* y) {
-  array_view<double, 1> aView(N, a);
-  array_view<double, 1> yView(N, y);
-  parallel_for_each(
-    yView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-  {
-    yView[idx] = aView[idx] == 0 ? 0 : (aView[idx] < 0 ? -1 : 1);
-  }
-  );
-  yView.synchronize();
+  caffe_amp_sign(N, const_cast <double*>(a), y);
 }
 
 
