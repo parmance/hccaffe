@@ -16,6 +16,7 @@ else
 	OTHER_BUILD_DIR := $(DEBUG_BUILD_DIR)
 endif
 
+CLAMP_PREFIX=/opt/clamp
 # All of the directories containing code.
 SRC_DIRS := $(shell find * -type d -exec bash -c "find {} -maxdepth 1 \
 	\( -name '*.cpp' -o -name '*.proto' \) | grep -q ." \; -print)
@@ -223,7 +224,7 @@ endif
 # Linux
 ifeq ($(LINUX), 1)
   ifeq ($(USE_CPPAMP), 1)
-    CXX := /opt/kalmar/bin/clang++
+    CXX := $(CLAMP_PREFIX)/bin/clang++
   else
     CXX ?= /usr/bin/g++
     GCCVERSION := $(shell $(CXX) -dumpversion | cut -f1,2 -d.)
@@ -264,7 +265,6 @@ endif
 #CPPAMP Build Option
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(USE_CPPAMP), 1)
-    CLAMP_PREFIX=/opt/kalmar
     AMP_COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --cxxflags --ldflags)
   endif
 endif
