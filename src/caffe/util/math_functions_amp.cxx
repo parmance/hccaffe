@@ -43,6 +43,29 @@ void caffe_amp_sign(const int N, Dtype* a, Dtype* y) {
 }
 
 template <typename Dtype>
+void sgnbit_kernel(const int N, Dtype* a, Dtype* y) {
+  array_view<Dtype, 1> aView(N, a);
+  array_view<Dtype, 1> yView(N, y);
+  parallel_for_each(
+    yView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+  {
+    yView[idx] = signbit(aView[idx]);
+  }
+  );
+  yView.synchronize();
+}
+
+template<>
+void caffe_gpu_sgnbit<float>(const int n, const float* x, float* y){
+  sgnbit_kernel(n, const_cast <float*>(x),  y);
+}
+template<>
+void caffe_gpu_sgnbit<double>(const int n, const double* x, double* y){
+  sgnbit_kernel(n, const_cast <double*>(x),  y);
+}
+
+template <typename Dtype>
 void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y) {
   array_view<Dtype, 1> aView(N, a);
   array_view<Dtype, 1> bView(N, b);
