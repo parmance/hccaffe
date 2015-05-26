@@ -90,6 +90,8 @@ void caffe_copy(const int N, const Dtype* X, Dtype* Y) {
 #ifndef USE_CPPAMP
       // NOLINT_NEXT_LINE(caffe/alt_fn)
       CUDA_CHECK(cudaMemcpy(Y, X, sizeof(Dtype) * N, cudaMemcpyDefault));
+#else
+       memcpy(Y, X, sizeof(Dtype) * N);  // NOLINT(caffe/alt_fn)
 #endif //USE_CPPAMP
 #else
       NO_GPU;
