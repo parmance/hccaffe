@@ -50,7 +50,7 @@ void sgnbit_kernel(const int N, Dtype* a, Dtype* y) {
     yView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
-    yView[idx] = signbit(aView[idx]);
+    yView[idx] = Concurrency::fast_math::signbit(aView[idx]);
   }
   );
   yView.synchronize();
