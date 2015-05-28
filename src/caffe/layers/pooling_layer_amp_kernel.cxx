@@ -79,13 +79,13 @@ void MaxPoolForward( int nthreads,  float* bottom_data,
         int n = index / pooled_width / pooled_height / channels;
         int hstart = ph * stride_h - pad_h;
         int wstart = pw * stride_w - pad_w;
-        int hend = min(hstart + kernel_h, height + pad_h);
-        int wend = min(wstart + kernel_w, width + pad_w);
+        int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height + pad_h);
+        int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width + pad_w);
         int pool_size = (hend - hstart) * (wend - wstart);
-        hstart = max(hstart, 0);
-        wstart = max(wstart, 0);
-        hend = min(hend, height);
-        wend = min(wend, width);
+        hstart =  Concurrency::fast_math::fmax(hstart, 0);
+        wstart =  Concurrency::fast_math::fmax(wstart, 0);
+        hend =  Concurrency::fast_math::fmin(hend, height);
+        wend =  Concurrency::fast_math::fmin(wend, width);
         float aveval = 0;
         int locan = (n * channels + c) * height * width;
         //bottomDataView += (n * channels + c) * height * width;
@@ -121,13 +121,13 @@ void MaxPoolForward(int nthreads, double* bottom_data,
         int n = index / pooled_width / pooled_height / channels;
         int hstart = ph * stride_h - pad_h;
         int wstart = pw * stride_w - pad_w;
-        int hend = min(hstart + kernel_h, height + pad_h);
-        int wend = min(wstart + kernel_w, width + pad_w);
+        int hend =  Concurrency::fast_math::fmin(hstart + kernel_h, height + pad_h);
+        int wend =  Concurrency::fast_math::fmin(wstart + kernel_w, width + pad_w);
         int pool_size = (hend - hstart) * (wend - wstart);
-        hstart = max(hstart, 0);
-        wstart = max(wstart, 0);
-        hend = min(hend, height);
-        wend = min(wend, width);
+        hstart = Concurrency::fast_math::fmax(hstart, 0);
+        wstart = Concurrency::fast_math::fmax(wstart, 0);
+        hend =  Concurrency::fast_math::fmin(hend, height);
+        wend =  Concurrency::fast_math::fmin(wend, width);
         double aveval = 0;
         int locan = (n * channels + c) * height * width;
         //bottomDataView += (n * channels + c) * height * width;
@@ -161,13 +161,13 @@ void AvePoolForward(const int nthreads, float* bottom_data,
         int n = index / pooled_width / pooled_height / channels;
         int hstart = ph * stride_h - pad_h;
         int wstart = pw * stride_w - pad_w;
-        int hend = min(hstart + kernel_h, height + pad_h);
-        int wend = min(wstart + kernel_w, width + pad_w);
+        int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height + pad_h);
+        int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width + pad_w);
         int pool_size = (hend - hstart) * (wend - wstart);
-        hstart = max(hstart, 0);
-        wstart = max(wstart, 0);
-        hend = min(hend, height);
-        wend = min(wend, width);
+        hstart = Concurrency::fast_math::fmax(hstart, 0);
+        wstart = Concurrency::fast_math::fmax(wstart, 0);
+        hend =  Concurrency::fast_math::fmin(hend, height);
+        wend =  Concurrency::fast_math::fmin(wend, width);
         float aveval = 0;
         int bottom_count = (n * channels + c) * height * width;
         for (int h = hstart; h < hend; ++h) {
@@ -201,13 +201,13 @@ void AvePoolForward(const int nthreads, double* bottom_data,
         int n = index / pooled_width / pooled_height / channels;
         int hstart = ph * stride_h - pad_h;
         int wstart = pw * stride_w - pad_w;
-        int hend = min(hstart + kernel_h, height + pad_h);
-        int wend = min(wstart + kernel_w, width + pad_w);
+        int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height + pad_h);
+        int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width + pad_w);
         int pool_size = (hend - hstart) * (wend - wstart);
-        hstart = max(hstart, 0);
-        wstart = max(wstart, 0);
-        hend = min(hend, height);
-        wend = min(wend, width);
+        hstart = Concurrency::fast_math::fmax(hstart, 0);
+        wstart = Concurrency::fast_math::fmax(wstart, 0);
+        hend = Concurrency::fast_math::fmin(hend, height);
+        wend = Concurrency::fast_math::fmin(wend, width);
         double aveval = 0;
         int bottom_count = (n * channels + c) * height * width;
         for (int h = hstart; h < hend; ++h) {
@@ -241,9 +241,9 @@ void StoPoolForwardTrain(const int nthreads,
         int c = (index / pooled_width / pooled_height) % channels;
         int n = index / pooled_width / pooled_height / channels;
         int hstart = ph * stride_h;
-        int hend = min(hstart + kernel_h, height);
+        int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
         int wstart = pw * stride_w;
-        int wend = min(wstart + kernel_w, width);
+        int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
         float cumsum = 0;
         int bottom_count = (n * channels + c) * height * width;
         // First pass: get sum
@@ -289,9 +289,9 @@ void StoPoolForwardTrain(const int nthreads,
         int c = (index / pooled_width / pooled_height) % channels;
         int n = index / pooled_width / pooled_height / channels;
         int hstart = ph * stride_h;
-        int hend = min(hstart + kernel_h, height);
+        int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
         int wstart = pw * stride_w;
-        int wend = min(wstart + kernel_w, width);
+        int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
         double cumsum = 0;
         int bottom_count = (n * channels + c) * height * width;
         // First pass: get sum
@@ -336,9 +336,9 @@ void StoPoolForwardTest(const int nthreads,
         int c = (index / pooled_width / pooled_height) % channels;
         int n = index / pooled_width / pooled_height / channels;
         int hstart = ph * stride_h;
-        int hend = min(hstart + kernel_h, height);
+        int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
         int wstart = pw * stride_w;
-        int wend = min(wstart + kernel_w, width);
+        int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
         // We set cumsum to be 0 to avoid divide-by-zero problems
         float cumsum = FLT_MIN;
         float cumvalues = 0.;
@@ -374,9 +374,9 @@ void StoPoolForwardTest(const int nthreads,
         int c = (index / pooled_width / pooled_height) % channels;
         int n = index / pooled_width / pooled_height / channels;
         int hstart = ph * stride_h;
-        int hend = min(hstart + kernel_h, height);
+        int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
         int wstart = pw * stride_w;
-        int wend = min(wstart + kernel_w, width);
+        int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
         // We set cumsum to be 0 to avoid divide-by-zero problems
         double cumsum = FLT_MIN;
         double cumvalues = 0.;
@@ -415,10 +415,10 @@ void MaxPoolBackward(const int nthreads,  float* top_diff,
         int n = index / width / height / channels;
         int phstart =
             (h + pad_h < kernel_h) ? 0 : (h + pad_h - kernel_h) / stride_h + 1;
-        int phend = min((h + pad_h) / stride_h + 1, pooled_height);
+        int phend = Concurrency::fast_math::fmin((h + pad_h) / stride_h + 1, pooled_height);
         int pwstart =
             (w + pad_w < kernel_w) ? 0 : (w + pad_w - kernel_w) / stride_w + 1;
-        int pwend = min((w + pad_w) / stride_w + 1, pooled_width);
+        int pwend = Concurrency::fast_math::fmin((w + pad_w) / stride_w + 1, pooled_width);
         float gradient = 0;
         int offset = (n * channels + c) * pooled_height * pooled_width;
         int top_diff_offset = offset;
@@ -469,10 +469,10 @@ void MaxPoolBackward(const int nthreads, double* top_diff,
         int n = index / width / height / channels;
         int phstart =
             (h + pad_h < kernel_h) ? 0 : (h + pad_h - kernel_h) / stride_h + 1;
-        int phend = min((h + pad_h) / stride_h + 1, pooled_height);
+        int phend = Concurrency::fast_math::fmin((h + pad_h) / stride_h + 1, pooled_height);
         int pwstart =
             (w + pad_w < kernel_w) ? 0 : (w + pad_w - kernel_w) / stride_w + 1;
-        int pwend = min((w + pad_w) / stride_w + 1, pooled_width);
+        int pwend = Concurrency::fast_math::fmin((w + pad_w) / stride_w + 1, pooled_width);
         double gradient = 0;
         int offset = (n * channels + c) * pooled_height * pooled_width;
         int top_diff_offset = offset;
@@ -520,9 +520,9 @@ void AvePoolBackward(const int nthreads, float* top_diff,
         int c = (index / width / height) % channels;
         int n = index / width / height / channels;
         int phstart = (h < kernel_h) ? 0 : (h - kernel_h) / stride_h + 1;
-        int phend = min(h / stride_h + 1, pooled_height);
+        int phend = Concurrency::fast_math::fmin(h / stride_h + 1, pooled_height);
         int pwstart = (w < kernel_w) ? 0 : (w - kernel_w) / stride_w + 1;
-        int pwend = min(w / stride_w + 1, pooled_width);
+        int pwend = Concurrency::fast_math::fmin(w / stride_w + 1, pooled_width);
         float gradient = 0;
         //topDiffView += (n * channels + c) * pooled_height * pooled_width;
         int top_diff_count = (n * channels + c) * pooled_height * pooled_width;
@@ -531,8 +531,8 @@ void AvePoolBackward(const int nthreads, float* top_diff,
                 // figure out the pooling size
                 int hstart = ph * stride_h - pad_h;
                 int wstart = pw * stride_w - pad_w;
-                int hend = min(hstart + kernel_h, height + pad_h);
-                int wend = min(wstart + kernel_w, width + pad_w);
+                int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height + pad_h);
+                int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width + pad_w);
                 int pool_size = (hend - hstart) * (wend - wstart);
                 gradient += topDiffView[top_diff_count + ph * pooled_width + pw] / pool_size;
             }
@@ -561,9 +561,9 @@ void AvePoolBackward(const int nthreads, double *top_diff,
         int c = (index / width / height) % channels;
         int n = index / width / height / channels;
         int phstart = (h < kernel_h) ? 0 : (h - kernel_h) / stride_h + 1;
-        int phend = min(h / stride_h + 1, pooled_height);
+        int phend = Concurrency::fast_math::fmin(h / stride_h + 1, pooled_height);
         int pwstart = (w < kernel_w) ? 0 : (w - kernel_w) / stride_w + 1;
-        int pwend = min(w / stride_w + 1, pooled_width);
+        int pwend = Concurrency::fast_math::fmin(w / stride_w + 1, pooled_width);
         double gradient = 0;
         //topDiffView += (n * channels + c) * pooled_height * pooled_width;
         int top_diff_count = (n * channels + c) * pooled_height * pooled_width;
@@ -572,8 +572,8 @@ void AvePoolBackward(const int nthreads, double *top_diff,
                 // figure out the pooling size
                 int hstart = ph * stride_h - pad_h;
                 int wstart = pw * stride_w - pad_w;
-                int hend = min(hstart + kernel_h, height + pad_h);
-                int wend = min(wstart + kernel_w, width + pad_w);
+                int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height + pad_h);
+                int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width + pad_w);
                 int pool_size = (hend - hstart) * (wend - wstart);
                 gradient += topDiffView[top_diff_count + ph * pooled_width + pw] / pool_size;
             }
@@ -603,9 +603,9 @@ void StoPoolBackward(const int nthreads,
         int c = (index / width / height) % channels;
         int n = index / width / height / channels;
         int phstart = (h < kernel_h) ? 0 : (h - kernel_h) / stride_h + 1;
-        int phend = min(h / stride_h + 1, pooled_height);
+        int phend = Concurrency::fast_math::fmin(h / stride_h + 1, pooled_height);
         int pwstart = (w < kernel_w) ? 0 : (w - kernel_w) / stride_w + 1;
-        int pwend = min(w / stride_w + 1, pooled_width);
+        int pwend = Concurrency::fast_math::fmin(w / stride_w + 1, pooled_width);
         float gradient = 0;
         int rand_idx_count = (n * channels + c) * pooled_height * pooled_width;
         int top_diff_count = (n * channels + c) * pooled_height * pooled_width;
@@ -640,9 +640,9 @@ void StoPoolBackward(const int nthreads,
         int c = (index / width / height) % channels;
         int n = index / width / height / channels;
         int phstart = (h < kernel_h) ? 0 : (h - kernel_h) / stride_h + 1;
-        int phend = min(h / stride_h + 1, pooled_height);
+        int phend = Concurrency::fast_math::fmin(h / stride_h + 1, pooled_height);
         int pwstart = (w < kernel_w) ? 0 : (w - kernel_w) / stride_w + 1;
-        int pwend = min(w / stride_w + 1, pooled_width);
+        int pwend = Concurrency::fast_math::fmin(w / stride_w + 1, pooled_width);
         double gradient = 0;
         int rand_idx_count = (n * channels + c) * pooled_height * pooled_width;
         int top_diff_count = (n * channels + c) * pooled_height * pooled_width;

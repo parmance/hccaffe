@@ -41,7 +41,7 @@ void SoftmaxLossForwardGPU(const int nthreads,
             lossView[idx] = 0;
             countsView[idx] = 0;
         } else {
-            data_temp = max(probDataView[n * dim + label_value * spatial_dim + s], float(FLT_MIN));
+            data_temp = Concurrency::fast_math::fmax(probDataView[n * dim + label_value * spatial_dim + s], float(FLT_MIN));
             lossView[idx] = -concurrency::fast_math::log(data_temp);
             countsView[idx] = 1;
         }
@@ -72,7 +72,8 @@ void SoftmaxLossForwardGPU(const int nthreads,
             countsView[idx] = 0;
         }
         else {
-            data_temp = max(probDataView[n * dim + label_value * spatial_dim + s], double(FLT_MIN));
+            data_temp = Concurrency::fast_math::fmax(probDataView[n * dim + label_value * spatial_dim + s], double(FLT_MIN));
+            lossView[idx] = -concurrency::fast_math::log(data_temp);
             lossView[idx] = -concurrency::fast_math::log(data_temp);
             countsView[idx] = 1;
         }

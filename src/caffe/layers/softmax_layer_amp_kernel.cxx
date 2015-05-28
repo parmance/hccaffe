@@ -146,7 +146,7 @@ void kernel_channel_max<float>(const int N, const int channels,
       int s = idx[0] % spatial_dim;
       float maxval = -FLT_MAX;
       for (int c = 0; c < channels; ++c) {
-        maxval = max(dataView[(n * channels + c) * spatial_dim + s], maxval);
+        maxval =  Concurrency::fast_math::fmax(dataView[(n * channels + c) * spatial_dim + s], maxval);
       }
       outView[idx] = maxval;
     }
@@ -258,7 +258,7 @@ void kernel_channel_max<double>(const int N, const int channels,
       int s = idx[0] % spatial_dim;
       double maxval = -FLT_MAX;
       for (int c = 0; c < channels; ++c) {
-        maxval = max(dataView[(n * channels + c) * spatial_dim + s], maxval);
+        maxval = Concurrency::fast_math::fmax(dataView[(n * channels + c) * spatial_dim + s], maxval);
       }
       outView[idx] = maxval;
     }

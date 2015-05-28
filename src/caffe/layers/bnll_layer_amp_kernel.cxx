@@ -53,7 +53,7 @@ void BNLLBackward(const int n,  float* in_diff,
         outDiffView.get_extent(),
         [=](index<1> idx) restrict(amp)
     {
-		float expval = fast_math::exp(min(inDataView[idx], float(kBNLL_THRESHOLD)));
+		float expval = fast_math::exp(Concurrency::fast_math::fmin(inDataView[idx], float(kBNLL_THRESHOLD)));
         outDiffView[idx] = inDiffView[idx] * expval / (expval + 1.);
     }
     );
@@ -69,7 +69,7 @@ void BNLLBackward(const int n, double* in_diff,
 		outDiffView.get_extent(),
 		[=](index<1> idx) restrict(amp)
 	{
-		double expval = fast_math::exp(min(inDataView[idx], double(kBNLL_THRESHOLD)));
+		double expval = fast_math::exp(Concurrency::fast_math::fmin(inDataView[idx], double(kBNLL_THRESHOLD)));
 		outDiffView[idx] = inDiffView[idx] * expval / (expval + 1.);
 	}
 	);
