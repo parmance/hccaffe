@@ -86,9 +86,9 @@ template <>
      int c = idx[0] / (width * height);
      // compute the start and end of the output
      int w_col_start = (w < patch_w) ? 0 : (w - patch_w) / stride_w + 1;
-     int w_col_end = min(w / stride_w + 1, width_col);
+     int w_col_end = Concurrency::fast_math::fmin(w / stride_w + 1, width_col);
      int h_col_start = (h < patch_h) ? 0 : (h - patch_h) / stride_h + 1;
-     int h_col_end = min(h / stride_h + 1, height_col);
+     int h_col_end = Concurrency::fast_math::fmin(h / stride_h + 1, height_col);
      // equivalent implementation
      int offset =
        (c * patch_h * patch_w + h * patch_w + w) * height_col * width_col;
@@ -165,9 +165,9 @@ template <>
      int c = idx[0] / (width * height);
      // compute the start and end of the output
      int w_col_start = (w < patch_w) ? 0 : (w - patch_w) / stride_w + 1;
-     int w_col_end = min(w / stride_w + 1, width_col);
+     int w_col_end = Concurrency::fast_math::fmin(w / stride_w + 1, width_col);
      int h_col_start = (h < patch_h) ? 0 : (h - patch_h) / stride_h + 1;
-     int h_col_end = min(h / stride_h + 1, height_col);
+     int h_col_end = Concurrency::fast_math::fmin(h / stride_h + 1, height_col);
      // equivalent implementation
      int offset =
        (c * patch_h * patch_w + h * patch_w + w) * height_col * width_col;
