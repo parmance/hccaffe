@@ -2,119 +2,7 @@
 #include "amp.h"
 #include "amp_math.h"
 using namespace concurrency;
-/*template <typename Dtype>
-void kernel_channel_max(const int N, const int channels,
-  const int spatial_dim, Dtype* data, Dtype* out) {
-  array_view<Dtype, 1> dataView(N, data);
-  array_view<Dtype, 1> outView(N, out);
-  parallel_for_each(
-    outView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      int n = idx[0] / spatial_dim;
-      int s = idx[0] % spatial_dim;
-      Dtype maxval = -FLT_MAX;
-      for (int c = 0; c < channels; ++c) {
-        maxval = max(dataView[(n * channels + c) * spatial_dim + s], maxval);
-      }
-      outView[idx] = maxval;
-    }
-  );
-  outView.synchronize();
-}
 
-template <typename Dtype>
-void kernel_channel_subtract(const int N, const int num, const int channels,
-    const int spatial_dim, Dtype* channel_max, Dtype* data) {
-  array_view<Dtype, 1> channel_maxView(N, channel_max);
-  array_view<Dtype, 1> dataView(N, data);
-  parallel_for_each(
-    dataView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      int n = idx[0] / channels / spatial_dim;
-      int s = idx[0] % spatial_dim;
-      dataView[idx] -= channel_maxView[n * spatial_dim + s];
-    }
-  );
-  dataView.synchronize();
-}
-
-template <typename Dtype>
-void kernel_exp(const int N, Dtype* data, Dtype* out) {
-  array_view<Dtype, 1> dataView(N, data);
-  array_view<Dtype, 1> outView(N, out);
-  parallel_for_each(
-    dataView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      outView[idx] = Concurrency::fast_math::exp(dataView[idx]);
-    }
-  );
-  dataView.synchronize();
-}
-
-template <typename Dtype>
-void kernel_channel_sum(const int N, const int channels,
-    const int spatial_dim, Dtype* data, Dtype* channel_sum) {
-  array_view<Dtype, 1> dataView(N, data);
-  array_view<Dtype, 1> channel_sumView(N, channel_sum);
-  parallel_for_each(
-    channel_sumView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      int n = idx[0] / spatial_dim;
-      int s = idx[0] % spatial_dim;
-      Dtype sum = 0;
-      for (int c = 0; c < channels; ++c) {
-        sum += dataView[(n * channels + c) * spatial_dim + s];
-      }
-      channel_sumView[idx] = sum;
-    }
-  );
-  channel_sumView.synchronize();
-}
-
-template <typename Dtype>
-void kernel_channel_div(const int N, const int num, const int channels,
-    const int spatial_dim, Dtype* channel_sum, Dtype* data) {
-  array_view<Dtype, 1> channel_sumView(N, channel_sum);
-  array_view<Dtype, 1> dataView(N, data);
-  parallel_for_each(
-    dataView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      int n = idx[0] / channels / spatial_dim;
-      int s = idx[0] % spatial_dim;
-      dataView[idx] /= channel_sumView[n * spatial_dim + s];
-    }
-  );
-  dataView.synchronize();
-}
-
-template <typename Dtype>
-void kernel_channel_dot(const int N, const int channels, const int spatial_dim,
-    Dtype* data_1, Dtype* data_2, Dtype* channel_dot) {
-  array_view<Dtype, 1> data_1View(N, data_1);
-  array_view<Dtype, 1> data_2View(N, data_2);
-  array_view<Dtype, 1> channel_dotView(N, channel_dot);
-  parallel_for_each(
-    channel_dotView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      int n = idx[0] / spatial_dim;
-      int s = idx[0] % spatial_dim;
-      Dtype dot = 0;
-      for (int c = 0; c < channels; ++c) {
-        dot += (data_1View[(n * channels + c) * spatial_dim + s]
-          * data_2View[(n * channels + c) * spatial_dim + s]);
-      }
-      channel_dotView[idx] = dot;
-    }
-  );
-  channel_dotView.synchronize();
-}
-*/
 template <typename Dtype>
 void kernel_channel_max(const int N, const int channels,
   const int spatial_dim, Dtype* data, Dtype* out);
@@ -146,7 +34,11 @@ void kernel_channel_max<float>(const int N, const int channels,
       int s = idx[0] % spatial_dim;
       float maxval = -FLT_MAX;
       for (int c = 0; c < channels; ++c) {
+<<<<<<< HEAD
         maxval =  Concurrency::fast_math::fmax(dataView[(n * channels + c) * spatial_dim + s], maxval);
+=======
+        maxval = Concurrency::fast_math::fmax(dataView[(n * channels + c) * spatial_dim + s], maxval);
+>>>>>>> 7619b6a687f6ab6ca5610d97fe97d391f4bdfed3
       }
       outView[idx] = maxval;
     }

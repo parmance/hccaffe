@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <vector>
+#include <iostream>
 #include "amp.h"
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
@@ -12,6 +13,11 @@ void ThresholdForwardKernel(const int N, float threshold,
 	float* in, float* out) {
 	array_view<float, 1> inView(N, in);
 	array_view<float, 1> outView(N, out);
+
+    std::cout<<"\n$$$$$$$$$$$$$$$$$$$$\n";
+    std::cout<<outView[0];
+    std::cout<<"\n$$$$$$$$$$$$$$$$$$$out\n";
+
     parallel_for_each(
         outView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -19,6 +25,10 @@ void ThresholdForwardKernel(const int N, float threshold,
         outView[idx] = inView[idx] > threshold ? 1 : 0;
     }
     );
+    
+    std::cout<<"\n################out\n";
+    std::cout<<outView[0];
+    std::cout<<"\n################out\n";
     outView.synchronize();
 }
 template <>
