@@ -7,7 +7,7 @@ namespace caffe {
 template <typename Dtype>
 void BasePrefetchingDataLayer<Dtype>::Forward_gpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
-/*
+
   // First, join the thread
   JoinPrefetchThread();
   // Reshape to loaded data.
@@ -22,7 +22,7 @@ void BasePrefetchingDataLayer<Dtype>::Forward_gpu(
   }
   // Start a new prefetch thread
   CreatePrefetchThread();
-*/
+
 }
 
 INSTANTIATE_LAYER_GPU_FORWARD(BasePrefetchingDataLayer);
