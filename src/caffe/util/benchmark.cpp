@@ -77,7 +77,7 @@ float Timer::MicroSeconds() {
   if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
 #ifdef USE_CPPAMP
-    elapsed_microseconds_ = (stop_cpu_ - start_cpu_).total_microseconds();
+    elapsed_microseconds_ = (stop_gpu_ - start_gpu_).total_microseconds();
 #else
     CUDA_CHECK(cudaEventElapsedTime(&elapsed_milliseconds_, start_gpu_,
                                     stop_gpu_));
@@ -104,7 +104,7 @@ float Timer::MilliSeconds() {
   if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
 #ifdef USE_CPPAMP
-    elapsed_milliseconds_ = (stop_cpu_ - start_cpu_).total_milliseconds();
+    elapsed_milliseconds_ = (stop_gpu_ - start_gpu_).total_milliseconds();
 #else
     CUDA_CHECK(cudaEventElapsedTime(&elapsed_milliseconds_, start_gpu_,
                                     stop_gpu_));
