@@ -403,24 +403,20 @@ template <>
 void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
   const CBLAS_TRANSPOSE TransB, const int M, const int N, const int K,
   const float alpha, const float* A, const float* B, const float beta, float* C) {
-  const enum CBLAS_ORDER Order=CblasRowMajor;
-  // Note that cublas follows fortran order.
   // todo cpu version
   int lda = (TransA == CblasNoTrans) ? K : M;
   int ldb = (TransB == CblasNoTrans) ? N : K;
-  cblas_sgemm(Order, TransA, TransB, M, N, K, alpha, B, ldb, A, lda, beta, C, N);
+  cblas_sgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, N);
 }
 
 template <>
 void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
   const CBLAS_TRANSPOSE TransB, const int M, const int N, const int K,
   const double alpha, const double* A, const double* B, const double beta, double* C) {
-  const enum CBLAS_ORDER Order=CblasRowMajor;
-  // Note that cublas follows fortran order.
   // todo cpu version
   int lda = (TransA == CblasNoTrans) ? K : M;
   int ldb = (TransB == CblasNoTrans) ? N : K;
-  cblas_dgemm(Order, TransA, TransB, M, N, K, alpha, B, ldb, A, lda, beta, C, N);
+  cblas_dgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, N);
 }
 template <>
 void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
