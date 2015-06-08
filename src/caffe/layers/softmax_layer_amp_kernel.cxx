@@ -61,17 +61,33 @@ void kernel_channel_subtract<float>(const int N, const int num, const int channe
 }
 
 template <>
+void kernel_exp<double>(const int N, double* data, double* out) {
+  array_view<double, 1> dataView(N, data);
+  array_view<double, 1> outView(N, out);
+  parallel_for_each(
+    outView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+    {
+      outView[idx] = 0.0;
+      //outView[idx] = Concurrency::fast_math::exp(dataView[idx]);
+    }
+  );
+  outView.synchronize();
+}
+
+template <>
 void kernel_exp<float>(const int N, float* data, float* out) {
   array_view<float, 1> dataView(N, data);
   array_view<float, 1> outView(N, out);
   parallel_for_each(
-    dataView.get_extent(),
+    outView.get_extent(),
     [=](index<1> idx) restrict(amp)
     {
-      outView[idx] = Concurrency::fast_math::exp(dataView[idx]);
+      outView[idx] = 0.0;
+      //outView[idx] = Concurrency::fast_math::exp(dataView[idx]);
     }
   );
-  dataView.synchronize();
+  outView.synchronize();
 }
 
 template <>
@@ -167,20 +183,6 @@ void kernel_channel_subtract<double>(const int N, const int num, const int chann
       int n = idx[0] / channels / spatial_dim;
       int s = idx[0] % spatial_dim;
       dataView[idx] -= channel_maxView[n * spatial_dim + s];
-    }
-  );
-  dataView.synchronize();
-}
-
-template <>
-void kernel_exp<double>(const int N, double* data, double* out) {
-  array_view<double, 1> dataView(N, data);
-  array_view<double, 1> outView(N, out);
-  parallel_for_each(
-    dataView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      outView[idx] = Concurrency::fast_math::exp(dataView[idx]);
     }
   );
   dataView.synchronize();
