@@ -9,7 +9,7 @@
 #include "caffe/vision_layers.hpp"
 #ifdef USE_CPPAMP
 template <typename Dtype>
-void kernel_channel_max(const int N, const int channels,
+void kernel_channel_max(int count,const int N, const int channels,
   const int spatial_dim, Dtype* data, Dtype* out);
 template <typename Dtype>
 void kernel_channel_subtract(const int N, const int num, const int channels,
@@ -17,32 +17,14 @@ void kernel_channel_subtract(const int N, const int num, const int channels,
 template <typename Dtype>
 void kernel_exp(const int N, Dtype* data, Dtype* out);
 template <typename Dtype>
-void kernel_channel_sum(const int N, const int channels,
+void kernel_channel_sum(int count,const int N, const int channels,
     const int spatial_dim, Dtype* data, Dtype* channel_sum);
 template <typename Dtype>
 void kernel_channel_div(const int N, const int num, const int channels,
     const int spatial_dim, Dtype* channel_sum, Dtype* data);
 template <typename Dtype>
-void kernel_channel_dot(const int N, const int channels, const int spatial_dim,
+void kernel_channel_dot(int count, const int N, const int channels, const int spatial_dim,
     Dtype* data_1, Dtype* data_2, Dtype* channel_dot);
-/*template <>
-void kernel_channel_max<double>(const int N, const int channels,
-  const int spatial_dim, double* data, double* out);
-template <>
-void kernel_channel_subtract<double>(const int N, const int num, const int channels,
-    const int spatial_dim, double* channel_max, double* data);
-template <>
-void kernel_exp<double>(const int N, double* data, double* out);
-template <>
-void kernel_channel_sum<double>(const int N, const int channels,
-    const int spatial_dim, double* data, double* channel_sum);
-template <>
-void kernel_channel_div<double>(const int N, const int num, const int channels,
-    const int spatial_dim, double* channel_sum, double* data);
-template <>
-void kernel_channel_dot<double>(const int N, const int channels, const int spatial_dim,
-    double* data_1, double* data_2, double* channel_dot);
- */
 namespace caffe {
 
 
@@ -59,20 +41,16 @@ void SoftmaxLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   // and then normalize.
   // compute max
   // NOLINT_NEXT_LINE(whitespace/operators)
-  kernel_channel_max<Dtype>(outer_num_, channels, inner_num_, top_data, scale_data);
-
+  kernel_channel_max<Dtype>(count,outer_num_, channels, inner_num_, top_data, scale_data);
   // subtract
   // NOLINT_NEXT_LINE(whitespace/operators)
   kernel_channel_subtract<Dtype>(count, outer_num_, channels, inner_num_, scale_data, top_data);
-
   // exponentiate
   // NOLINT_NEXT_LINE(whitespace/operators)
   kernel_exp<Dtype>(count, top_data, top_data);
-
   // sum after exp
   // NOLINT_NEXT_LINE(whitespace/operators)
-  kernel_channel_sum<Dtype>(outer_num_, channels, inner_num_, top_data, scale_data);
-
+  kernel_channel_sum<Dtype>(count,outer_num_, channels, inner_num_, top_data, scale_data);
   // divide
   // NOLINT_NEXT_LINE(whitespace/operators)
   kernel_channel_div<Dtype>(count, outer_num_, channels, inner_num_, scale_data, top_data);
@@ -90,11 +68,9 @@ void SoftmaxLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
   caffe_copy(count, top_diff, bottom_diff);
   // Compute inner1d(top_diff, top_data) and subtract them from the bottom diff.
   // NOLINT_NEXT_LINE(whitespace/operators)
-  kernel_channel_dot<Dtype>(outer_num_, channels, inner_num_, top_diff, top_data, scale_data);
-
+  kernel_channel_dot<Dtype>(count,outer_num_, channels, inner_num_, top_diff, top_data, scale_data);
   // NOLINT_NEXT_LINE(whitespace/operators)
   kernel_channel_subtract<Dtype>(count, outer_num_, channels, inner_num_, scale_data, bottom_diff);
-
   // elementwise multiplication
   caffe_gpu_mul<Dtype>(top[0]->count(), bottom_diff, top_data, bottom_diff);
 }
