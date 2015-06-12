@@ -9,11 +9,11 @@ DEBUG_BUILD_DIR ?= .$(BUILD_DIR)_debug
 
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
-	BUILD_DIR := $(DEBUG_BUILD_DIR)
-	OTHER_BUILD_DIR := $(RELEASE_BUILD_DIR)
+  BUILD_DIR := $(DEBUG_BUILD_DIR)
+  OTHER_BUILD_DIR := $(RELEASE_BUILD_DIR)
 else
-	BUILD_DIR := $(RELEASE_BUILD_DIR)
-	OTHER_BUILD_DIR := $(DEBUG_BUILD_DIR)
+  BUILD_DIR := $(RELEASE_BUILD_DIR)
+  OTHER_BUILD_DIR := $(DEBUG_BUILD_DIR)
 endif
 
 CLAMP_PREFIX=/opt/kalmar
@@ -77,7 +77,7 @@ PY$(PROJECT)_HXX := include/$(PROJECT)/python_layer.hpp
 # MAT$(PROJECT)_SRC is the matlab wrapper for $(PROJECT)
 MAT$(PROJECT)_SRC := matlab/$(PROJECT)/mat$(PROJECT).cpp
 ifneq ($(MATLAB_DIR),)
-	MAT_SO_EXT := $(shell $(MATLAB_DIR)/bin/mexext)
+  MAT_SO_EXT := $(shell $(MATLAB_DIR)/bin/mexext)
 endif
 MAT$(PROJECT)_SO := matlab/$(PROJECT)/$(PROJECT).$(MAT_SO_EXT)
 
@@ -156,16 +156,16 @@ CUDA_INCLUDE_DIR := $(CUDA_DIR)/include
 CUDA_LIB_DIR :=
 # add <cuda>/lib64 only if it exists
 ifneq ("$(wildcard $(CUDA_DIR)/lib64)","")
-	CUDA_LIB_DIR += $(CUDA_DIR)/lib64
+  CUDA_LIB_DIR += $(CUDA_DIR)/lib64
 endif
 CUDA_LIB_DIR += $(CUDA_DIR)/lib
 
 INCLUDE_DIRS += $(BUILD_INCLUDE_DIR) ./src ./include
 ifneq ($(CPU_ONLY), 1)
   ifneq ($(USE_CPPAMP), 1)
-	  INCLUDE_DIRS += $(CUDA_INCLUDE_DIR)
- 	  LIBRARY_DIRS += $(CUDA_LIB_DIR)
-	  LIBRARIES := cudart cublas curand
+    INCLUDE_DIRS += $(CUDA_INCLUDE_DIR)
+    LIBRARY_DIRS += $(CUDA_LIB_DIR)
+    LIBRARIES := cudart cublas curand
   endif
 endif
 LIBRARIES += glog gflags protobuf leveldb snappy \
@@ -181,7 +181,7 @@ WARNINGS := -Wall -Wno-sign-compare
 DISTRIBUTE_SUBDIRS := $(DISTRIBUTE_DIR)/bin $(DISTRIBUTE_DIR)/lib
 DIST_ALIASES := dist
 ifneq ($(strip $(DISTRIBUTE_DIR)),distribute)
-		DIST_ALIASES += distribute
+  DIST_ALIASES += distribute
 endif
 
 ALL_BUILD_DIRS := $(sort $(BUILD_DIR) $(addprefix $(BUILD_DIR)/, $(SRC_DIRS)) \
@@ -216,9 +216,9 @@ DOXYGEN_SOURCES += $(DOXYGEN_CONFIG_FILE)
 # Determine platform
 UNAME := $(shell uname -s)
 ifeq ($(UNAME), Linux)
-	LINUX := 1
+  LINUX := 1
 else ifeq ($(UNAME), Darwin)
-	OSX := 1
+  OSX := 1
 endif
 
 # Linux
@@ -228,12 +228,12 @@ ifeq ($(LINUX), 1)
   else
     CXX ?= /usr/bin/g++
     GCCVERSION := $(shell $(CXX) -dumpversion | cut -f1,2 -d.)
-	  # older versions of gcc are too dumb to build boost with -Wuninitalized
+    # older versions of gcc are too dumb to build boost with -Wuninitalized
     ifeq ($(shell echo $(GCCVERSION) \< 4.6 | bc), 1)
       WARNINGS += -Wno-uninitialized
     endif
   endif
-	# boost::thread is reasonably called boost_thread (compare OS X)
+  # boost::thread is reasonably called boost_thread (compare OS X)
   # We will also explicitly add stdc++ to the link target.
   LIBRARIES += boost_thread stdc++
 endif
@@ -242,25 +242,25 @@ endif
 # clang++ instead of g++
 # libstdc++ for NVCC compatibility on OS X >= 10.9 with CUDA < 7.0
 ifeq ($(OSX), 1)
-	CXX := /usr/bin/clang++
+  CXX := /usr/bin/clang++
   ifneq ($(CPU_ONLY), 1)
-		CUDA_VERSION := $(shell $(CUDA_DIR)/bin/nvcc -V | grep -o 'release \d' | grep -o '\d')
+    CUDA_VERSION := $(shell $(CUDA_DIR)/bin/nvcc -V | grep -o 'release \d' | grep -o '\d')
     ifeq ($(shell echo $(CUDA_VERSION) \< 7.0 | bc), 1)
-			CXXFLAGS += -stdlib=libstdc++
-			LINKFLAGS += -stdlib=libstdc++
+      CXXFLAGS += -stdlib=libstdc++
+      LINKFLAGS += -stdlib=libstdc++
     endif
-		# clang throws this warning for cuda headers
-		WARNINGS += -Wno-unneeded-internal-declaration
+    # clang throws this warning for cuda headers
+    WARNINGS += -Wno-unneeded-internal-declaration
   endif
-	# gtest needs to use its own tuple to not conflict with clang
-	COMMON_FLAGS += -DGTEST_USE_OWN_TR1_TUPLE=1
-	# boost::thread is called boost_thread-mt to mark multithreading on OS X
-	LIBRARIES += boost_thread-mt
-	# we need to explicitly ask for the rpath to be obeyed
-	DYNAMIC_FLAGS := -install_name @rpath/libcaffe.so
-	ORIGIN := @loader_path
+  # gtest needs to use its own tuple to not conflict with clang
+  COMMON_FLAGS += -DGTEST_USE_OWN_TR1_TUPLE=1
+  # boost::thread is called boost_thread-mt to mark multithreading on OS X
+  LIBRARIES += boost_thread-mt
+  # we need to explicitly ask for the rpath to be obeyed
+  DYNAMIC_FLAGS := -install_name @rpath/libcaffe.so
+  ORIGIN := @loader_path
 else
-	ORIGIN := \$$ORIGIN
+  ORIGIN := \$$ORIGIN
 endif
 #CPPAMP Build Option
 ifneq ($(CPU_ONLY), 1)
@@ -270,14 +270,14 @@ ifneq ($(CPU_ONLY), 1)
 endif
 # Custom compiler
 ifdef CUSTOM_CXX
-	CXX := $(CUSTOM_CXX)
+CXX := $(CUSTOM_CXX)
 endif
 
 # Static linking
 ifneq (,$(findstring clang++,$(CXX)))
-	STATIC_LINK_COMMAND := -Wl,-force_load $(STATIC_NAME)
+  STATIC_LINK_COMMAND := -Wl,-force_load $(STATIC_NAME)
 else ifneq (,$(findstring g++,$(CXX)))
-	STATIC_LINK_COMMAND := -Wl,--whole-archive $(STATIC_NAME) -Wl,--no-whole-archive
+  STATIC_LINK_COMMAND := -Wl,--whole-archive $(STATIC_NAME) -Wl,--no-whole-archive
 else
   # The following line must not be indented with a tab, since we are not inside a target
   $(error Cannot static link with the $(CXX) compiler)
@@ -285,76 +285,75 @@ endif
 
 # Debugging
 ifeq ($(DEBUG), 1)
-	COMMON_FLAGS += -DDEBUG -g -O0
-	AMP_COMMON_FLAGS += -DDEBUG -g -O0
-	NVCCFLAGS += -G
+  COMMON_FLAGS += -DDEBUG -g -O0
+  AMP_COMMON_FLAGS += -DDEBUG -g -O0
+  NVCCFLAGS += -G
 else
-	COMMON_FLAGS += -DNDEBUG -O2
-	AMP_COMMON_FLAGS += -DNDEBUG -O2
+  COMMON_FLAGS += -DNDEBUG -O2
+  AMP_COMMON_FLAGS += -DNDEBUG -O2
 endif
 
 # cuDNN acceleration configuration.
 ifeq ($(USE_CUDNN), 1)
-	LIBRARIES += cudnn
-	COMMON_FLAGS += -DUSE_CUDNN
+  LIBRARIES += cudnn
+  COMMON_FLAGS += -DUSE_CUDNN
 endif
-
 # CPU-only configuration
 ifeq ($(CPU_ONLY), 1)
-	OBJS := $(PROTO_OBJS) $(CXX_OBJS)
-	TEST_OBJS := $(TEST_CXX_OBJS)
-	TEST_BINS := $(TEST_CXX_BINS)
-	ALL_WARNS := $(ALL_CXX_WARNS)
-	TEST_FILTER := --gtest_filter="-*GPU*"
-	COMMON_FLAGS += -DCPU_ONLY
+  OBJS := $(PROTO_OBJS) $(CXX_OBJS)
+  TEST_OBJS := $(TEST_CXX_OBJS)
+  TEST_BINS := $(TEST_CXX_BINS)
+  ALL_WARNS := $(ALL_CXX_WARNS)
+  COMMON_FLAGS += -DCPU_ONLY
+  TEST_FILTER := --gtest_filter="-*GPU*"
 else
   ifeq ($(USE_CPPAMP), 1)
-	  OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CXXAMP_OBJS)
-	  TEST_OBJS := $(TEST_CXX_OBJS)
-	  TEST_BINS := $(TEST_CXX_BINS)
-	  COMMON_FLAGS += -DUSE_CPPAMP
-	  AMP_COMMON_FLAGS += -DUSE_CPPAMP
+    OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CXXAMP_OBJS)
+    TEST_OBJS := $(TEST_CXX_OBJS)
+    TEST_BINS := $(TEST_CXX_BINS)
+    COMMON_FLAGS += -DUSE_CPPAMP
+    AMP_COMMON_FLAGS += -DUSE_CPPAMP
   endif
 endif
 
 # Python layer support
 ifeq ($(WITH_PYTHON_LAYER), 1)
-	COMMON_FLAGS += -DWITH_PYTHON_LAYER
-	LIBRARIES += $(PYTHON_LIBRARIES)
+  COMMON_FLAGS += -DWITH_PYTHON_LAYER
+  LIBRARIES += $(PYTHON_LIBRARIES)
 endif
 
 # BLAS configuration (default = ATLAS)
 BLAS ?= atlas
 ifeq ($(BLAS), mkl)
-	# MKL
-	LIBRARIES += mkl_rt
-	COMMON_FLAGS += -DUSE_MKL
-	MKL_DIR ?= /opt/intel/mkl
-	BLAS_INCLUDE ?= $(MKL_DIR)/include
-	BLAS_LIB ?= $(MKL_DIR)/lib $(MKL_DIR)/lib/intel64
+  # MKL
+  LIBRARIES += mkl_rt
+  COMMON_FLAGS += -DUSE_MKL
+  MKL_DIR ?= /opt/intel/mkl
+  BLAS_INCLUDE ?= $(MKL_DIR)/include
+  BLAS_LIB ?= $(MKL_DIR)/lib $(MKL_DIR)/lib/intel64
 else ifeq ($(BLAS), open)
-	# OpenBLAS
-	LIBRARIES += openblas
+  # OpenBLAS
+  LIBRARIES += openblas
 else
-	# ATLAS
-	ifeq ($(LINUX), 1)
-		ifeq ($(BLAS), atlas)
-			# Linux simply has cblas and atlas
-			LIBRARIES += cblas atlas
-		endif
-	else ifeq ($(OSX), 1)
-		# OS X packages atlas as the vecLib framework
-		LIBRARIES += cblas
-		# 10.10 has accelerate while 10.9 has veclib
-		XCODE_CLT_VER := $(shell pkgutil --pkg-info=com.apple.pkg.CLTools_Executables | grep -o 'version: 6')
-		ifneq (,$(findstring version: 6,$(XCODE_CLT_VER)))
-			BLAS_INCLUDE ?= /System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Headers/
-			LDFLAGS += -framework Accelerate
-		else
-			BLAS_INCLUDE ?= /System/Library/Frameworks/vecLib.framework/Versions/Current/Headers/
-			LDFLAGS += -framework vecLib
-		endif
-	endif
+# ATLAS
+  ifeq ($(LINUX), 1)
+    ifeq ($(BLAS), atlas)
+      # Linux simply has cblas and atlas
+      LIBRARIES += cblas atlas
+    endif
+  else ifeq ($(OSX), 1)
+    # OS X packages atlas as the vecLib framework
+    LIBRARIES += cblas
+    # 10.10 has accelerate while 10.9 has veclib
+    XCODE_CLT_VER := $(shell pkgutil --pkg-info=com.apple.pkg.CLTools_Executables | grep -o 'version: 6')
+    ifneq (,$(findstring version: 6,$(XCODE_CLT_VER)))
+      BLAS_INCLUDE ?= /System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Headers/
+      LDFLAGS += -framework Accelerate
+    else
+      BLAS_INCLUDE ?= /System/Library/Frameworks/vecLib.framework/Versions/Current/Headers/
+      LDFLAGS += -framework vecLib
+    endif
+  endif
 endif
 INCLUDE_DIRS += $(BLAS_INCLUDE)
 LIBRARY_DIRS += $(BLAS_LIB)
@@ -379,14 +378,14 @@ LINKFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
 
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(USE_CPPAMP), 1)
-	  LINKFLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --ldflags)
+     LINKFLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --ldflags)
   endif
 endif
 USE_PKG_CONFIG ?= 0
 ifeq ($(USE_PKG_CONFIG), 1)
-	PKG_CONFIG := $(shell pkg-config opencv --libs)
+  PKG_CONFIG := $(shell pkg-config opencv --libs)
 else
-	PKG_CONFIG :=
+  PKG_CONFIG :=
 endif
 LDFLAGS += $(foreach librarydir,$(LIBRARY_DIRS),-L$(librarydir)) $(PKG_CONFIG) \
 		$(foreach library,$(LIBRARIES),-l$(library))
@@ -407,7 +406,7 @@ SUPERCLEAN_EXTS := .so .a .o .bin .testbin .pb.cc .pb.h _pb2.py .cuo
 EVERYTHING_TARGETS := all py$(PROJECT) test warn lint
 # Only build matcaffe as part of "everything" if MATLAB_DIR is specified.
 ifneq ($(MATLAB_DIR),)
-	EVERYTHING_TARGETS += mat$(PROJECT)
+  EVERYTHING_TARGETS += mat$(PROJECT)
 endif
 
 ##############################
