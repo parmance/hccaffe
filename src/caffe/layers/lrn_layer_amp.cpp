@@ -4,8 +4,7 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
 
-
-
+#ifdef USE_CPPAMP
 template <typename Dtype>
 void LRNFillScale(const int N, Dtype* in,
   const int num, const int channels, const int height,
@@ -105,3 +104,5 @@ template void LRNLayer<double>::CrossChannelBackward_gpu(
 INSTANTIATE_LAYER_GPU_FUNCS(LRNLayer);
 
 }  // namespace caffe
+
+#endif  //USE_CPPAMP

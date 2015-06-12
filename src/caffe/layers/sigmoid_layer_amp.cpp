@@ -5,8 +5,7 @@
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
 
-
-
+#ifdef USE_CPPAMP
 template <typename Dtype>
 void SigmoidForward(const int N, Dtype* in, Dtype* out);
 
@@ -45,3 +44,4 @@ INSTANTIATE_LAYER_GPU_FUNCS(SigmoidLayer);
 
 
 }  // namespace caffe
+#endif  //USE_CPPAMP

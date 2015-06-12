@@ -87,4 +87,4 @@ template void col2im_gpu<double>(const double* data_col, const int channels,
     const int stride_w, double* data_im);
 
 }  // namespace caffe
-#endif
+#endif  //USE_CPPAMP

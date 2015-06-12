@@ -6,9 +6,7 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
 
-
-
-
+#ifdef USE_CPPAMP
 template <typename Dtype>
 void CLLForward(const int N, const int channels, const Dtype margin, const Dtype alpha,
     Dtype* y, Dtype* diff, Dtype* dist_sq, Dtype* bottom_diff);
@@ -76,3 +74,5 @@ void ContrastiveLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
 INSTANTIATE_LAYER_GPU_FUNCS(ContrastiveLossLayer);
 
 }  // namespace caffe
+
+#endif  //USE_CPPAMP
