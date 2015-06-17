@@ -26,7 +26,7 @@ void SigmoidForward<float>(const int N, float* in, float* out) {
      outView.get_extent(),
      [=](index<1> idx) restrict(amp)
      {
-       outView[idx] = 1 / (1 + Concurrency::fast_math::exp(-inView[idx]));
+       outView[idx] = 1. / (1. + Concurrency::fast_math::exp(-inView[idx]));
      }
   );
   outView.synchronize();
@@ -40,7 +40,7 @@ void SigmoidForward<double>(const int N, double* in, double* out) {
      outView.get_extent(),
      [=](index<1> idx) restrict(amp)
      {
-       outView[idx] = 1 / (1 + Concurrency::fast_math::exp(-inView[idx]));
+       outView[idx] = 1. / (1. + Concurrency::fast_math::exp(-inView[idx]));
      }
   );
   outView.synchronize();
