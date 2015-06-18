@@ -68,6 +68,7 @@ void MaxPoolForward(int top_count, int boottom_count, float* bottom_data,
 	array_view<float, 1> topDataView(top_count, top_data);
 	array_view<int, 1> maskView(top_count, mask);
 	array_view<float, 1> topMaskView(top_count, top_mask);
+        bool maskTag = ( mask==NULL ? false:true);
     parallel_for_each(
 		topDataView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -81,7 +82,6 @@ void MaxPoolForward(int top_count, int boottom_count, float* bottom_data,
         int wstart = pw * stride_w - pad_w;
         int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
         int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
-        int pool_size = (hend - hstart) * (wend - wstart);
         hstart = Concurrency::fast_math::fmax(hstart, 0);
         wstart = Concurrency::fast_math::fmax(wstart, 0);
 		float maxval = -FLT_MAX;
@@ -97,7 +97,7 @@ void MaxPoolForward(int top_count, int boottom_count, float* bottom_data,
             }
         }
         topDataView[index] = maxval;
-        if (maskView.data())
+        if (maskTag)
         {
             maskView[index] = maxidx;
         }
@@ -107,7 +107,9 @@ void MaxPoolForward(int top_count, int boottom_count, float* bottom_data,
         }
     }
     );
+    if(maskTag) maskView.synchronize();
     topDataView.synchronize();
+    topMaskView.synchronize();
 }
 template <>
 void MaxPoolForward(int top_count,  int boottom_count, double* bottom_data,
@@ -120,6 +122,7 @@ void MaxPoolForward(int top_count,  int boottom_count, double* bottom_data,
 	array_view<double, 1> topDataView(top_count, top_data);
 	array_view<int, 1> maskView(top_count, mask);
 	array_view<double, 1> topMaskView(top_count, top_mask);
+        bool maskTag = ( mask==NULL ? false:true);
 	parallel_for_each(
 		topDataView.get_extent(),
 		[=](index<1> idx) restrict(amp)
@@ -133,7 +136,6 @@ void MaxPoolForward(int top_count,  int boottom_count, double* bottom_data,
 		int wstart = pw * stride_w - pad_w;
 		int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
 		int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
-		int pool_size = (hend - hstart) * (wend - wstart);
 		hstart = Concurrency::fast_math::fmax(hstart, 0);
 		wstart = Concurrency::fast_math::fmax(wstart, 0);
 		double maxval = -FLT_MAX;
@@ -149,7 +151,7 @@ void MaxPoolForward(int top_count,  int boottom_count, double* bottom_data,
 			}
 		}
 		topDataView[index] = maxval;
-		if (maskView.data())
+		if (maskTag)
 		{
 			maskView[index] = maxidx;
 		}
@@ -159,13 +161,9 @@ void MaxPoolForward(int top_count,  int boottom_count, double* bottom_data,
 		}
 	}
 	);
-
+    if(maskTag)maskView.synchronize();
     topDataView.synchronize();
-	topMaskView.synchronize();
-	//for (int i = 0; i <= 10; i++)
-	//{
-	//	printf("###########%d$$$$$$$$", top_data[i]);
-	//}
+    topMaskView.synchronize();
 }
 template <>
 void AvePoolForward(int top_count, int boottom_count, float* bottom_data,
@@ -430,6 +428,7 @@ void MaxPoolBackward(int top_count, int boottom_count, float* top_diff,
 	array_view<float, 1> topDiffView(top_count, top_diff);
 	array_view<float, 1> topMaskView(top_count, top_mask);
 	array_view<int, 1>  maskView(top_count, mask);
+        bool maskTag = ( mask==NULL ? false:true);
     parallel_for_each(
         bottomDiffView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -448,7 +447,7 @@ void MaxPoolBackward(int top_count, int boottom_count, float* top_diff,
         float gradient = 0;
         int offset = (n * channels + c) * pooled_height * pooled_width;
         int top_diff_offset = offset;
-        if (maskView.data()) {
+        if (maskTag) {
             int mask_offset = offset;
             for (int ph = phstart; ph < phend; ++ph) {
                 for (int pw = pwstart; pw < pwend; ++pw) {
@@ -484,6 +483,7 @@ void MaxPoolBackward(int top_count, int boottom_count, double* top_diff,
 	array_view<double, 1> topDiffView(top_count, top_diff);
 	array_view<double, 1> topMaskView(top_count, top_mask);
 	array_view<int, 1>  maskView(top_count, mask);
+        bool maskTag = ( mask==NULL ? false:true);
     parallel_for_each(
         bottomDiffView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -502,7 +502,7 @@ void MaxPoolBackward(int top_count, int boottom_count, double* top_diff,
         double gradient = 0;
         int offset = (n * channels + c) * pooled_height * pooled_width;
         int top_diff_offset = offset;
-        if (maskView.data()) {
+        if (maskTag) {
             int mask_offset = offset;
             for (int ph = phstart; ph < phend; ++ph) {
                 for (int pw = pwstart; pw < pwend; ++pw) {
