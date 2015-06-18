@@ -427,6 +427,7 @@ void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
   *y = cblas_dasum(n, x, 1);
 }
 void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
+  caffe_rng_uniform(n,r);
 } 
 template <>
 void caffe_gpu_rng_uniform<float>(const int n, const float a, const float b,
