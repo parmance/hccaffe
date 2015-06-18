@@ -14,18 +14,18 @@ template <typename Dtype>
 void LRNFillScale(const int N, Dtype* in,
   const int num, const int channels, const int height,
   const int width, const int size, const Dtype alpha_over_size,
-  const Dtype k, Dtype* scale);
+  const Dtype k, Dtype* scale,int count);
 
 template <typename Dtype>
 void LRNComputeOutput(const int N, Dtype* in,
-  Dtype* scale, const Dtype negative_beta, Dtype* out);
+  Dtype* scale, const Dtype negative_beta, Dtype* out,int count);
 
 template <typename Dtype>
 void LRNComputeDiff(const int N, Dtype* bottom_data,
   Dtype* top_data, Dtype* scale, Dtype* top_diff,
   const int num, const int channels, const int height,
   const int width, const int size, const Dtype negative_beta,
-  const Dtype cache_ratio, Dtype* bottom_diff);
+  const Dtype cache_ratio, Dtype* bottom_diff,int count);
 
 
 
@@ -33,11 +33,12 @@ template <>
 void LRNFillScale<float>(const int N, float* in,
   const int num, const int channels, const int height,
   const int width, const int size, const float alpha_over_size,
-  const float k, float* scale) {
-  array_view<float, 1> inView(N, in);
-  array_view<float, 1> scaleView(N, scale);
+  const float k, float* scale,int count) {
+  array_view<float, 1> inView(count, in);
+  array_view<float, 1> scaleView(count, scale);
+  extent<1> e(N);
   parallel_for_each(
-    scaleView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int w = idx[0] % width;
@@ -80,11 +81,12 @@ template <>
 void LRNFillScale<double>(const int N, double* in,
   const int num, const int channels, const int height,
   const int width, const int size, const double alpha_over_size,
-  const double k, double* scale) {
-  array_view<double, 1> inView(N, in);
-  array_view<double, 1> scaleView(N, scale);
+  const double k, double* scale,int count) {
+  array_view<double, 1> inView(count, in);
+  array_view<double, 1> scaleView(count, scale);
+  extent<1> e(N);
   parallel_for_each(
-    scaleView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int w = idx[0] % width;
@@ -126,12 +128,13 @@ void LRNFillScale<double>(const int N, double* in,
 // TODO: check if it would be faster to just put it into the previous kernel.
 template <>
 void LRNComputeOutput<float>(const int N, float* in,
-  float* scale, const float negative_beta, float* out) {
-  array_view<float, 1> inView(N, in);
-  array_view<float, 1> scaleView(N, scale);
-  array_view<float, 1> outView(N, out);
+  float* scale, const float negative_beta, float* out,int count) {
+  array_view<float, 1> inView(count, in);
+  array_view<float, 1> scaleView(count, scale);
+  array_view<float, 1> outView(count, out);
+  extent<1> e(N);
   parallel_for_each(
-    outView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       outView[idx] = inView[idx] * Concurrency::fast_math::pow(scaleView[idx], negative_beta);
@@ -143,12 +146,13 @@ void LRNComputeOutput<float>(const int N, float* in,
 // TODO: check if it would be faster to just put it into the previous kernel.
 template <>
 void LRNComputeOutput<double>(const int N, double* in,
-  double* scale, const double negative_beta, double* out) {
-  array_view<double, 1> inView(N, in);
-  array_view<double, 1> scaleView(N, scale);
-  array_view<double, 1> outView(N, out);
+  double* scale, const double negative_beta, double* out,int count) {
+  array_view<double, 1> inView(count, in);
+  array_view<double, 1> scaleView(count, scale);
+  array_view<double, 1> outView(count, out);
+  extent<1> e(N);
   parallel_for_each(
-    outView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       outView[idx] = inView[idx] * Concurrency::fast_math::pow(scaleView[idx], negative_beta);
@@ -162,14 +166,15 @@ void LRNComputeDiff<float>(const int N, float* bottom_data,
   float* top_data, float* scale, float* top_diff,
   const int num, const int channels, const int height,
   const int width, const int size, const float negative_beta,
-  const float cache_ratio, float* bottom_diff) {
-  array_view<float, 1> bottom_dataView(N, bottom_data);
-  array_view<float, 1> top_dataView(N, top_data);
-  array_view<float, 1> scaleView(N, scale);
-  array_view<float, 1> top_diffView(N, top_diff);
-  array_view<float, 1> bottom_diffView(N, bottom_diff);
+  const float cache_ratio, float* bottom_diff,int count) {
+  array_view<float, 1> bottom_dataView(count, bottom_data);
+  array_view<float, 1> top_dataView(count, top_data);
+  array_view<float, 1> scaleView(count, scale);
+  array_view<float, 1> top_diffView(count, top_diff);
+  array_view<float, 1> bottom_diffView(count, bottom_diff);
+  extent<1> e(N);
   parallel_for_each(
-    bottom_diffView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int w = idx[0] % width;
@@ -221,14 +226,15 @@ void LRNComputeDiff<double>(const int N, double* bottom_data,
   double* top_data, double* scale, double* top_diff,
   const int num, const int channels, const int height,
   const int width, const int size, const double negative_beta,
-  const double cache_ratio, double* bottom_diff) {
-  array_view<double, 1> bottom_dataView(N, bottom_data);
-  array_view<double, 1> top_dataView(N, top_data);
-  array_view<double, 1> scaleView(N, scale);
-  array_view<double, 1> top_diffView(N, top_diff);
-  array_view<double, 1> bottom_diffView(N, bottom_diff);
+  const double cache_ratio, double* bottom_diff,int count) {
+  array_view<double, 1> bottom_dataView(count, bottom_data);
+  array_view<double, 1> top_dataView(count, top_data);
+  array_view<double, 1> scaleView(count, scale);
+  array_view<double, 1> top_diffView(count, top_diff);
+  array_view<double, 1> bottom_diffView(count, bottom_diff);
+  extent<1> e(N);
   parallel_for_each(
-    bottom_diffView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int w = idx[0] % width;

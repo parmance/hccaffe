@@ -9,18 +9,18 @@ template <typename Dtype>
 void LRNFillScale(const int N, Dtype* in,
   const int num, const int channels, const int height,
   const int width, const int size, const Dtype alpha_over_size,
-  const Dtype k, Dtype* scale);
+  const Dtype k, Dtype* scale,int count);
 
 template <typename Dtype>
 void LRNComputeOutput(const int N, Dtype* in,
-  Dtype* scale, const Dtype negative_beta, Dtype* out);
+  Dtype* scale, const Dtype negative_beta, Dtype* out,int count);
 
 template <typename Dtype>
 void LRNComputeDiff(const int N, Dtype* bottom_data,
   Dtype* top_data, Dtype* scale, Dtype* top_diff,
   const int num, const int channels, const int height,
   const int width, const int size, const Dtype negative_beta,
-  const Dtype cache_ratio, Dtype* bottom_diff);
+  const Dtype cache_ratio, Dtype* bottom_diff,int count);
 
 
 
@@ -53,11 +53,11 @@ void LRNLayer<Dtype>::CrossChannelForward_gpu(
   int n_threads = num_ * height_ * width_;
   // NOLINT_NEXT_LINE(whitespace/operators)
   LRNFillScale(n_threads, const_cast<Dtype*>(bottom_data), num_, channels_, height_, width_, size_,
-      alpha_ / size_, k_, scale_data);
+      alpha_ / size_, k_, scale_data,scale_.count());
 
   n_threads = bottom[0]->count();
   // NOLINT_NEXT_LINE(whitespace/operators)
-  LRNComputeOutput(n_threads, const_cast<Dtype*>(bottom_data), scale_data, -beta_, top_data);
+  LRNComputeOutput(n_threads, const_cast<Dtype*>(bottom_data), scale_data, -beta_, top_data,scale_.count());
 }
 
 template void LRNLayer<float>::CrossChannelForward_gpu(
@@ -90,7 +90,7 @@ void LRNLayer<Dtype>::CrossChannelBackward_gpu(
   LRNComputeDiff(n_threads, const_cast<Dtype*>(bottom[0]->gpu_data()), const_cast<Dtype*>(top[0]->gpu_data()),
       const_cast<Dtype*>(scale_.gpu_data()), const_cast<Dtype*>(top[0]->gpu_diff()), num_, channels_, height_, width_,
       size_, -beta_, Dtype(2. * alpha_ * beta_ / size_),
-      bottom[0]->mutable_gpu_diff());
+      bottom[0]->mutable_gpu_diff(),bottom[0]->count());
 }
 template void LRNLayer<float>::CrossChannelBackward_gpu(
     const vector<Blob<float>*>& top, const vector<bool>& propagate_down,
