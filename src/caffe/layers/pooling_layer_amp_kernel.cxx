@@ -10,66 +10,66 @@
 #include "caffe/vision_layers.hpp"
 using namespace Concurrency;
 template <typename Dtype>
-void MaxPoolForward(int nthreads, Dtype* bottom_data,
+void MaxPoolForward(int top_count,int boottom_count, Dtype* bottom_data,
                     const int num, const int channels, const int height,
                     const int width, const int pooled_height, const int pooled_width,
                     const int kernel_h, const int kernel_w, const int stride_h,
                     const int stride_w, const int pad_h, const int pad_w, Dtype* top_data,
                     int* mask, Dtype* top_mask);
 template <typename Dtype>
-void AvePoolForward(const int nthreads, Dtype* bottom_data,
+void AvePoolForward(int top_count, int boottom_count, Dtype* bottom_data,
                     const int num, const int channels, const int height,
                     const int width, const int pooled_height, const int pooled_width,
                     const int kernel_h, const int kernel_w, const int stride_h,
                     const int stride_w, const int pad_h, const int pad_w, Dtype* top_data);
 template <typename Dtype>
-void StoPoolForwardTrain(const int nthreads,
+void StoPoolForwardTrain(int top_count, int boottom_count,
                          Dtype* bottom_data,
                          const int num, const int channels, const int height,
                          const int width, const int pooled_height, const int pooled_width,
                          const int kernel_h, const int kernel_w, const int stride_h,
                          const int stride_w, Dtype* rand_idx, Dtype* top_data);
 template <typename Dtype>
-void StoPoolForwardTest(const int nthreads,
+void StoPoolForwardTest(int top_count, int boottom_count,
                         Dtype* bottom_data,
                         const int num, const int channels, const int height,
                         const int width, const int pooled_height, const int pooled_width,
                         const int kernel_h, const int kernel_w, const int stride_h,
                         const int stride_w, Dtype* top_data);
 template <typename Dtype>
-void MaxPoolBackward(const int nthreads, Dtype* top_diff,
+void MaxPoolBackward(int top_count, int boottom_count, Dtype* top_diff,
                      int* mask, Dtype* top_mask, const int num, const int channels,
                      const int height, const int width, const int pooled_height,
                      const int pooled_width, const int kernel_h, const int kernel_w,
                      const int stride_h, const int stride_w, const int pad_h, const int pad_w,
                      Dtype* bottom_diff);
 template <typename Dtype>
-void AvePoolBackward(const int nthreads, Dtype* top_diff,
+void AvePoolBackward(int top_count, int boottom_count, Dtype* top_diff,
                      const int num, const int channels, const int height,
                      const int width, const int pooled_height, const int pooled_width,
                      const int kernel_h, const int kernel_w, const int stride_h,
                      const int stride_w, const int pad_h, const int pad_w,
                      Dtype* bottom_diff);
 template <typename Dtype>
-void StoPoolBackward(const int nthreads,
+void StoPoolBackward(int top_count, int boottom_count,
                      Dtype* rand_idx, Dtype* top_diff,
                      const int num, const int channels, const int height,
                      const int width, const int pooled_height, const int pooled_width,
                      const int kernel_h, const int kernel_w, const int stride_h,
                      const int stride_w, Dtype* bottom_diff);
 template <>
-void MaxPoolForward( int nthreads,  float* bottom_data,
+void MaxPoolForward(int top_count, int boottom_count, float* bottom_data,
                      const int num, const int channels, const int height,
                      const int width, const int pooled_height, const int pooled_width,
                      const int kernel_h, const int kernel_w, const int stride_h,
                      const int stride_w, const int pad_h, const int pad_w, float* top_data,
                      int* mask, float* top_mask) {
-    array_view<float, 1> bottomDataView(nthreads, bottom_data);
-    array_view<float, 1> topDataView(nthreads, top_data);
-    array_view<int, 1> maskView(nthreads, mask);
-    array_view<float, 1> outView(nthreads, top_mask);
+	array_view<float, 1> bottomDataView(boottom_count, bottom_data);
+	array_view<float, 1> topDataView(top_count, top_data);
+	array_view<int, 1> maskView(top_count, mask);
+	array_view<float, 1> topMaskView(top_count, top_mask);
     parallel_for_each(
-        topDataView.get_extent(),
+		topDataView.get_extent(),
         [=](index<1> idx) restrict(amp)
     {
         int index = idx[0];
@@ -79,77 +79,103 @@ void MaxPoolForward( int nthreads,  float* bottom_data,
         int n = index / pooled_width / pooled_height / channels;
         int hstart = ph * stride_h - pad_h;
         int wstart = pw * stride_w - pad_w;
-        int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height + pad_h);
-        int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width + pad_w);
-        int pool_size = (hend - hstart) * (wend - wstart);
-        hstart =  Concurrency::fast_math::fmax(hstart, 0);
-        wstart =  Concurrency::fast_math::fmax(wstart, 0);
-        hend =  Concurrency::fast_math::fmin(hend, height);
-        wend =  Concurrency::fast_math::fmin(wend, width);
-        float aveval = 0;
-        int locan = (n * channels + c) * height * width;
-        //bottomDataView += (n * channels + c) * height * width;
-        for (int h = hstart; h < hend; ++h) {
-            for (int w = wstart; w < wend; ++w) {
-                aveval += bottomDataView[locan+h * width + w];
-            }
-        }
-        topDataView[index] = aveval / pool_size;
-    }
-    );
-    topDataView.synchronize();
-}
-template <>
-void MaxPoolForward(int nthreads, double* bottom_data,
-                    const int num, const int channels, const int height,
-                    const int width, const int pooled_height, const int pooled_width,
-                    const int kernel_h, const int kernel_w, const int stride_h,
-                    const int stride_w, const int pad_h, const int pad_w, double* top_data,
-                    int* mask, double* top_mask) {
-    array_view<double, 1> bottomDataView(nthreads, bottom_data);
-    array_view<double, 1> topDataView(nthreads, top_data);
-    array_view<int, 1> maskView(nthreads, mask);
-    array_view<double, 1> outView(nthreads, top_mask);
-    parallel_for_each(
-        topDataView.get_extent(),
-        [=](index<1> idx) restrict(amp)
-    {
-        int index = idx[0];
-        int pw = index % pooled_width;
-        int ph = (index / pooled_width) % pooled_height;
-        int c = (index / pooled_width / pooled_height) % channels;
-        int n = index / pooled_width / pooled_height / channels;
-        int hstart = ph * stride_h - pad_h;
-        int wstart = pw * stride_w - pad_w;
-        int hend =  Concurrency::fast_math::fmin(hstart + kernel_h, height + pad_h);
-        int wend =  Concurrency::fast_math::fmin(wstart + kernel_w, width + pad_w);
+        int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
+        int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
         int pool_size = (hend - hstart) * (wend - wstart);
         hstart = Concurrency::fast_math::fmax(hstart, 0);
         wstart = Concurrency::fast_math::fmax(wstart, 0);
-        hend =  Concurrency::fast_math::fmin(hend, height);
-        wend =  Concurrency::fast_math::fmin(wend, width);
-        double aveval = 0;
+		float maxval = -FLT_MAX;
+        double maxidx = -1;
         int locan = (n * channels + c) * height * width;
-        //bottomDataView += (n * channels + c) * height * width;
         for (int h = hstart; h < hend; ++h) {
             for (int w = wstart; w < wend; ++w) {
-                aveval += bottomDataView[locan + h * width + w];
+                if (bottomDataView[locan + h * width + w] > maxval) {
+                    maxidx = h * width + w;
+                    maxval = bottomDataView[locan + maxidx];
+                }
+
             }
         }
-        topDataView[index] = aveval / pool_size;
+        topDataView[index] = maxval;
+        if (maskView.data())
+        {
+            maskView[index] = maxidx;
+        }
+        else
+        {
+            topMaskView[index] = maxidx;
+        }
     }
     );
     topDataView.synchronize();
 }
 template <>
-void AvePoolForward(const int nthreads, float* bottom_data,
+void MaxPoolForward(int top_count,  int boottom_count, double* bottom_data,
+	const int num, const int channels, const int height,
+	const int width, const int pooled_height, const int pooled_width,
+	const int kernel_h, const int kernel_w, const int stride_h,
+	const int stride_w, const int pad_h, const int pad_w, double* top_data,
+	int* mask, double* top_mask) {
+	array_view<double, 1> bottomDataView(boottom_count, bottom_data);
+	array_view<double, 1> topDataView(top_count, top_data);
+	array_view<int, 1> maskView(top_count, mask);
+	array_view<double, 1> topMaskView(top_count, top_mask);
+	parallel_for_each(
+		topDataView.get_extent(),
+		[=](index<1> idx) restrict(amp)
+	{
+		int index = idx[0];
+		int pw = index % pooled_width;
+		int ph = (index / pooled_width) % pooled_height;
+		int c = (index / pooled_width / pooled_height) % channels;
+		int n = index / pooled_width / pooled_height / channels;
+		int hstart = ph * stride_h - pad_h;
+		int wstart = pw * stride_w - pad_w;
+		int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
+		int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
+		int pool_size = (hend - hstart) * (wend - wstart);
+		hstart = Concurrency::fast_math::fmax(hstart, 0);
+		wstart = Concurrency::fast_math::fmax(wstart, 0);
+		double maxval = -FLT_MAX;
+		double maxidx = -1;
+		int locan = (n * channels + c) * height * width;
+		for (int h = hstart; h < hend; ++h) {
+			for (int w = wstart; w < wend; ++w) {
+				if (bottomDataView[locan + h * width + w] > maxval) {
+					maxidx = h * width + w;
+					maxval = bottomDataView[locan + maxidx];
+				}
+
+			}
+		}
+		topDataView[index] = maxval;
+		if (maskView.data())
+		{
+			maskView[index] = maxidx;
+		}
+		else
+		{
+			topMaskView[index] = maxidx;
+		}
+	}
+	);
+
+    topDataView.synchronize();
+	topMaskView.synchronize();
+	//for (int i = 0; i <= 10; i++)
+	//{
+	//	printf("###########%d$$$$$$$$", top_data[i]);
+	//}
+}
+template <>
+void AvePoolForward(int top_count, int boottom_count, float* bottom_data,
                     const int num, const int channels, const int height,
                     const int width, const int pooled_height, const int pooled_width,
                     const int kernel_h, const int kernel_w, const int stride_h,
                     const int stride_w, const int pad_h, const int pad_w, float* top_data) {
 
-    array_view<float, 1> bottomDataView(nthreads, bottom_data);
-    array_view<float, 1> topDataView(nthreads, top_data);
+	array_view<float, 1> bottomDataView(boottom_count, bottom_data);
+	array_view<float, 1> topDataView(top_count, top_data);
     parallel_for_each(
         topDataView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -182,14 +208,14 @@ void AvePoolForward(const int nthreads, float* bottom_data,
     topDataView.synchronize();
 }
 template <>
-void AvePoolForward(const int nthreads, double* bottom_data,
+void AvePoolForward(int top_count, int boottom_count, double* bottom_data,
                     const int num, const int channels, const int height,
                     const int width, const int pooled_height, const int pooled_width,
                     const int kernel_h, const int kernel_w, const int stride_h,
                     const int stride_w, const int pad_h, const int pad_w, double* top_data) {
 
-    array_view<double, 1> bottomDataView(nthreads, bottom_data);
-    array_view<double, 1> topDataView(nthreads, top_data);
+	array_view<double, 1> bottomDataView(boottom_count, bottom_data);
+	array_view<double, 1> topDataView(top_count, top_data);
     parallel_for_each(
         topDataView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -222,15 +248,15 @@ void AvePoolForward(const int nthreads, double* bottom_data,
     topDataView.synchronize();
 }
 template <>
-void StoPoolForwardTrain(const int nthreads,
+void StoPoolForwardTrain(int top_count, int boottom_count,
                          float* bottom_data,
                          const int num, const int channels, const int height,
                          const int width, const int pooled_height, const int pooled_width,
                          const int kernel_h, const int kernel_w, const int stride_h,
                          const int stride_w, float* rand_idx, float* top_data) {
-    array_view<float, 1> bottomDataView(nthreads, bottom_data);
-    array_view<float, 1> randIdxView(nthreads, rand_idx);
-    array_view<float, 1> topDataView(nthreads, top_data);
+	array_view<float, 1> bottomDataView(boottom_count, bottom_data);
+	array_view<float, 1> randIdxView(boottom_count, rand_idx);
+	array_view<float, 1> topDataView(top_count, top_data);
     parallel_for_each(
         topDataView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -270,15 +296,15 @@ void StoPoolForwardTrain(const int nthreads,
     topDataView.synchronize();
 }
 template <>
-void StoPoolForwardTrain(const int nthreads,
+void StoPoolForwardTrain(int top_count, int boottom_count,
                          double* bottom_data,
                          const int num, const int channels, const int height,
                          const int width, const int pooled_height, const int pooled_width,
                          const int kernel_h, const int kernel_w, const int stride_h,
                          const int stride_w, double* rand_idx, double* top_data) {
-    array_view<double, 1> bottomDataView(nthreads, bottom_data);
-    array_view<double, 1> randIdxView(nthreads, rand_idx);
-    array_view<double, 1> topDataView(nthreads, top_data);
+	array_view<double, 1> bottomDataView(boottom_count, bottom_data);
+	array_view<double, 1> randIdxView(boottom_count, rand_idx);
+	array_view<double, 1> topDataView(top_count, top_data);
     parallel_for_each(
         topDataView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -318,14 +344,14 @@ void StoPoolForwardTrain(const int nthreads,
     topDataView.synchronize();
 }
 template <>
-void StoPoolForwardTest(const int nthreads,
+void StoPoolForwardTest(int top_count, int boottom_count,
                         float* bottom_data,
                         const int num, const int channels, const int height,
                         const int width, const int pooled_height, const int pooled_width,
                         const int kernel_h, const int kernel_w, const int stride_h,
                         const int stride_w, float* top_data) {
-    array_view<float, 1> bottomDataView(nthreads, bottom_data);
-    array_view<float, 1> topDataView(nthreads, top_data);
+	array_view<float, 1> bottomDataView(boottom_count, bottom_data);
+	array_view<float, 1> topDataView(top_count, top_data);
     parallel_for_each(
         topDataView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -356,14 +382,14 @@ void StoPoolForwardTest(const int nthreads,
     topDataView.synchronize();
 }
 template <>
-void StoPoolForwardTest(const int nthreads,
+void StoPoolForwardTest(int top_count, int boottom_count,
                         double* bottom_data,
                         const int num, const int channels, const int height,
                         const int width, const int pooled_height, const int pooled_width,
                         const int kernel_h, const int kernel_w, const int stride_h,
                         const int stride_w, double* top_data) {
-    array_view<double, 1> bottomDataView(nthreads, bottom_data);
-    array_view<double, 1> topDataView(nthreads, top_data);
+	array_view<double, 1> bottomDataView(boottom_count, bottom_data);
+	array_view<double, 1> topDataView(top_count, top_data);
     parallel_for_each(
         topDataView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -394,16 +420,16 @@ void StoPoolForwardTest(const int nthreads,
     topDataView.synchronize();
 }
 template <>
-void MaxPoolBackward(const int nthreads,  float* top_diff,
+void MaxPoolBackward(int top_count, int boottom_count, float* top_diff,
                      int* mask, float* top_mask, const int num, const int channels,
                      const int height, const int width, const int pooled_height,
                      const int pooled_width, const int kernel_h, const int kernel_w,
                      const int stride_h, const int stride_w, const int pad_h, const int pad_w,
                      float* bottom_diff) {
-    array_view<float, 1> bottomDiffView(nthreads, bottom_diff);
-    array_view<float, 1> topDiffView(nthreads, top_diff);
-    array_view<float, 1> topMaskView(nthreads, top_mask);
-    array_view<int, 1>  maskView(nthreads, mask);
+	array_view<float, 1> bottomDiffView(boottom_count, bottom_diff);
+	array_view<float, 1> topDiffView(top_count, top_diff);
+	array_view<float, 1> topMaskView(top_count, top_mask);
+	array_view<int, 1>  maskView(top_count, mask);
     parallel_for_each(
         bottomDiffView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -448,16 +474,16 @@ void MaxPoolBackward(const int nthreads,  float* top_diff,
     bottomDiffView.synchronize();
 }
 template <>
-void MaxPoolBackward(const int nthreads, double* top_diff,
+void MaxPoolBackward(int top_count, int boottom_count, double* top_diff,
                      int* mask, double* top_mask, const int num, const int channels,
                      const int height, const int width, const int pooled_height,
                      const int pooled_width, const int kernel_h, const int kernel_w,
                      const int stride_h, const int stride_w, const int pad_h, const int pad_w,
                      double* bottom_diff) {
-    array_view<double, 1> bottomDiffView(nthreads, bottom_diff);
-    array_view<double, 1> topDiffView(nthreads, top_diff);
-    array_view<double, 1> topMaskView(nthreads, top_mask);
-    array_view<int, 1>  maskView(nthreads, mask);
+	array_view<double, 1> bottomDiffView(boottom_count, bottom_diff);
+	array_view<double, 1> topDiffView(top_count, top_diff);
+	array_view<double, 1> topMaskView(top_count, top_mask);
+	array_view<int, 1>  maskView(top_count, mask);
     parallel_for_each(
         bottomDiffView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -502,14 +528,14 @@ void MaxPoolBackward(const int nthreads, double* top_diff,
     bottomDiffView.synchronize();
 }
 template <>
-void AvePoolBackward(const int nthreads, float* top_diff,
+void AvePoolBackward(int top_count, int boottom_count, float* top_diff,
                      const int num, const int channels, const int height,
                      const int width, const int pooled_height, const int pooled_width,
                      const int kernel_h, const int kernel_w, const int stride_h,
                      const int stride_w, const int pad_h, const int pad_w,
                      float* bottom_diff) {
-    array_view<float, 1> bottomDiffView(nthreads, bottom_diff);
-    array_view<float, 1> topDiffView(nthreads, top_diff);
+	array_view<float, 1> bottomDiffView(boottom_count, bottom_diff);
+	array_view<float, 1> topDiffView(top_count, top_diff);
     parallel_for_each(
         bottomDiffView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -543,14 +569,14 @@ void AvePoolBackward(const int nthreads, float* top_diff,
     bottomDiffView.synchronize();
 }
 template <>
-void AvePoolBackward(const int nthreads, double *top_diff,
+void AvePoolBackward(int top_count, int boottom_count, double *top_diff,
                      const int num, const int channels, const int height,
                      const int width, const int pooled_height, const int pooled_width,
                      const int kernel_h, const int kernel_w, const int stride_h,
                      const int stride_w, const int pad_h, const int pad_w,
                      double* bottom_diff) {
-    array_view<double, 1> bottomDiffView(nthreads, bottom_diff);
-    array_view<double, 1> topDiffView(nthreads, top_diff);
+	array_view<double, 1> bottomDiffView(boottom_count, bottom_diff);
+	array_view<double, 1> topDiffView(top_count, top_diff);
     parallel_for_each(
         bottomDiffView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -584,15 +610,15 @@ void AvePoolBackward(const int nthreads, double *top_diff,
     bottomDiffView.synchronize();
 }
 template <>
-void StoPoolBackward(const int nthreads,
+void StoPoolBackward(int top_count, int boottom_count,
                      float* rand_idx, float* top_diff,
                      const int num, const int channels, const int height,
                      const int width, const int pooled_height, const int pooled_width,
                      const int kernel_h, const int kernel_w, const int stride_h,
                      const int stride_w, float* bottom_diff) {
-    array_view<float, 1> bottomDiffView(nthreads, bottom_diff);
-    array_view<float, 1> randIdxView(nthreads, rand_idx);
-    array_view<float, 1> topDiffView(nthreads, top_diff);
+	array_view<float, 1> bottomDiffView(boottom_count, bottom_diff);
+	array_view<float, 1> randIdxView(boottom_count, rand_idx);
+	array_view<float, 1> topDiffView(boottom_count, top_diff);
     parallel_for_each(
         bottomDiffView.get_extent(),
         [=](index<1> idx) restrict(amp)
@@ -621,15 +647,15 @@ void StoPoolBackward(const int nthreads,
     bottomDiffView.synchronize();
 }
 template <>
-void StoPoolBackward(const int nthreads,
+void StoPoolBackward(int top_count, int boottom_count,
                      double* rand_idx, double* top_diff,
                      const int num, const int channels, const int height,
                      const int width, const int pooled_height, const int pooled_width,
                      const int kernel_h, const int kernel_w, const int stride_h,
                      const int stride_w, double* bottom_diff) {
-    array_view<double, 1> bottomDiffView(nthreads, bottom_diff);
-    array_view<double, 1> randIdxView(nthreads, rand_idx);
-    array_view<double, 1> topDiffView(nthreads, top_diff);
+	array_view<double, 1> bottomDiffView(boottom_count, bottom_diff);
+	array_view<double, 1> randIdxView(boottom_count, rand_idx);
+	array_view<double, 1> topDiffView(top_count, top_diff);
     parallel_for_each(
         bottomDiffView.get_extent(),
         [=](index<1> idx) restrict(amp)

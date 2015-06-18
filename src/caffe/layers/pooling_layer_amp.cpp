@@ -8,48 +8,48 @@
 #include "caffe/vision_layers.hpp"
 #ifdef USE_CPPAMP
 template <typename Dtype>
-void MaxPoolForward(int nthreads, Dtype* bottom_data,
+void MaxPoolForward(int top_count,int boottom_count, Dtype* bottom_data,
                     const int num, const int channels, const int height,
                     const int width, const int pooled_height, const int pooled_width,
                     const int kernel_h, const int kernel_w, const int stride_h,
                     const int stride_w, const int pad_h, const int pad_w, Dtype* top_data,
                     int* mask, Dtype* top_mask);
 template <typename Dtype>
-void AvePoolForward(const int nthreads, Dtype* bottom_data,
+void AvePoolForward(int top_count, int boottom_count, Dtype* bottom_data,
                     const int num, const int channels, const int height,
                     const int width, const int pooled_height, const int pooled_width,
                     const int kernel_h, const int kernel_w, const int stride_h,
                     const int stride_w, const int pad_h, const int pad_w, Dtype* top_data);
 template <typename Dtype>
-void StoPoolForwardTrain(const int nthreads,
+void StoPoolForwardTrain(int top_count, int boottom_count,
                          Dtype* bottom_data,
                          const int num, const int channels, const int height,
                          const int width, const int pooled_height, const int pooled_width,
                          const int kernel_h, const int kernel_w, const int stride_h,
                          const int stride_w, Dtype* rand_idx, Dtype* top_data);
 template <typename Dtype>
-void StoPoolForwardTest(const int nthreads,
+void StoPoolForwardTest(int top_count, int boottom_count,
                         Dtype* bottom_data,
                         const int num, const int channels, const int height,
                         const int width, const int pooled_height, const int pooled_width,
                         const int kernel_h, const int kernel_w, const int stride_h,
                         const int stride_w, Dtype* top_data);
 template <typename Dtype>
-void MaxPoolBackward(const int nthreads, Dtype* top_diff,
+void MaxPoolBackward(int top_count, int boottom_count, Dtype* top_diff,
                      int* mask, Dtype* top_mask, const int num, const int channels,
                      const int height, const int width, const int pooled_height,
                      const int pooled_width, const int kernel_h, const int kernel_w,
                      const int stride_h, const int stride_w, const int pad_h, const int pad_w,
                      Dtype* bottom_diff);
 template <typename Dtype>
-void AvePoolBackward(const int nthreads, Dtype* top_diff,
+void AvePoolBackward(int top_count, int boottom_count, Dtype* top_diff,
                      const int num, const int channels, const int height,
                      const int width, const int pooled_height, const int pooled_width,
                      const int kernel_h, const int kernel_w, const int stride_h,
                      const int stride_w, const int pad_h, const int pad_w,
                      Dtype* bottom_diff);
 template <typename Dtype>
-void StoPoolBackward(const int nthreads,
+void StoPoolBackward(int top_count, int boottom_count,
                      Dtype* rand_idx, Dtype* top_diff,
                      const int num, const int channels, const int height,
                      const int width, const int pooled_height, const int pooled_width,
@@ -61,7 +61,9 @@ void PoolingLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
                                       const vector<Blob<Dtype>*>& top) {
     Dtype* bottom_data = const_cast <Dtype*>(bottom[0]->gpu_data());
     Dtype* top_data = const_cast <Dtype*>(top[0]->mutable_gpu_data());
-    int count = top[0]->count();
+	int count = top[0]->count();
+    int top_count = top[0]->count();
+	int bottom_count = bottom[0]->count();
     // We'll output the mask to top[1] if it's of size >1.
     const bool use_top_mask = top.size() > 1;
     int* mask = NULL;
@@ -75,16 +77,24 @@ void PoolingLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
             mask = max_idx_.mutable_gpu_data();
         }
         // NOLINT_NEXT_LINE(whitespace/operators)
+		//for (int i = 0; i <= 10; i++)
+		//{
+		//	printf("\n###########%f#########\n", top_data[i]);
+		//}
         MaxPoolForward(
-            count, bottom_data, bottom[0]->num(), channels_,
+			top_count, bottom_count,bottom_data, bottom[0]->num(), channels_,
             height_, width_, pooled_height_, pooled_width_, kernel_h_,
             kernel_w_, stride_h_, stride_w_, pad_h_, pad_w_, top_data,
             mask, top_mask);
+		//for (int i = 0; i <= 10; i++)
+		//{
+		//	printf("\n$$$$$$$$$$%f$$$$$$$$$$$\n", top_data[i]);
+		//}
         break;
     case PoolingParameter_PoolMethod_AVE:
         // NOLINT_NEXT_LINE(whitespace/operators)
         AvePoolForward(
-            count, bottom_data, bottom[0]->num(), channels_,
+			top_count, bottom_count, bottom_data, bottom[0]->num(), channels_,
             height_, width_, pooled_height_, pooled_width_, kernel_h_,
             kernel_w_, stride_h_, stride_w_, pad_h_, pad_w_, top_data);
         break;
@@ -95,7 +105,7 @@ void PoolingLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
                                   rand_idx_.mutable_gpu_data());
             // NOLINT_NEXT_LINE(whitespace/operators)
             StoPoolForwardTrain(
-                count, bottom_data, bottom[0]->num(), channels_,
+				top_count, bottom_count, bottom_data, bottom[0]->num(), channels_,
                 height_, width_, pooled_height_, pooled_width_, kernel_h_,
                 kernel_w_, stride_h_, stride_w_,
                 rand_idx_.mutable_gpu_data(), top_data);
@@ -103,7 +113,7 @@ void PoolingLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
         else {
             // NOLINT_NEXT_LINE(whitespace/operators)
             StoPoolForwardTest(
-                count, bottom_data, bottom[0]->num(), channels_,
+				top_count, bottom_count, bottom_data, bottom[0]->num(), channels_,
                 height_, width_, pooled_height_, pooled_width_, kernel_h_,
                 kernel_w_, stride_h_, stride_w_, top_data);
         }
@@ -121,6 +131,8 @@ void PoolingLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     Dtype* top_diff = const_cast <Dtype*>(top[0]->gpu_diff());
     Dtype* bottom_diff = bottom[0]->mutable_gpu_diff();
     const int count = bottom[0]->count();
+	int top_count = top[0]->count();
+	int bottom_count = bottom[0]->count();
     caffe_gpu_set(count, Dtype(0.), bottom_diff);
     // We'll output the mask to top[1] if it's of size >1.
     const bool use_top_mask = top.size() > 1;
@@ -136,7 +148,7 @@ void PoolingLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
         }
         // NOLINT_NEXT_LINE(whitespace/operators)
         MaxPoolBackward(
-            count, top_diff, mask, top_mask, top[0]->num(), channels_,
+			top_count, bottom_count, top_diff, mask, top_mask, top[0]->num(), channels_,
             height_, width_, pooled_height_, pooled_width_,
             kernel_h_, kernel_w_, stride_h_, stride_w_, pad_h_, pad_w_,
             bottom_diff);
@@ -144,14 +156,14 @@ void PoolingLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     case PoolingParameter_PoolMethod_AVE:
         // NOLINT_NEXT_LINE(whitespace/operators)
         AvePoolBackward(
-            count, top_diff, top[0]->num(), channels_,
+			top_count, bottom_count, top_diff, top[0]->num(), channels_,
             height_, width_, pooled_height_, pooled_width_, kernel_h_,
             kernel_w_, stride_h_, stride_w_, pad_h_, pad_w_, bottom_diff);
         break;
     case PoolingParameter_PoolMethod_STOCHASTIC:
         // NOLINT_NEXT_LINE(whitespace/operators)
         StoPoolBackward(
-            count, const_cast <Dtype *>(rand_idx_.gpu_data()), top_diff,
+			top_count, bottom_count, const_cast <Dtype *>(rand_idx_.gpu_data()), top_diff,
             top[0]->num(), channels_, height_, width_, pooled_height_,
             pooled_width_, kernel_h_, kernel_w_, stride_h_, stride_w_,
             bottom_diff);
