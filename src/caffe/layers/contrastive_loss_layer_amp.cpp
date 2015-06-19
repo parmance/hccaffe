@@ -8,7 +8,11 @@
 
 #ifdef USE_CPPAMP
 template <typename Dtype>
-void CLLForward(const int N, const int channels, const Dtype margin, const Dtype alpha,
+void CLLForward(const int N,
+    const int channels,
+    const Dtype margin,
+    const Dtype alpha,
+    const int y_count,
     Dtype* y, Dtype* diff, Dtype* dist_sq, Dtype* bottom_diff);
 
 
@@ -62,7 +66,7 @@ void ContrastiveLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
       const Dtype alpha = sign * top[0]->cpu_diff()[0] /
           static_cast<Dtype>(bottom[0]->num());
       // NOLINT_NEXT_LINE(whitespace/operators)
-      CLLForward(count, channels, margin, alpha,
+      CLLForward(count, channels, margin, alpha, bottom[2]->count(),
           const_cast <Dtype*>(bottom[2]->gpu_data()),  // pair similarity 0 or 1
           const_cast <Dtype*>(diff_.gpu_data()),  // the cached eltwise difference between a and b
           const_cast <Dtype*>(dist_sq_.gpu_data()),  // the cached square distance between a and b
