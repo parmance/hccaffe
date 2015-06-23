@@ -283,8 +283,6 @@ template <typename Dtype>
 void caffe_amp_sign(const int N, Dtype* a, Dtype* y);
 template <typename Dtype>
 void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y);
-template <typename Dtype>
-void caffe_amp_sign(const int N, Dtype* a, Dtype* y);
 
 #endif  //USE_CPPAMP
 }  // namespace caffe
