@@ -1,6 +1,5 @@
 #include <boost/math/special_functions/next.hpp>
 #include <boost/random.hpp>
-
 #include <limits>
 #include "caffe/util/math_functions.hpp"
 #include "amp.h"
@@ -437,9 +436,69 @@ void caffe_gpu_rng_uniform<float>(const int n, const float a, const float b,
 template <>
 void caffe_gpu_rng_uniform<double>(const int n, const double a, const double b,
                                    double* r) {
-
   caffe_rng_uniform(n, a, b, r);
 };
+template <>
+uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
+                                  const float* y) {
+  uint32_t result[n];
+  memset(result, 0, sizeof(uint32_t)*n);
+  array_view<uint32_t, 1> resultView(n, result);
+  array_view<float, 1> xView(n, const_cast <float*>(x));
+  array_view<float, 1> yView(n, const_cast <float*>(y));
+  parallel_for_each(
+    resultView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+  {
+    uint32_t ret = 0;
+    uint32_t u = static_cast<uint32_t>(xView[idx]) ^
+                 static_cast<uint32_t>(yView[idx]);
+    while(u)
+    {
+      u = u & (u - 1);
+      ret ++;
+    }
+    resultView[idx] = ret;
+  }
+  );
+  resultView.synchronize();
+  uint32_t sum = 0;
+  for(int i = 0; i < n; i++ ) {
+    sum+=result[i];
+  }
+  return sum;
+}
+
+template <>
+uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
+                                   const double* y) {
+  uint32_t result[n];
+  memset(result, 0, sizeof(uint32_t)*n);
+  array_view<uint32_t, 1> resultView(n, result);
+  array_view<double, 1> xView(n, const_cast <double*>(x));
+  array_view<double, 1> yView(n, const_cast <double*>(y));
+  parallel_for_each(
+    resultView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+  {
+    uint32_t ret = 0;
+    uint64_t u = static_cast<uint64_t>(xView[idx]) ^
+                 static_cast<uint64_t>(yView[idx]);
+    while(u)
+    {
+      u = u & (u - 1);
+      ret ++;
+    }
+    resultView[idx] = ret;
+  }
+  );
+  resultView.synchronize();
+  uint32_t sum = 0;
+  for(int i = 0; i < n; i++ ) {
+    sum+=result[i];
+  }
+  return sum;
+}
 void caffe_gpu_memcpy(const size_t N, const void *X, void *Y)
 {
   memcpy(Y,X,N);
