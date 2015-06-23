@@ -5,14 +5,6 @@
 #include "caffe/vision_layers.hpp"
 
 #ifdef USE_CPPAMP
-template <typename Dtype>
-void caffe_amp_abs(const int N, Dtype* a, Dtype* y);
-
-template <typename Dtype>
-void caffe_amp_sign(const int N, Dtype* a, Dtype* y);
-
-template <typename Dtype>
-void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y);
 
 namespace caffe {
 
