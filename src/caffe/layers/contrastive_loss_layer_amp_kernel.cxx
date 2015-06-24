@@ -12,30 +12,41 @@ using namespace concurrency;
 
 
 template <typename Dtype>
-void CLLForward(const int N, const int channels, const Dtype margin, const Dtype alpha,
-    Dtype* y, Dtype* diff, Dtype* dist_sq, Dtype* bottom_diff);
+void CLLForward(const int N,
+                const int channels,
+                const Dtype margin,
+                const Dtype alpha,
+                const int y_count,
+                Dtype* y,
+                Dtype* diff,
+                Dtype* dist_sq,
+                Dtype* bottom_diff);
 
 
 template <>
-void CLLForward<float>(const int N, const int channels, const float margin, const float alpha,
-    float* y, float* diff, float* dist_sq, float* bottom_diff) {
-  array_view<float, 1> yView(N, y);
+void CLLForward<float>(const int N,
+    const int channels,
+    const float margin,
+    const float alpha,
+    const int y_count,
+    float* y,
+    float* diff,
+    float* dist_sq,
+    float* bottom_diff) {
+  array_view<float, 1> yView(y_count, y);
   array_view<float, 1> diffView(N, diff);
-  array_view<float, 1> dist_sqView(N, dist_sq);
+  array_view<float, 1> dist_sqView(y_count, dist_sq);
   array_view<float, 1> bottom_diffView(N, bottom_diff);
   parallel_for_each(
     bottom_diffView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
+    [=](index<1> idx) restrict(amp){
       int n = idx[0] / channels;  // the num index, to access y and dist_sq
       if (static_cast<int>(yView[n])) {  // similar pairsS
         bottom_diffView[idx] = alpha * diffView[idx];
-      }
-      else {  // dissimilar pairs
-        if ((margin - dist_sqView[n]) > 0) {
+      } else {  // dissimilar pairs
+        if ((margin - dist_sqView[n]) > 0.0) {
           bottom_diffView[idx] = -alpha * diffView[idx];
-        }
-        else {
+        } else {
           bottom_diffView[idx] = 0;
         }
       }
@@ -45,25 +56,29 @@ void CLLForward<float>(const int N, const int channels, const float margin, cons
 }
 
 template <>
-void CLLForward<double>(const int N, const int channels, const double margin, const double alpha,
-    double* y, double* diff, double* dist_sq, double* bottom_diff) {
-  array_view<double, 1> yView(N, y);
+void CLLForward<double>(const int N,
+    const int channels,
+    const double margin,
+    const double alpha,
+    const int y_count,
+    double* y,
+    double* diff,
+    double* dist_sq,
+    double* bottom_diff) {
+  array_view<double, 1> yView(y_count, y);
   array_view<double, 1> diffView(N, diff);
-  array_view<double, 1> dist_sqView(N, dist_sq);
+  array_view<double, 1> dist_sqView(y_count, dist_sq);
   array_view<double, 1> bottom_diffView(N, bottom_diff);
   parallel_for_each(
     bottom_diffView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
+    [=](index<1> idx) restrict(amp){
       int n = idx[0] / channels;  // the num index, to access y and dist_sq
       if (static_cast<int>(yView[n])) {  // similar pairsS
         bottom_diffView[idx] = alpha * diffView[idx];
-      }
-      else {  // dissimilar pairs
-        if ((margin - dist_sqView[n]) > 0) {
+      } else {  // dissimilar pairs
+        if ((margin - dist_sqView[n]) > 0.0) {
           bottom_diffView[idx] = -alpha * diffView[idx];
-        }
-        else {
+        } else {
           bottom_diffView[idx] = 0;
         }
       }
