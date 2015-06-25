@@ -503,6 +503,87 @@ void caffe_gpu_memcpy(const size_t N, const void *X, void *Y)
 {
   memcpy(Y,X,N);
 }
+#define RAND_MAX 0x7fff
+
+template <>
+void caffe_gpu_rng_gaussian(const int N, float mu, const float sigma, float* r) {
+  float * v = new float[N];
+  float * s = new float[N];
+  int flag = 0;
+  int i =  0;
+  while (i<N)
+  {
+    float U1 = (float)rand() / RAND_MAX;
+    float U2 = (float)rand() / RAND_MAX;
+
+    float V1 = 2 * U1 - 1;
+    float V2 = 2 * U2 - 1;
+    float S = V1 * V1 + V2 * V2;
+    if(S >= 1 || S == 0)
+      continue;
+    if(flag==0)
+      v[i] = V1;
+    else
+      v[i] = V2;
+    s[i] = S;
+    flag = 1 - flag;
+    i++; 
+  }
+  array_view<float, 1> rView(N, r);
+  array_view<float, 1> vView(N, v);
+  array_view<float, 1> sView(N, s);
+  parallel_for_each(
+    rView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+  {
+    rView[idx] = vView[idx] * Concurrency::fast_math::sqrt( -2 * fast_math::log(sView[idx])/sView[idx]) * sigma + mu;
+  }
+  );
+  delete[] v;
+  delete[] s;
+  rView.synchronize();
+}
+
+
+template <>
+void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, double* r) {
+  double * v = new double[N];
+  double * s = new double[N];
+  int flag = 0;
+  int i =  0;
+  while (i<N)
+  {
+    double U1 = (double)rand() / RAND_MAX;
+    double U2 = (double)rand() / RAND_MAX;
+
+    double V1 = 2 * U1 - 1;
+    double V2 = 2 * U2 - 1;
+    double S = V1 * V1 + V2 * V2;
+    if(S >= 1 || S == 0)
+      continue;
+    if(flag==0)
+      v[i] = V1;
+    else
+      v[i] = V2;
+    s[i] = S;
+    flag = 1 - flag;
+    i++; 
+  }
+  array_view<double, 1> rView(N, r);
+  array_view<double, 1> vView(N, v);
+  array_view<double, 1> sView(N, s);
+  parallel_for_each(
+    rView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+  {
+    rView[idx] = vView[idx] * Concurrency::fast_math::sqrt( (float)-2 * fast_math::log((float)sView[idx])/(float)sView[idx]) * sigma + mu;
+  }
+  );
+  delete[] v;
+  delete[] s;
+  rView.synchronize();
+}
+
 #endif //USE_CPPAMP
 }  // namespace caffe
 
