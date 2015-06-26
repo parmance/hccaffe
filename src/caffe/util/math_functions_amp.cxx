@@ -507,8 +507,8 @@ void caffe_gpu_memcpy(const size_t N, const void *X, void *Y)
 
 template <>
     void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, float* r) {
-      float * v = new float[N];
-      float * s = new float[N];
+      float v[N];
+      float s[N];
       float tempV2;
       float tempS;
       int flag = 0;
@@ -549,8 +549,6 @@ template <>
         rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 * fast_math::log((float)sView[idx]) / (float)sView[idx]) * sigma + mu;
       }
       );
-      delete[] v;
-      delete[] s;
       rView.synchronize();
     }
 
@@ -558,8 +556,8 @@ template <>
 
 template <>
     void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, double* r) {
-      double * v = new double[N];
-      double * s = new double[N];
+      double v[N];
+      double s[N];
       double tempV2;
       double tempS;
       int flag = 0;
@@ -599,8 +597,6 @@ template <>
         rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 * fast_math::log((float)sView[idx]) / (float)sView[idx]) * sigma + mu;
       }
       );
-      delete[] v;
-      delete[] s;
       rView.synchronize();
     }
 
