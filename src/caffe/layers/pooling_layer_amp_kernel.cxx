@@ -253,7 +253,7 @@ void StoPoolForwardTrain(int top_count, int boottom_count,
                          const int kernel_h, const int kernel_w, const int stride_h,
                          const int stride_w, float* rand_idx, float* top_data) {
 	array_view<float, 1> bottomDataView(boottom_count, bottom_data);
-	array_view<float, 1> randIdxView(boottom_count, rand_idx);
+	array_view<float, 1> randIdxView(top_count, rand_idx);
 	array_view<float, 1> topDataView(top_count, top_data);
     parallel_for_each(
         topDataView.get_extent(),
@@ -281,10 +281,10 @@ void StoPoolForwardTrain(int top_count, int boottom_count,
         cumsum = 0;
         for (int h = hstart; h < hend; ++h) {
             for (int w = wstart; w < wend; ++w) {
-                cumsum += bottomDataView[h * width + w];
+                cumsum += bottomDataView[bottom_count+h * width + w];
                 if (cumsum >= thres) {
                     randIdxView[index] = ((n * channels + c) * height + h) * width + w;
-                    topDataView[index] = bottomDataView[h * width + w];
+                    topDataView[index] = bottomDataView[bottom_count+h * width + w];
                     return;
                 }
             }
@@ -292,6 +292,7 @@ void StoPoolForwardTrain(int top_count, int boottom_count,
     }
     );
     topDataView.synchronize();
+    randIdxView.synchronize();
 }
 template <>
 void StoPoolForwardTrain(int top_count, int boottom_count,
@@ -301,7 +302,7 @@ void StoPoolForwardTrain(int top_count, int boottom_count,
                          const int kernel_h, const int kernel_w, const int stride_h,
                          const int stride_w, double* rand_idx, double* top_data) {
 	array_view<double, 1> bottomDataView(boottom_count, bottom_data);
-	array_view<double, 1> randIdxView(boottom_count, rand_idx);
+	array_view<double, 1> randIdxView(top_count, rand_idx);
 	array_view<double, 1> topDataView(top_count, top_data);
     parallel_for_each(
         topDataView.get_extent(),
@@ -324,15 +325,15 @@ void StoPoolForwardTrain(int top_count, int boottom_count,
                 cumsum += bottomDataView[bottom_count + h * width + w];
             }
         }
-        float thres = randIdxView[index] * cumsum;
+        double thres = randIdxView[index] * cumsum;
         // Second pass: get value, and set index.
         cumsum = 0;
         for (int h = hstart; h < hend; ++h) {
             for (int w = wstart; w < wend; ++w) {
-                cumsum += bottomDataView[h * width + w];
+                cumsum += bottomDataView[bottom_count+h * width + w];
                 if (cumsum >= thres) {
                     randIdxView[index] = ((n * channels + c) * height + h) * width + w;
-                    topDataView[index] = bottomDataView[h * width + w];
+                    topDataView[index] = bottomDataView[bottom_count+h * width + w];
                     return;
                 }
             }
@@ -340,6 +341,7 @@ void StoPoolForwardTrain(int top_count, int boottom_count,
     }
     );
     topDataView.synchronize();
+    randIdxView.synchronize();
 }
 template <>
 void StoPoolForwardTest(int top_count, int boottom_count,
@@ -617,7 +619,7 @@ void StoPoolBackward(int top_count, int boottom_count,
                      const int kernel_h, const int kernel_w, const int stride_h,
                      const int stride_w, float* bottom_diff) {
 	array_view<float, 1> bottomDiffView(boottom_count, bottom_diff);
-	array_view<float, 1> randIdxView(boottom_count, rand_idx);
+	array_view<float, 1> randIdxView(top_count, rand_idx);
 	array_view<float, 1> topDiffView(boottom_count, top_diff);
     parallel_for_each(
         bottomDiffView.get_extent(),
@@ -654,7 +656,7 @@ void StoPoolBackward(int top_count, int boottom_count,
                      const int kernel_h, const int kernel_w, const int stride_h,
                      const int stride_w, double* bottom_diff) {
 	array_view<double, 1> bottomDiffView(boottom_count, bottom_diff);
-	array_view<double, 1> randIdxView(boottom_count, rand_idx);
+	array_view<double, 1> randIdxView(top_count, rand_idx);
 	array_view<double, 1> topDiffView(top_count, top_diff);
     parallel_for_each(
         bottomDiffView.get_extent(),
