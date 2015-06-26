@@ -503,7 +503,6 @@ void caffe_gpu_memcpy(const size_t N, const void *X, void *Y)
 {
   memcpy(Y,X,N);
 }
-#define RAND_MAX 0x7fff
 
 template <>
     void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, float* r) {
@@ -541,11 +540,13 @@ template <>
       array_view<float, 1> rView(N, r);
       array_view<float, 1> vView(N, v);
       array_view<float, 1> sView(N, s);
+      printf("float-first step end \n");
       parallel_for_each(
         rView.get_extent(),
         [=](index<1> idx) restrict(amp)
       {
-        rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 * fast_math::log((float)sView[idx]) / (float)sView[idx]) * sigma + mu;
+        
+        //rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 * fast_math::log((float)sView[idx]) / (float)sView[idx]) * sigma + mu;
       }
       );
       delete[] v;
@@ -591,11 +592,12 @@ template <>
       array_view<double, 1> rView(N, r);
       array_view<double, 1> vView(N, v);
       array_view<double, 1> sView(N, s);
+      printf("double-first step end \n");
       parallel_for_each(
         rView.get_extent(),
         [=](index<1> idx) restrict(amp)
       {
-        rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 * fast_math::log((float)sView[idx]) / (float)sView[idx]) * sigma + mu;
+        //rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 * fast_math::log((float)sView[idx]) / (float)sView[idx]) * sigma + mu;
       }
       );
       delete[] v;
