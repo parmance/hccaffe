@@ -312,8 +312,6 @@ void caffe_gpu_powx<double>(const int N, const double* a,
   powx_kernel(N, const_cast <double*>(a), alpha, y);
 }
 
-
-
 template <>
 void caffe_gpu_dot<float>(const int n, const float* x, const float* y,
   float* out) {
@@ -342,8 +340,7 @@ void caffe_gpu_axpy<double>(const int N, const double alpha, const double* X,
 
 template <>
 void caffe_gpu_scale<float>(const int n, const float alpha, const float *x,
-                                float* y)
-{
+                                float* y){
   amp_copy(n, const_cast <float*>(x), y);
   amp_scale(n, alpha, y);
 }
@@ -397,7 +394,6 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   cblas_dgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
 }
 
-
 template <>
 void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
   const CBLAS_TRANSPOSE TransB, const int M, const int N, const int K,
@@ -417,27 +413,33 @@ void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
   int ldb = (TransB == CblasNoTrans) ? N : K;
   cblas_dgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, N);
 }
+
 template <>
 void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
   *y = cblas_sasum(n, x, 1);
 }
+
 template <>
 void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
   *y = cblas_dasum(n, x, 1);
 }
+
 void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
   caffe_rng_uniform(n,r);
 } 
+
 template <>
 void caffe_gpu_rng_uniform<float>(const int n, const float a, const float b,
                                   float* r) {
   caffe_rng_uniform(n, a, b, r);
 };
+
 template <>
 void caffe_gpu_rng_uniform<double>(const int n, const double a, const double b,
                                    double* r) {
   caffe_rng_uniform(n, a, b, r);
 };
+
 template <>
 uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
                                   const float* y) {
@@ -446,21 +448,16 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
   array_view<uint32_t, 1> resultView(n, result);
   array_view<float, 1> xView(n, const_cast <float*>(x));
   array_view<float, 1> yView(n, const_cast <float*>(y));
-  parallel_for_each(
-    resultView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-  {
+  parallel_for_each(resultView.get_extent(), [=](index<1> idx) restrict(amp) {
     uint32_t ret = 0;
     uint32_t u = static_cast<uint32_t>(xView[idx]) ^
                  static_cast<uint32_t>(yView[idx]);
-    while(u)
-    {
+    while(u) {
       u = u & (u - 1);
       ret ++;
     }
     resultView[idx] = ret;
-  }
-  );
+  } );
   resultView.synchronize();
   uint32_t sum = 0;
   for(int i = 0; i < n; i++ ) {
@@ -477,21 +474,16 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
   array_view<uint32_t, 1> resultView(n, result);
   array_view<double, 1> xView(n, const_cast <double*>(x));
   array_view<double, 1> yView(n, const_cast <double*>(y));
-  parallel_for_each(
-    resultView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-  {
+  parallel_for_each(resultView.get_extent(), [=](index<1> idx) restrict(amp) {
     uint32_t ret = 0;
     uint64_t u = static_cast<uint64_t>(xView[idx]) ^
                  static_cast<uint64_t>(yView[idx]);
-    while(u)
-    {
+    while(u) {
       u = u & (u - 1);
       ret ++;
     }
     resultView[idx] = ret;
-  }
-  );
+  } );
   resultView.synchronize();
   uint32_t sum = 0;
   for(int i = 0; i < n; i++ ) {
@@ -499,107 +491,89 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
   }
   return sum;
 }
-void caffe_gpu_memcpy(const size_t N, const void *X, void *Y)
-{
+
+void caffe_gpu_memcpy(const size_t N, const void *X, void *Y){
   memcpy(Y,X,N);
 }
 
 
 template <>
-    void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, float* r) {
-      float v[N];
-      float s[N];
-      float tempV2;
-      float tempS;
-      int flag = 0;
-      int i = 0;
-      while (i < N)
-      {
-        if (flag == 0)
-        {
-          float U1 = (float)rand() / RAND_MAX;
-          float U2 = (float)rand() / RAND_MAX;
-    
-          float V1 = 2 * U1 - 1;
-          float V2 = 2 * U2 - 1;
-          float S = V1 * V1 + V2 * V2;
-          if (S >= 1 || S == 0)
-            continue;
-          v[i] = V1;
-          s[i] = S;
-          tempV2 = V2;
-          tempS = S;
-        }
-        else
-        {
-          v[i] = tempV2;
-          s[i] = tempS;
-        }
-        flag = 1 - flag;
-        i++;
-      }
-      array_view<float, 1> rView(N, r);
-      array_view<float, 1> vView(N, v);
-      array_view<float, 1> sView(N, s);
-      parallel_for_each(
-        rView.get_extent(),
-        [=](index<1> idx) restrict(amp)
-      {
-        
-        rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 * fast_math::log((float)sView[idx]) / (float)sView[idx]) * sigma + mu;
-      }
-      );
-      rView.synchronize();
+void caffe_gpu_rng_gaussian(const int N, const float mu,
+                            const float sigma, float* r) {
+  float v[N];
+  float s[N];
+  float tempV2, tempS;
+  int flag = 0, i = 0;
+  while (i < N) {
+    if (flag == 0) {
+      float U1 = (float)rand() / RAND_MAX;
+      float U2 = (float)rand() / RAND_MAX;
+      float V1 = 2 * U1 - 1;
+      float V2 = 2 * U2 - 1;
+      float S = V1 * V1 + V2 * V2;
+      if (S >= 1 || S == 0)
+        continue;
+      v[i] = V1;
+      s[i] = S;
+      tempV2 = V2;
+      tempS = S;
+    } else {
+      v[i] = tempV2;
+      s[i] = tempS;
     }
-
-
+    flag = 1 - flag;
+    i++;
+  }
+  array_view<float, 1> rView(N, r);
+  array_view<float, 1> vView(N, v);
+  array_view<float, 1> sView(N, s);
+  parallel_for_each(rView.get_extent(), [=](index<1> idx) restrict(amp) {
+    rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 *
+                  fast_math::log((float)sView[idx]) / (float)sView[idx]) *
+                  sigma + mu;
+  } );
+  rView.synchronize();
+}
 
 template <>
-    void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, double* r) {
-      double v[N];
-      double s[N];
-      double tempV2;
-      double tempS;
-      int flag = 0;
-      int i = 0;
-      while (i < N)
-      {
-        if (flag == 0)
-        {
-          double U1 = (double)rand() / RAND_MAX;
-          double U2 = (double)rand() / RAND_MAX;
-    
-          double V1 = 2 * U1 - 1;
-          double V2 = 2 * U2 - 1;
-          double S = V1 * V1 + V2 * V2;
-          if (S >= 1 || S == 0)
-            continue;
-          v[i] = V1;
-          s[i] = S;
-          tempV2 = V2;
-          tempS = S;
-        }
-        else
-        {
-          v[i] = tempV2;
-          s[i] = tempS;
-        }
-        flag = 1 - flag;
-        i++;
-      }
-      array_view<double, 1> rView(N, r);
-      array_view<double, 1> vView(N, v);
-      array_view<double, 1> sView(N, s);
-      parallel_for_each(
-        rView.get_extent(),
-        [=](index<1> idx) restrict(amp)
-      {
-        rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 * fast_math::log((float)sView[idx]) / (float)sView[idx]) * sigma + mu;
-      }
-      );
-      rView.synchronize();
+void caffe_gpu_rng_gaussian(const int N, const double mu,
+                            const double sigma, double* r) {
+  double v[N];
+  double s[N];
+  double tempV2;
+  double tempS;
+  int flag = 0;
+  int i = 0;
+  while (i < N) {
+    if (flag == 0) {
+      double U1 = (double)rand() / RAND_MAX;
+      double U2 = (double)rand() / RAND_MAX;
+      double V1 = 2 * U1 - 1;
+      double V2 = 2 * U2 - 1;
+      double S = V1 * V1 + V2 * V2;
+      if (S >= 1 || S == 0)
+        continue;
+      v[i] = V1;
+      s[i] = S;
+      tempV2 = V2;
+      tempS = S;
+    } else {
+      v[i] = tempV2;
+      s[i] = tempS;
     }
-
+    flag = 1 - flag;
+    i++;
+  }
+  array_view<double, 1> rView(N, r);
+  array_view<double, 1> vView(N, v);
+  array_view<double, 1> sView(N, s);
+  parallel_for_each(rView.get_extent(), [=](index<1> idx) restrict(amp) {
+    rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 *
+                   fast_math::log((float)sView[idx]) / (float)sView[idx]) *
+                   sigma + mu;
+  } );
+  rView.synchronize();
+}
 
 #endif //USE_CPPAMP
 }  // namespace caffe
