@@ -546,7 +546,7 @@ template <>
         [=](index<1> idx) restrict(amp)
       {
         
-        //rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 * fast_math::log((float)sView[idx]) / (float)sView[idx]) * sigma + mu;
+        rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 * fast_math::log((float)sView[idx]) / (float)sView[idx]) * sigma + mu;
       }
       );
       delete[] v;
@@ -596,7 +596,7 @@ template <>
         rView.get_extent(),
         [=](index<1> idx) restrict(amp)
       {
-        //rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 * fast_math::log((float)sView[idx]) / (float)sView[idx]) * sigma + mu;
+        rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 * fast_math::log((float)sView[idx]) / (float)sView[idx]) * sigma + mu;
       }
       );
       delete[] v;
