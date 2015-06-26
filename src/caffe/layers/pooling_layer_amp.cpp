@@ -77,19 +77,11 @@ void PoolingLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
             mask = max_idx_.mutable_gpu_data();
         }
         // NOLINT_NEXT_LINE(whitespace/operators)
-		//for (int i = 0; i <= 10; i++)
-		//{
-		//	printf("\n###########%f#########\n", top_data[i]);
-		//}
         MaxPoolForward(
 			top_count, bottom_count,bottom_data, bottom[0]->num(), channels_,
             height_, width_, pooled_height_, pooled_width_, kernel_h_,
             kernel_w_, stride_h_, stride_w_, pad_h_, pad_w_, top_data,
             mask, top_mask);
-		//for (int i = 0; i <= 10; i++)
-		//{
-		//	printf("\n$$$$$$$$$$%f$$$$$$$$$$$\n", top_data[i]);
-		//}
         break;
     case PoolingParameter_PoolMethod_AVE:
         // NOLINT_NEXT_LINE(whitespace/operators)
@@ -138,6 +130,7 @@ void PoolingLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     const bool use_top_mask = top.size() > 1;
     int* mask = NULL;
     Dtype* top_mask = NULL;
+
     switch (this->layer_param_.pooling_param().pool()) {
     case PoolingParameter_PoolMethod_MAX:
         if (use_top_mask) {
