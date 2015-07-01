@@ -418,12 +418,41 @@ void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
 
 template <>
 void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
-  *y = cblas_sasum(n, x, 1);
+  float tItems[n];
+  array_view<float, 1> xView(n, const_cast <float*>(x));
+  array_view<float, 1> tView(n, const_cast <float*>(tItems));
+  float sum = 0.0f;
+  array_view<float, 1> sumView(1, &sum);
+  parallel_for_each(
+    xView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+  {
+    tView[idx] = Concurrency::fast_math::fabs(xView[idx]);
+  }
+  );
+  tView.synchronize();
+  for (int i=0;i<n;i++)sum +=tItems[i];
+  *y = sum;
+
 }
 
 template <>
 void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
-  *y = cblas_dasum(n, x, 1);
+  double tItems[n];
+  array_view<double, 1> xView(n, const_cast <double*>(x));
+  array_view<double, 1> tView(n, const_cast <double*>(tItems));
+  double sum = 0.0f;
+  array_view<double, 1> sumView(1, &sum);
+  parallel_for_each(
+    xView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+  {
+    tView[idx] = Concurrency::fast_math::fabs(xView[idx]);
+  }
+  );
+  tView.synchronize();
+  for (int i=0;i<n;i++) sum +=tItems[i];
+  *y = sum;
 }
 
 void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
