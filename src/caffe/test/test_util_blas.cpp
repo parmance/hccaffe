@@ -1,19 +1,15 @@
-#ifndef CPU_ONLY  // CPU-GPU test
-#ifndef USE_CPPAMP
+#ifndef CPU_ONLY
 #include <cstring>
-
 #include "gtest/gtest.h"
-
 #include "caffe/blob.hpp"
 #include "caffe/util/device_alternate.hpp"
 #include "caffe/util/math_functions.hpp"
-
 #include "caffe/test/test_caffe_main.hpp"
 
 namespace caffe {
-
+#ifndef USE_CPPAMP
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
-
+#endif
 template <typename TypeParam>
 class GemmTest : public ::testing::Test {};
 
@@ -30,7 +26,11 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
   caffe_copy(6, data, A.mutable_cpu_data());
   caffe_copy(12, data, B.mutable_cpu_data());
 
+#ifdef USE_CPPAMP
+  if (1) {
+#else
   if (sizeof(TypeParam) == 4 || CAFFE_TEST_CUDA_PROP.major >= 2) {
+#endif
     // [1, 2, 3; 4 5 6] * [1, 2, 3, 4; 5, 6, 7, 8; 9, 10, 11, 12];
     caffe_cpu_gemm<TypeParam>(CblasNoTrans, CblasNoTrans, 2, 4, 3, 1.,
         A.cpu_data(), B.cpu_data(), 0., C.mutable_cpu_data());
@@ -99,8 +99,11 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
   TypeParam result_3[3] = {9, 12, 15};
   caffe_copy(6, data, A.mutable_cpu_data());
   caffe_copy(3, data, x.mutable_cpu_data());
-
+#ifdef USE_CPPAMP
+  if (1) {
+#else
   if (sizeof(TypeParam) == 4 || CAFFE_TEST_CUDA_PROP.major >= 2) {
+#endif
     caffe_cpu_gemv<TypeParam>(CblasNoTrans, 2, 3, 1., A.cpu_data(),
         x.cpu_data(), 0., y.mutable_cpu_data());
     for (int i = 0; i < 2; ++i) {
@@ -130,5 +133,4 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
 }
 
 }  // namespace caffe
-#endif  //USE_CPPAMP
-#endif  // CPU_ONLY
+#endif
