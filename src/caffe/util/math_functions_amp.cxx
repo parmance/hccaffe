@@ -8,6 +8,7 @@
 #include "cppamp/ampblaslib.h"
 
 using namespace concurrency;
+using namespace Concurrency::fast_math;
 
 
 namespace caffe {
@@ -432,28 +433,16 @@ void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
 #define MAX 65536
 #define FACTOR 2053
 #define CONSTANT 13849
-template <>
-float rnd_kernel<float>(float &ri) restrict(amp)
+template <typename Dtype>
+float rnd_kernel<Dtype>(Dtype &ri) restrict(amp)
 {
   int temp;
-  temp = (int)(ri / (float)MAX);
-  ri = ri - temp*(float)MAX;
-  ri = (float)FACTOR * ri + (float)CONSTANT;
-  temp = (int)(ri / (float)MAX);
-  ri = ri - temp*(float)MAX;
-  return ri / (float)MAX;
-};
-
-template <>
-float rnd_kernel<double>(double &ri) restrict(amp)
-{
-  int temp;
-  temp = (int)(ri / (double)MAX);
-  ri = ri - temp*(double)MAX;
-  ri = (double)FACTOR * ri + (double)CONSTANT;
-  temp = (int)(ri / (double)MAX);
-  ri = ri - temp*(double)MAX;
-  return ri / (double)MAX;
+  temp = (int)(ri / (Dtype)MAX);
+  ri = ri - temp*(Dtype)MAX;
+  ri = (Dtype)FACTOR * ri + (Dtype)CONSTANT;
+  temp = (int)(ri / (Dtype)MAX);
+  ri = ri - temp*(Dtype)MAX;
+  return ri / (Dtype)MAX;
 };
 
 
@@ -481,8 +470,8 @@ void caffe_gpu_rng_gaussian<float>(const int N, const float mu, const float sigm
     float seed = (float)idx[0] * (rnd%MAX);
     float V1 = 0.0, V2 = 0.0, S=0.0;
     do {
-      V1 = 2 * rnd_kernel(seed) - 1;
-      V2 = 2 * rnd_kernel(seed) - 1;
+      V1 = 2 * rnd_kernel<float>(seed) - 1;
+      V2 = 2 * rnd_kernel<float>(seed) - 1;
       S = V1 * V1 + V2 * V2;
     } while ((S >= 1.0) || (S == 0.0));
     if (2 * idx[0] < N)
@@ -505,8 +494,8 @@ void caffe_gpu_rng_gaussian<double>(const int N, const double mu, const double s
     double seed = (double)idx[0] * (rnd%MAX);
     double V1 = 0.0, V2 = 0.0, S=0.0;
     do {
-      V1 = 2 * rnd_kernel(seed) - 1;
-      V2 = 2 * rnd_kernel(seed) - 1;
+      V1 = 2 * rnd_kernel<float>(seed) - 1;
+      V2 = 2 * rnd_kernel<float>(seed) - 1;
       S = V1 * V1 + V2 * V2;
     } while ((S >= 1.0) || (S == 0.0));
     if (2 * idx[0] < N)
