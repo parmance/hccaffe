@@ -427,7 +427,36 @@ void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
 
 void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
   caffe_rng_uniform(n,r);
-} 
+}
+
+#define MAX 65536
+#define FACTOR 2053
+#define CONSTANT 13849
+template <>
+float rnd_kernel<float>(float &ri) restrict(amp)
+{
+  int temp;
+  temp = (int)(ri / (float)MAX);
+  ri = ri - temp*(float)MAX;
+  ri = (float)FACTOR * ri + (float)CONSTANT;
+  temp = (int)(ri / (float)MAX);
+  ri = ri - temp*(float)MAX;
+  return ri / (float)MAX;
+};
+
+template <>
+float rnd_kernel<double>(double &ri) restrict(amp)
+{
+  int temp;
+  temp = (int)(ri / (double)MAX);
+  ri = ri - temp*(double)MAX;
+  ri = (double)FACTOR * ri + (double)CONSTANT;
+  temp = (int)(ri / (double)MAX);
+  ri = ri - temp*(double)MAX;
+  return ri / (double)MAX;
+};
+
+
 
 template <>
 void caffe_gpu_rng_uniform<float>(const int n, const float a, const float b,
@@ -440,6 +469,56 @@ void caffe_gpu_rng_uniform<double>(const int n, const double a, const double b,
                                    double* r) {
   caffe_rng_uniform(n, a, b, r);
 };
+
+template <>
+void caffe_gpu_rng_gaussian<float>(const int N, const float mu, const float sigma, float* r) {
+  array_view<float, 1> rView(N, r);
+  int rnd = (int)((long)r);
+  parallel_for_each(
+    rView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+  {
+    float seed = (float)idx[0] * (rnd%MAX);
+    float V1 = 0.0, V2 = 0.0, S=0.0;
+    do {
+      V1 = 2 * rnd_kernel(seed) - 1;
+      V2 = 2 * rnd_kernel(seed) - 1;
+      S = V1 * V1 + V2 * V2;
+    } while ((S >= 1.0) || (S == 0.0));
+    if (2 * idx[0] < N)
+      rView[2 * idx] = V1 * sqrt((float)-2.0 * log((float)S) / (float)S) * sigma + mu;
+    if (2*idx[0] + 1 < N)
+      rView[2 * idx + 1] = V2 * sqrt((float)-2.0 * log((float)S) / (float)S) * sigma + mu;
+  }
+  );
+  rView.synchronize();
+}
+
+template <>
+void caffe_gpu_rng_gaussian<double>(const int N, const double mu, const double sigma, double* r) {
+  array_view<double, 1> rView(N, r);
+  int rnd = (int)((long)r);
+  parallel_for_each(
+    rView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+  {
+    double seed = (double)idx[0] * (rnd%MAX);
+    double V1 = 0.0, V2 = 0.0, S=0.0;
+    do {
+      V1 = 2 * rnd_kernel(seed) - 1;
+      V2 = 2 * rnd_kernel(seed) - 1;
+      S = V1 * V1 + V2 * V2;
+    } while ((S >= 1.0) || (S == 0.0));
+    if (2 * idx[0] < N)
+      rView[2 * idx] = V1 * sqrt((float)-2.0 * log((float)S) / (float)S) * sigma + mu;
+    if (2*idx[0] + 1 < N)
+      rView[2 * idx + 1] = V2 * sqrt((float)-2.0 * log((float)S) / (float)S) * sigma + mu;
+  }
+  );
+  rView.synchronize();
+}
+
+
 
 template <>
 uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
@@ -495,85 +574,6 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
 
 void caffe_gpu_memcpy(const size_t N, const void *X, void *Y){
   memcpy(Y,X,N);
-}
-
-
-template <>
-void caffe_gpu_rng_gaussian(const int N, const float mu,
-                            const float sigma, float* r) {
-  float v[N];
-  float s[N];
-  float tempV2, tempS;
-  int flag = 0, i = 0;
-  while (i < N) {
-    if (flag == 0) {
-      float U1 = (float)rand() / RAND_MAX;
-      float U2 = (float)rand() / RAND_MAX;
-      float V1 = 2 * U1 - 1;
-      float V2 = 2 * U2 - 1;
-      float S = V1 * V1 + V2 * V2;
-      if (S >= 1 || S == 0)
-        continue;
-      v[i] = V1;
-      s[i] = S;
-      tempV2 = V2;
-      tempS = S;
-    } else {
-      v[i] = tempV2;
-      s[i] = tempS;
-    }
-    flag = 1 - flag;
-    i++;
-  }
-  array_view<float, 1> rView(N, r);
-  array_view<float, 1> vView(N, v);
-  array_view<float, 1> sView(N, s);
-  parallel_for_each(rView.get_extent(), [=](index<1> idx) restrict(amp) {
-    rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 *
-                  fast_math::log((float)sView[idx]) / (float)sView[idx]) *
-                  sigma + mu;
-  } );
-  rView.synchronize();
-}
-
-template <>
-void caffe_gpu_rng_gaussian(const int N, const double mu,
-                            const double sigma, double* r) {
-  double v[N];
-  double s[N];
-  double tempV2;
-  double tempS;
-  int flag = 0;
-  int i = 0;
-  while (i < N) {
-    if (flag == 0) {
-      double U1 = (double)rand() / RAND_MAX;
-      double U2 = (double)rand() / RAND_MAX;
-      double V1 = 2 * U1 - 1;
-      double V2 = 2 * U2 - 1;
-      double S = V1 * V1 + V2 * V2;
-      if (S >= 1 || S == 0)
-        continue;
-      v[i] = V1;
-      s[i] = S;
-      tempV2 = V2;
-      tempS = S;
-    } else {
-      v[i] = tempV2;
-      s[i] = tempS;
-    }
-    flag = 1 - flag;
-    i++;
-  }
-  array_view<double, 1> rView(N, r);
-  array_view<double, 1> vView(N, v);
-  array_view<double, 1> sView(N, s);
-  parallel_for_each(rView.get_extent(), [=](index<1> idx) restrict(amp) {
-    rView[idx] = vView[idx] * Concurrency::fast_math::sqrt((float)-2 *
-                   fast_math::log((float)sView[idx]) / (float)sView[idx]) *
-                   sigma + mu;
-  } );
-  rView.synchronize();
 }
 
 #endif //USE_CPPAMP
