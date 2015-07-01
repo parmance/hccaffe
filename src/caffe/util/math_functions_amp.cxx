@@ -430,21 +430,20 @@ void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
   caffe_rng_uniform(n,r);
 }
 
-#define MAX 65536
-#define FACTOR 2053
-#define CONSTANT 13849
+#define IMAX 65536
+#define MAX (float)65536.0
+#define FACTOR (float)2053.0
+#define CONSTANT (float)13849.0
 float rnd_kernel(float &ri) restrict(amp)
 {
   int temp;
-  temp = (int)(ri / (float)MAX);
-  ri = ri - temp*(float)MAX;
-  ri = (float)FACTOR * ri + (float)CONSTANT;
-  temp = (int)(ri / (float)MAX);
-  ri = ri - temp*(float)MAX;
-  return ri / (float)MAX;
+  temp = (int)(ri / MAX);
+  ri = ri - temp*MAX;
+  ri = FACTOR * ri + CONSTANT;
+  temp = (int)(ri / MAX);
+  ri = ri - temp*MAX;
+  return ri / MAX;
 };
-
-
 
 template <>
 void caffe_gpu_rng_uniform<float>(const int n, const float a, const float b,
@@ -459,14 +458,14 @@ void caffe_gpu_rng_uniform<double>(const int n, const double a, const double b,
 };
 
 template <>
-void caffe_gpu_rng_gaussian<float>(const int N, const float mu, const float sigma, float* r) {
+void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, float* r) {
   array_view<float, 1> rView(N, r);
   int rnd = (int)((long)r);
   parallel_for_each(
     rView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
-    float seed = (float)idx[0] * (rnd%MAX);
+    float seed = (float)idx[0] * (rnd%IMAX);
     float V1 = 0.0, V2 = 0.0, S=0.0;
     do {
       V1 = 2 * rnd_kernel(seed) - 1;
@@ -482,15 +481,16 @@ void caffe_gpu_rng_gaussian<float>(const int N, const float mu, const float sigm
   rView.synchronize();
 }
 
+
 template <>
-void caffe_gpu_rng_gaussian<double>(const int N, const double mu, const double sigma, double* r) {
+void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, double* r) {
   array_view<double, 1> rView(N, r);
   int rnd = (int)((long)r);
   parallel_for_each(
     rView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
-    float seed = (float)idx[0] * (rnd%MAX);
+    float seed = (float)idx[0] * (rnd%IMAX);
     double V1 = 0.0, V2 = 0.0, S=0.0;
     do {
       V1 = 2 * rnd_kernel(seed) - 1;
