@@ -381,8 +381,8 @@ void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const float alpha, const float* A, const float* x,
   const float beta, float* y) {
   const enum CBLAS_ORDER Order=CblasRowMajor;
-  //todo cpu version
-  cblas_sgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
+  ampblas_sgemv((AMPBLAS_TRANS)TransA, M, N, &alpha, const_cast<float*>(A), 0, N, const_cast<float*>(x),
+                0, 0, &beta, y, 0, 0);
 }
 
 template <>
@@ -390,18 +390,18 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const double alpha, const double* A, const double* x,
   const double beta, double* y) {
   const enum CBLAS_ORDER Order=CblasRowMajor;
-  //todo cpu version
-  cblas_dgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
+  ampblas_dgemv((AMPBLAS_TRANS)TransA, M, N, &alpha, const_cast<double*>(A), 0, N, const_cast<double*>(x),
+                0, 0, &beta, y, 0, 0);
 }
 
 template <>
 void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
   const CBLAS_TRANSPOSE TransB, const int M, const int N, const int K,
   const float alpha, const float* A, const float* B, const float beta, float* C) {
-  // todo cpu version
   int lda = (TransA == CblasNoTrans) ? K : M;
   int ldb = (TransB == CblasNoTrans) ? N : K;
-  cblas_sgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, N);
+  ampblas_sgemm((AMPBLAS_TRANS)TransA, (AMPBLAS_TRANS)TransB, M, N, K, &alpha, const_cast<float*>(A), 
+                lda, const_cast<float*>(B), ldb, &beta, C, N, 0, 0, 0);
 }
 
 template <>
@@ -411,7 +411,8 @@ void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
   // todo cpu version
   int lda = (TransA == CblasNoTrans) ? K : M;
   int ldb = (TransB == CblasNoTrans) ? N : K;
-  cblas_dgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, N);
+  ampblas_dgemm((AMPBLAS_TRANS)TransA, (AMPBLAS_TRANS)TransB, M, N, K, &alpha, const_cast<double*>(A),
+                lda, const_cast<double*>(B), ldb,&beta, C, N, 0, 0, 0);
 }
 
 template <>
