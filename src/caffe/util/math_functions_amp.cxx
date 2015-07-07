@@ -459,19 +459,29 @@ void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
   caffe_rng_uniform(n,r);
 }
 
-#define IMAX 65536
-#define MAX (float)65536.0
-#define FACTOR (float)2053.0
-#define CONSTANT (float)13849.0
-float rnd_kernel(float &ri) restrict(amp)
+#define MAX 65536
+#define FACTOR 2053
+#define CONSTANT 13849
+float srnd_kernel(float &ri) restrict(amp)
 {
   int temp;
-  temp = (int)(ri / MAX);
-  ri = ri - temp*MAX;
-  ri = FACTOR * ri + CONSTANT;
-  temp = (int)(ri / MAX);
-  ri = ri - temp*MAX;
-  return ri / MAX;
+  temp = (int)(ri / (float)MAX);
+  ri = ri - temp*(float)MAX;
+  ri = (float)FACTOR * ri + (float)CONSTANT;
+  temp = (int)(ri / (float)MAX);
+  ri = ri - temp * (float)MAX;
+  return ri / (float)MAX;
+};
+
+double drnd_kernel(double &ri) restrict(amp)
+{
+  int temp;
+  temp = (int)(ri / (double)MAX);
+  ri = ri - temp*(double)MAX;
+  ri = (double)FACTOR * ri + (double)CONSTANT;
+  temp = (int)(ri / (double)MAX);
+  ri = ri - temp * (double)MAX;
+  return ri / (double)MAX;
 };
 
 template <>
@@ -482,8 +492,8 @@ void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,floa
     rView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
-    float seed = (float)idx[0] * (rnd % IMAX);
-    rView[idx] = rnd_kernel(seed) * (b - a) + a;
+    float seed = (float)idx[0] * (rnd % MAX);
+    rView[idx] = srnd_kernel(seed) * (b - a) + a;
   }
   );
   rView.synchronize();
@@ -497,8 +507,8 @@ void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b,d
     rView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
-    float seed = (float)idx[0] * (rnd % IMAX);
-    rView[idx] = rnd_kernel(seed) * (b - a) + a;
+    double seed = (double)idx[0] * (rnd % MAX);
+    rView[idx] = drnd_kernel(seed) * (b - a) + a;
   }
   );
   rView.synchronize();
@@ -512,17 +522,17 @@ void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, floa
     rView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
-    float seed = (float)idx[0] * (rnd % IMAX);
+    float seed = (float)idx[0] * (rnd % MAX);
     float V1 = 0.0, V2 = 0.0, S=0.0;
     do {
-      V1 = 2 * rnd_kernel(seed) - 1;
-      V2 = 2 * rnd_kernel(seed) - 1;
+      V1 = 2 * srnd_kernel(seed) - 1;
+      V2 = 2 * srnd_kernel(seed) - 1;
       S = V1 * V1 + V2 * V2;
     } while ((S >= 1.0) || (S == 0.0));
     if (2 * idx[0] < N)
-      rView[2 * idx] = V1 * sqrt((float)-2.0 * log((float)S) / (float)S) * sigma + mu;
+      rView[2 * idx] = V1 * sqrt(-2.0 * log(S) / S) * sigma + mu;
     if (2*idx[0] + 1 < N)
-      rView[2 * idx + 1] = V2 * sqrt((float)-2.0 * log((float)S) / (float)S) * sigma + mu;
+      rView[2 * idx + 1] = V2 * sqrt(-2.0 * log(S) / S) * sigma + mu;
   }
   );
   rView.synchronize();
@@ -537,17 +547,17 @@ void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, do
     rView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
-    float seed = (float)idx[0] * (rnd % IMAX);
+    double seed = (double)idx[0] * (rnd % MAX);
     double V1 = 0.0, V2 = 0.0, S=0.0;
     do {
-      V1 = 2 * rnd_kernel(seed) - 1;
-      V2 = 2 * rnd_kernel(seed) - 1;
+      V1 = 2 * drnd_kernel(seed) - 1;
+      V2 = 2 * drnd_kernel(seed) - 1;
       S = V1 * V1 + V2 * V2;
     } while ((S >= 1.0) || (S == 0.0));
     if (2 * idx[0] < N)
-      rView[2 * idx] = V1 * sqrt((float)-2.0 * log((float)S) / (float)S) * sigma + mu;
+      rView[2 * idx] = V1 * sqrt(-2.0 * log(S) / S) * sigma + mu;
     if (2*idx[0] + 1 < N)
-      rView[2 * idx + 1] = V2 * sqrt((float)-2.0 * log((float)S) / (float)S) * sigma + mu;
+      rView[2 * idx + 1] = V2 * sqrt(-2.0 * log(S) / S) * sigma + mu;
   }
   );
   rView.synchronize();
