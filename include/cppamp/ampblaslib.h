@@ -116,5 +116,6 @@ ampblasStatus  ampblas_dgemm(const enum AMPBLAS_TRANS typeA,
                              const long ldb, const double *beta, double *C,
                              const long ldc, const long aOffset,
                              const long bOffset, const long cOffset);
-
+#define TILE_SIZE 256
+#define MAX_TILES 1024
 #endif
