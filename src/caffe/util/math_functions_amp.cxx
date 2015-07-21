@@ -544,11 +544,11 @@ void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
   int ldb = (TransB == CblasNoTrans) ? N : K;
   AMPBLAS_TRANS ampTransA = noTrans;
   AMPBLAS_TRANS ampTransB = noTrans;
+  /*
   if(TransA == CblasTrans)
   {
       ampTransA = trans;
   }
-
   if(TransA == CblasConjTrans)
   {
       ampTransA = conjugate;
@@ -563,11 +563,19 @@ void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
   {
       ampTransB = conjugate;
   }
-
-  //cblas_sgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, N);
-  ampblas_sgemm(ampTransA, ampTransB, M, N, K, &alpha, const_cast<float*>(A),
+  printf("\nampblas M=%d, N=%d, K=%d, alpha=%f, beta=%f.\n", M, N, K, alpha, beta);
+  for(int i=0;i<6;i++)
+  {
+   printf("\nampblas A =%f \n",A[i]);
+  }
+  for(int i=0;i<12;i++)
+  {
+   printf("\nampblas B =%f \n",B[i]);
+  }
+  ampblas_sgemm(noTrans, noTrans, M, N, K, &alpha, const_cast<float*>(A),
                 lda, const_cast<float*>(B), ldb, &beta, C, N, 0, 0, 0);
-
+ */
+  cblas_sgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, N);
 }
 
 template <>
