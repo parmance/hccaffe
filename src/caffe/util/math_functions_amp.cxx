@@ -26,7 +26,7 @@ void caffe_amp_abs(const int N, Dtype* a, Dtype* y) {
   }
   );
   yView.synchronize();
-}                                                                                                                                                
+}
 
 template <typename Dtype>
 void caffe_amp_sign(const int N, Dtype* a, Dtype* y) {
@@ -318,76 +318,58 @@ void caffe_gpu_dot<float>(const int n, const float* x, const float* y,
   float* out) {
   array_view<float, 1> xView(n, const_cast <float*>(x));
   array_view<float, 1> yView(n, const_cast <float*>(y));
-    // runtime sizes
-    unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
-    tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;   
-
-    // simultaneous live threads
-    const unsigned int thread_count = tile_count * TILE_SIZE;
-
-    // global buffer (return type)
-    concurrency::array<float,1> global_buffer(tile_count);
-    concurrency::array_view<float,1> global_buffer_view(global_buffer);
-
-    // configuration
-    concurrency::extent<1> extent(thread_count);
-
-    concurrency::parallel_for_each(
-        extent.tile<TILE_SIZE>(),	
-        [=] (concurrency::tiled_index<TILE_SIZE> tid) restrict(amp)
-    {
-        // shared tile buffer
-        tile_static float local_buffer[TILE_SIZE];
-
-        // indexes
-        int idx = tid.global[0];
-
-        // this threads's shared memory pointer
-        float& smem = local_buffer[ tid.local[0] ];
-
-        // initialize local buffer
-        smem = 0.0f;
-
-        // fold data into local buffer
-        while (idx < n)
-        {
-            // reduction of smem and X[idx] with results stored in smem
-
-            smem += xView[concurrency::index<1>(idx)] * yView[concurrency::index<1>(idx)] ;
-
-            // next chunk
-            idx += thread_count;
-        }
-
-        // synchronize
-        tid.barrier.wait_with_tile_static_memory_fence();
-
-        // reduce all values in this tile
-        
-        unsigned int local = tid.local[0];
-
-        float *mem = &smem;
-
-        // unrolled for performance
-        if (local < 128) { mem[0] = mem[0] + mem[128]; } tid.barrier.wait_with_tile_static_memory_fence();
-        if (local <  64) { mem[0] = mem[0] + mem[ 64]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <  32) { mem[0] = mem[0] + mem[ 32]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <  16) { mem[0] = mem[0] + mem[ 16]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <   8) { mem[0] = mem[0] + mem[  8]; } tid.barrier.wait_with_tile_static_memory_fence();    
-        if (local <   4) { mem[0] = mem[0] + mem[  4]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <   2) { mem[0] = mem[0] + mem[  2]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <   1) { mem[0] = mem[0] + mem[  1]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        // only 1 thread per tile does the inter tile communication
-        if (tid.local[0] == 0)
-        {
-            // write to global buffer in this tiles
-            global_buffer_view[ tid.tile[0] ] = smem;
-        }
-    });
-
-    // 2nd pass reduction
-    std::vector<float> host_buffer(global_buffer);
-    *out = *std::max_element(host_buffer.begin(), host_buffer.end());
+  // runtime sizes
+  unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
+  tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;
+  // simultaneous live threads
+  const unsigned int thread_count = tile_count * TILE_SIZE;
+  // global buffer (return type)
+  concurrency::array<float,1> global_buffer(tile_count);
+  concurrency::array_view<float,1> global_buffer_view(global_buffer);
+  // configuration
+  concurrency::extent<1> extent(thread_count);
+  concurrency::parallel_for_each(
+    extent.tile<TILE_SIZE>(),
+    [=] (concurrency::tiled_index<TILE_SIZE> tid) restrict(amp)
+  {
+    // shared tile buffer
+    tile_static float local_buffer[TILE_SIZE];
+    // indexes
+    int idx = tid.global[0];
+    // this threads's shared memory pointer
+    float& smem = local_buffer[ tid.local[0] ];
+    // initialize local buffer
+    smem = 0.0f;
+    // fold data into local buffer
+    while (idx < n) {
+      // reduction of smem and X[idx] with results stored in smem
+      smem += xView[concurrency::index<1>(idx)] * yView[concurrency::index<1>(idx)] ;
+      // next chunk
+      idx += thread_count;
+    }
+    // synchronize
+    tid.barrier.wait_with_tile_static_memory_fence();
+    // reduce all values in this tile
+    unsigned int local = tid.local[0];
+    float *mem = &smem;
+    // unrolled for performance
+    if (local < 128) { mem[0] = mem[0] + mem[128]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <  64) { mem[0] = mem[0] + mem[ 64]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <  32) { mem[0] = mem[0] + mem[ 32]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <  16) { mem[0] = mem[0] + mem[ 16]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   8) { mem[0] = mem[0] + mem[  8]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   4) { mem[0] = mem[0] + mem[  4]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   2) { mem[0] = mem[0] + mem[  2]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   1) { mem[0] = mem[0] + mem[  1]; } tid.barrier.wait_with_tile_static_memory_fence();
+    // only 1 thread per tile does the inter tile communication
+    if (tid.local[0] == 0) {
+      // write to global buffer in this tiles
+      global_buffer_view[ tid.tile[0] ] = smem;
+    }
+  });
+  // 2nd pass reduction
+  std::vector<float> host_buffer(global_buffer);
+  *out = *std::max_element(host_buffer.begin(), host_buffer.end());
 }
 
 template <>
@@ -395,77 +377,58 @@ void caffe_gpu_dot<double>(const int n, const double* x, const double* y,
   double * out) {
   array_view<double, 1> xView(n, const_cast <double*>(x));
   array_view<double, 1> yView(n, const_cast <double*>(y));
-
-    // runtime sizes
-    unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
-    tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;   
-
-    // simultaneous live threads
-    const unsigned int thread_count = tile_count * TILE_SIZE;
-
-    // global buffer (return type)
-    concurrency::array<double,1> global_buffer(tile_count);
-    concurrency::array_view<double,1> global_buffer_view(global_buffer);
-
-    // configuration
-    concurrency::extent<1> extent(thread_count);
-
-    concurrency::parallel_for_each(
-        extent.tile<TILE_SIZE>(),	
-        [=] (concurrency::tiled_index<TILE_SIZE> tid) restrict(amp)
-    {
-        // shared tile buffer
-        tile_static double local_buffer[TILE_SIZE];
-
-        // indexes
-        int idx = tid.global[0];
-
-        // this threads's shared memory pointer
-        double& smem = local_buffer[ tid.local[0] ];
-
-        // initialize local buffer
-        smem = 0.0f;
-
-        // fold data into local buffer
-        while (idx < n)
-        {
-            // reduction of smem and X[idx] with results stored in smem
-
-            smem += xView[concurrency::index<1>(idx)] * yView[concurrency::index<1>(idx)];
-
-            // next chunk
-            idx += thread_count;
-        }
-
-        // synchronize
-        tid.barrier.wait_with_tile_static_memory_fence();
-
-        // reduce all values in this tile
-        
-        unsigned int local = tid.local[0];
-
-        double *mem = &smem;
-
-        // unrolled for performance
-        if (local < 128) { mem[0] = mem[0] + mem[128]; } tid.barrier.wait_with_tile_static_memory_fence();
-        if (local <  64) { mem[0] = mem[0] + mem[ 64]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <  32) { mem[0] = mem[0] + mem[ 32]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <  16) { mem[0] = mem[0] + mem[ 16]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <   8) { mem[0] = mem[0] + mem[  8]; } tid.barrier.wait_with_tile_static_memory_fence();    
-        if (local <   4) { mem[0] = mem[0] + mem[  4]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <   2) { mem[0] = mem[0] + mem[  2]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <   1) { mem[0] = mem[0] + mem[  1]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        // only 1 thread per tile does the inter tile communication
-        if (tid.local[0] == 0)
-        {
-            // write to global buffer in this tiles
-            global_buffer_view[ tid.tile[0] ] = smem;
-        }
-    });
-
-    // 2nd pass reduction
-    std::vector<double> host_buffer(global_buffer);
-    *out = *std::max_element(host_buffer.begin(), host_buffer.end());
+  // runtime sizes
+  unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
+  tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;
+  // simultaneous live threads
+  const unsigned int thread_count = tile_count * TILE_SIZE;
+  // global buffer (return type)
+  concurrency::array<double,1> global_buffer(tile_count);
+  concurrency::array_view<double,1> global_buffer_view(global_buffer);
+  // configuration
+  concurrency::extent<1> extent(thread_count);
+  concurrency::parallel_for_each(
+    extent.tile<TILE_SIZE>(),
+    [=] (concurrency::tiled_index<TILE_SIZE> tid) restrict(amp)
+  {
+    // shared tile buffer
+    tile_static double local_buffer[TILE_SIZE];
+    // indexes
+    int idx = tid.global[0];
+    // this threads's shared memory pointer
+    double& smem = local_buffer[ tid.local[0] ];
+    // initialize local buffer
+    smem = 0.0f;
+    // fold data into local buffer
+    while (idx < n) {
+      // reduction of smem and X[idx] with results stored in smem
+      smem += xView[concurrency::index<1>(idx)] * yView[concurrency::index<1>(idx)];
+      // next chunk
+      idx += thread_count;
+    }
+    // synchronize
+    tid.barrier.wait_with_tile_static_memory_fence();
+    // reduce all values in this tile
+    unsigned int local = tid.local[0];
+    double *mem = &smem;
+    // unrolled for performance
+    if (local < 128) { mem[0] = mem[0] + mem[128]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <  64) { mem[0] = mem[0] + mem[ 64]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <  32) { mem[0] = mem[0] + mem[ 32]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <  16) { mem[0] = mem[0] + mem[ 16]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   8) { mem[0] = mem[0] + mem[  8]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   4) { mem[0] = mem[0] + mem[  4]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   2) { mem[0] = mem[0] + mem[  2]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   1) { mem[0] = mem[0] + mem[  1]; } tid.barrier.wait_with_tile_static_memory_fence();
+    // only 1 thread per tile does the inter tile communication
+    if (tid.local[0] == 0) {
+      // write to global buffer in this tiles
+      global_buffer_view[ tid.tile[0] ] = smem;
+    }
+  });
+  // 2nd pass reduction
+  std::vector<double> host_buffer(global_buffer);
+  *out = *std::max_element(host_buffer.begin(), host_buffer.end());
 }
 
 template <>
@@ -524,7 +487,6 @@ void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
   const float beta, float* y) {
   const enum CBLAS_ORDER Order=CblasRowMajor;
   cblas_sgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
-  //ampblas_sgemv((AMPBLAS_TRANS)TransA, M, N, &alpha, const_cast<float*>(A), 0, N, const_cast<float*>(x), 0, 0, &beta, y, 0, 0);
 }
 
 template <>
@@ -533,7 +495,6 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   const double beta, double* y) {
   const enum CBLAS_ORDER Order=CblasRowMajor;
   cblas_dgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
-  //ampblas_dgemv((AMPBLAS_TRANS)TransA, M, N, &alpha, const_cast<double*>(A), 0, N, const_cast<double*>(x), 0, 0, &beta, y, 0, 0);
 }
 
 template <>
@@ -544,37 +505,6 @@ void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
   int ldb = (TransB == CblasNoTrans) ? N : K;
   AMPBLAS_TRANS ampTransA = noTrans;
   AMPBLAS_TRANS ampTransB = noTrans;
-  /*
-  if(TransA == CblasTrans)
-  {
-      ampTransA = trans;
-  }
-  if(TransA == CblasConjTrans)
-  {
-      ampTransA = conjugate;
-  }
-
-  if(TransB == CblasTrans)
-  {
-      ampTransB = trans;
-  }
-
-  if(TransB == CblasConjTrans)
-  {
-      ampTransB = conjugate;
-  }
-  printf("\nampblas M=%d, N=%d, K=%d, alpha=%f, beta=%f.\n", M, N, K, alpha, beta);
-  for(int i=0;i<6;i++)
-  {
-   printf("\nampblas A =%f \n",A[i]);
-  }
-  for(int i=0;i<12;i++)
-  {
-   printf("\nampblas B =%f \n",B[i]);
-  }
-  ampblas_sgemm(noTrans, noTrans, M, N, K, &alpha, const_cast<float*>(A),
-                lda, const_cast<float*>(B), ldb, &beta, C, N, 0, 0, 0);
- */
   cblas_sgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, N);
 }
 
@@ -585,162 +515,121 @@ void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
   // todo cpu version
   int lda = (TransA == CblasNoTrans) ? K : M;
   int ldb = (TransB == CblasNoTrans) ? N : K;
-  cblas_dgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, N); 
- // ampblas_dgemm((AMPBLAS_TRANS)TransA, (AMPBLAS_TRANS)TransB, M, N, K, &alpha, const_cast<double*>(A),lda, const_cast<double*>(B), ldb,&beta, C, N, 0, 0, 0);
+  cblas_dgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, N);
 }
 
 template <>
 void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
-
-    array_view<float, 1> xView(n, const_cast <float*>(x));
-
-    // runtime sizes
-    unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
-    tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;   
-
-    // simultaneous live threads
-    const unsigned int thread_count = tile_count * TILE_SIZE;
-
-    // global buffer (return type)
-    concurrency::array<float,1> global_buffer(tile_count);
-    concurrency::array_view<float,1> global_buffer_view(global_buffer);
-
-    // configuration
-    concurrency::extent<1> extent(thread_count);
-
-    concurrency::parallel_for_each(
-        extent.tile<TILE_SIZE>(),	
-        [=] (concurrency::tiled_index<TILE_SIZE> tid) restrict(amp)
-    {
-        // shared tile buffer
-        tile_static float local_buffer[TILE_SIZE];
-
-        // indexes
-        int idx = tid.global[0];
-
-        // this threads's shared memory pointer
-        float& smem = local_buffer[ tid.local[0] ];
-
-        // initialize local buffer
-        smem = 0.0f;
-
-        // fold data into local buffer
-        while (idx < n)
-        {
-            // reduction of smem and X[idx] with results stored in smem
-
-            smem += Concurrency::fast_math::fabs(xView[concurrency::index<1>(idx)]);
-
-            // next chunk
-            idx += thread_count;
-        }
-
-        // synchronize
-        tid.barrier.wait_with_tile_static_memory_fence();
-
-        // reduce all values in this tile
-        
-        unsigned int local = tid.local[0];
-
-        float *mem = &smem;
-
-        // unrolled for performance
-        if (local < 128) { mem[0] = mem[0] + mem[128]; } tid.barrier.wait_with_tile_static_memory_fence();
-        if (local <  64) { mem[0] = mem[0] + mem[ 64]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <  32) { mem[0] = mem[0] + mem[ 32]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <  16) { mem[0] = mem[0] + mem[ 16]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <   8) { mem[0] = mem[0] + mem[  8]; } tid.barrier.wait_with_tile_static_memory_fence();    
-        if (local <   4) { mem[0] = mem[0] + mem[  4]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <   2) { mem[0] = mem[0] + mem[  2]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <   1) { mem[0] = mem[0] + mem[  1]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        // only 1 thread per tile does the inter tile communication
-        if (tid.local[0] == 0)
-        {
-            // write to global buffer in this tiles
-            global_buffer_view[ tid.tile[0] ] = smem;
-        }
-    });
-
-    // 2nd pass reduction
-    std::vector<float> host_buffer(global_buffer);
-    *y = *std::max_element(host_buffer.begin(), host_buffer.end());
+  array_view<float, 1> xView(n, const_cast <float*>(x));
+  // runtime sizes
+  unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
+  tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;
+  // simultaneous live threads
+  const unsigned int thread_count = tile_count * TILE_SIZE;
+  // global buffer (return type)
+  concurrency::array<float,1> global_buffer(tile_count);
+  concurrency::array_view<float,1> global_buffer_view(global_buffer);
+  // configuration
+  concurrency::extent<1> extent(thread_count);
+  concurrency::parallel_for_each(
+    extent.tile<TILE_SIZE>(),
+    [=] (concurrency::tiled_index<TILE_SIZE> tid) restrict(amp)
+  {
+    // shared tile buffer
+    tile_static float local_buffer[TILE_SIZE];
+    // indexes
+    int idx = tid.global[0];
+    // this threads's shared memory pointer
+    float& smem = local_buffer[ tid.local[0] ];
+    // initialize local buffer
+    smem = 0.0f;
+    // fold data into local buffer
+    while (idx < n) {
+      // reduction of smem and X[idx] with results stored in smem
+      smem += Concurrency::fast_math::fabs(xView[concurrency::index<1>(idx)]);
+      // next chunk
+      idx += thread_count;
+    }
+    // synchronize
+    tid.barrier.wait_with_tile_static_memory_fence();
+    // reduce all values in this tile
+    unsigned int local = tid.local[0];
+    float *mem = &smem;
+    // unrolled for performance
+    if (local < 128) { mem[0] = mem[0] + mem[128]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <  64) { mem[0] = mem[0] + mem[ 64]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <  32) { mem[0] = mem[0] + mem[ 32]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <  16) { mem[0] = mem[0] + mem[ 16]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   8) { mem[0] = mem[0] + mem[  8]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   4) { mem[0] = mem[0] + mem[  4]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   2) { mem[0] = mem[0] + mem[  2]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   1) { mem[0] = mem[0] + mem[  1]; } tid.barrier.wait_with_tile_static_memory_fence();
+    // only 1 thread per tile does the inter tile communication
+    if (tid.local[0] == 0) {
+      // write to global buffer in this tiles
+      global_buffer_view[ tid.tile[0] ] = smem;
+    }
+  } );
+  // 2nd pass reduction
+  std::vector<float> host_buffer(global_buffer);
+  *y = *std::max_element(host_buffer.begin(), host_buffer.end());
 }
 
 template <>
 void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
-
-    array_view<double, 1> xView(n, const_cast <double*>(x));
-
-    // runtime sizes
-    unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
-    tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;   
-
-    // simultaneous live threads
-    const unsigned int thread_count = tile_count * TILE_SIZE;
-
-    // global buffer (return type)
-    concurrency::array<double,1> global_buffer(tile_count);
-    concurrency::array_view<double,1> global_buffer_view(global_buffer);
-
-    // configuration
-    concurrency::extent<1> extent(thread_count);
-
-    concurrency::parallel_for_each(
-        extent.tile<TILE_SIZE>(),	
-        [=] (concurrency::tiled_index<TILE_SIZE> tid) restrict(amp)
-    {
-        // shared tile buffer
-        tile_static double local_buffer[TILE_SIZE];
-
-        // indexes
-        int idx = tid.global[0];
-
-        // this threads's shared memory pointer
-        double& smem = local_buffer[ tid.local[0] ];
-
-        // initialize local buffer
-        smem = 0.0f;
-
-        // fold data into local buffer
-        while (idx < n)
-        {
-            // reduction of smem and X[idx] with results stored in smem
-
-            smem += Concurrency::fast_math::fabs(xView[concurrency::index<1>(idx)]);
-
-            // next chunk
-            idx += thread_count;
-        }
-
-        // synchronize
-        tid.barrier.wait_with_tile_static_memory_fence();
-
-        // reduce all values in this tile
-        
-        unsigned int local = tid.local[0];
-
-        double *mem = &smem;
-
-        // unrolled for performance
-        if (local < 128) { mem[0] = mem[0] + mem[128]; } tid.barrier.wait_with_tile_static_memory_fence();
-        if (local <  64) { mem[0] = mem[0] + mem[ 64]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <  32) { mem[0] = mem[0] + mem[ 32]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <  16) { mem[0] = mem[0] + mem[ 16]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <   8) { mem[0] = mem[0] + mem[  8]; } tid.barrier.wait_with_tile_static_memory_fence();    
-        if (local <   4) { mem[0] = mem[0] + mem[  4]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <   2) { mem[0] = mem[0] + mem[  2]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        if (local <   1) { mem[0] = mem[0] + mem[  1]; } tid.barrier.wait_with_tile_static_memory_fence(); 
-        // only 1 thread per tile does the inter tile communication
-        if (tid.local[0] == 0)
-        {
-            // write to global buffer in this tiles
-            global_buffer_view[ tid.tile[0] ] = smem;
-        }
-    });
-
-    // 2nd pass reduction
-    std::vector<double> host_buffer(global_buffer);
-    *y = *std::max_element(host_buffer.begin(), host_buffer.end());
+  array_view<double, 1> xView(n, const_cast <double*>(x));
+  // runtime sizes
+  unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
+  tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;
+  // simultaneous live threads
+  const unsigned int thread_count = tile_count * TILE_SIZE;
+  // global buffer (return type)
+  concurrency::array<double,1> global_buffer(tile_count);
+  concurrency::array_view<double,1> global_buffer_view(global_buffer);
+  // configuration
+  concurrency::extent<1> extent(thread_count);
+  concurrency::parallel_for_each(
+    extent.tile<TILE_SIZE>(),
+    [=] (concurrency::tiled_index<TILE_SIZE> tid) restrict(amp)
+  {
+    // shared tile buffer
+    tile_static double local_buffer[TILE_SIZE];
+    // indexes
+    int idx = tid.global[0];
+    // this threads's shared memory pointer
+    double& smem = local_buffer[ tid.local[0] ];
+    // initialize local buffer
+    smem = 0.0f;
+    // fold data into local buffer
+    while (idx < n) {
+      // reduction of smem and X[idx] with results stored in smem
+      smem += Concurrency::fast_math::fabs(xView[concurrency::index<1>(idx)]);
+      // next chunk
+      idx += thread_count;
+    }
+    // synchronize
+    tid.barrier.wait_with_tile_static_memory_fence();
+    // reduce all values in this tile
+    unsigned int local = tid.local[0];
+    double *mem = &smem;
+    // unrolled for performance
+    if (local < 128) { mem[0] = mem[0] + mem[128]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <  64) { mem[0] = mem[0] + mem[ 64]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <  32) { mem[0] = mem[0] + mem[ 32]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <  16) { mem[0] = mem[0] + mem[ 16]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   8) { mem[0] = mem[0] + mem[  8]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   4) { mem[0] = mem[0] + mem[  4]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   2) { mem[0] = mem[0] + mem[  2]; } tid.barrier.wait_with_tile_static_memory_fence();
+    if (local <   1) { mem[0] = mem[0] + mem[  1]; } tid.barrier.wait_with_tile_static_memory_fence();
+    // only 1 thread per tile does the inter tile communication
+    if (tid.local[0] == 0) {
+      // write to global buffer in this tiles
+      global_buffer_view[ tid.tile[0] ] = smem;
+    }
+  } );
+  // 2nd pass reduction
+  std::vector<double> host_buffer(global_buffer);
+  *y = *std::max_element(host_buffer.begin(), host_buffer.end());
 }
 
 void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
@@ -750,8 +639,7 @@ void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
 #define MAX 65536
 #define FACTOR 2053
 #define CONSTANT 13849
-float srnd_kernel(float &ri) restrict(amp)
-{
+float srnd_kernel(float &ri) restrict(amp){
   int temp;
   temp = (int)(ri / (float)MAX);
   ri = ri - temp*(float)MAX;
@@ -761,8 +649,7 @@ float srnd_kernel(float &ri) restrict(amp)
   return ri / (float)MAX;
 };
 
-double drnd_kernel(double &ri) restrict(amp)
-{
+double drnd_kernel(double &ri) restrict(amp){
   int temp;
   temp = (int)(ri / (double)MAX);
   ri = ri - temp*(double)MAX;
@@ -782,8 +669,7 @@ void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,floa
   {
     float seed = (float)idx[0] * (rnd % MAX);
     rView[idx] = srnd_kernel(seed) * (b - a) + a;
-  }
-  );
+  } );
   rView.synchronize();
 };
 
@@ -797,8 +683,7 @@ void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b,d
   {
     double seed = (double)idx[0] * (rnd % MAX);
     rView[idx] = drnd_kernel(seed) * (b - a) + a;
-  }
-  );
+  } );
   rView.synchronize();
 };
 
@@ -821,8 +706,7 @@ void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, floa
       rView[2 * idx] = V1 * sqrt(-2.0 * log(S) / S) * sigma + mu;
     if (2*idx[0] + 1 < N)
       rView[2 * idx + 1] = V2 * sqrt(-2.0 * log(S) / S) * sigma + mu;
-  }
-  );
+  } );
   rView.synchronize();
 }
 
@@ -846,8 +730,7 @@ void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, do
       rView[2 * idx] = V1 * sqrt(-2.0 * log(S) / S) * sigma + mu;
     if (2*idx[0] + 1 < N)
       rView[2 * idx + 1] = V2 * sqrt(-2.0 * log(S) / S) * sigma + mu;
-  }
-  );
+  } );
   rView.synchronize();
 }
 
