@@ -108,7 +108,7 @@ float Timer::MilliSeconds() {
 #else
     CUDA_CHECK(cudaEventElapsedTime(&elapsed_milliseconds_, start_gpu_,
                                     stop_gpu_));
-#endif //USE_CPPAMP
+#endif  // USE_CPPAMP
 #else
       NO_GPU;
 #endif

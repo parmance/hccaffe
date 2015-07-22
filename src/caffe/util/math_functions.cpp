@@ -91,8 +91,8 @@ void caffe_copy(const int N, const Dtype* X, Dtype* Y) {
       // NOLINT_NEXT_LINE(caffe/alt_fn)
       CUDA_CHECK(cudaMemcpy(Y, X, sizeof(Dtype) * N, cudaMemcpyDefault));
 #else
-       memcpy(Y, X, sizeof(Dtype) * N);  // NOLINT(caffe/alt_fn)
-#endif //USE_CPPAMP
+      memcpy(Y, X, sizeof(Dtype) * N);  // NOLINT(caffe/alt_fn)
+#endif  // USE_CPPAMP
 #else
       NO_GPU;
 #endif
@@ -250,7 +250,7 @@ void caffe_rng_uniform(const int n, const Dtype a, const Dtype b, Dtype* r) {
 }
 
 void caffe_rng_uniform(const int n, unsigned int* r) {
-  boost::uniform_int<> random_distribution(INT_MIN,INT_MAX);
+  boost::uniform_int<> random_distribution(INT_MIN, INT_MAX);
   boost::variate_generator<caffe::rng_t*, boost::uniform_int<> >
       variate_generator(caffe_rng(), random_distribution);
   for (int i = 0; i < n; ++i) {
