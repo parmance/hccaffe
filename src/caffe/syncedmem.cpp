@@ -109,25 +109,20 @@ void* SyncedMemory::mutable_gpu_data() {
 #endif
 }
 
-
-
-#else
+#else  // !USE_CPPAMP
 SyncedMemory::~SyncedMemory() {
   if (cpu_ptr_ && own_cpu_data_) {
     CaffeFreeHost(cpu_ptr_);
   }
-
 }
 
 inline void SyncedMemory::to_cpu() {
-  //std::cerr<<"to_cpu..........\n";
   switch (head_) {
   case UNINITIALIZED:
     CaffeMallocHost(&cpu_ptr_, size_);
     caffe_memset(size_, 0, cpu_ptr_);
     head_ = HEAD_AT_CPU;
     own_cpu_data_ = true;
-    //std::cerr<<"uninitialized........\n";
     break;
   case HEAD_AT_GPU:
 #ifndef CPU_ONLY
@@ -139,44 +134,29 @@ inline void SyncedMemory::to_cpu() {
 #else
     NO_GPU;
 #endif
-    //std::cerr<<"at gpu........\n";
     break;
   case HEAD_AT_CPU:
-
-    //std::cerr<<"at cpu........\n";
   case SYNCED:
-
-    //std::cerr<<"synced........\n";
     break;
   }
 }
 
 inline void SyncedMemory::to_gpu() {
-  //std::cerr<<"to_gpu..........\n";
-
-
 #ifndef CPU_ONLY
   switch (head_) {
   case UNINITIALIZED:
     CaffeMallocHost(&cpu_ptr_, size_);
     caffe_memset(size_, 0, cpu_ptr_);
     head_ = HEAD_AT_GPU;
-    //std::cerr<<"uninitialized........\n";
     break;
   case HEAD_AT_CPU:
     if (cpu_ptr_ == NULL) {
       CaffeMallocHost(&cpu_ptr_, size_);
     }
     head_ = SYNCED;
-
-    //std::cerr<<"at cpu........\n";
     break;
   case HEAD_AT_GPU:
-
-    //std::cerr<<"at gpu........\n";
   case SYNCED:
-
-    //std::cerr<<"at synced........\n";
     break;
   }
 #else
@@ -185,14 +165,11 @@ inline void SyncedMemory::to_gpu() {
 }
 
 const void* SyncedMemory::cpu_data() {
-  //std::cerr<<"cpu_data..........\n";
-
   to_cpu();
   return (const void*)cpu_ptr_;
 }
 
 void SyncedMemory::set_cpu_data(void* data) {
-  //std::cerr<<"set_cpu_data..........\n";
   CHECK(data);
   if (own_cpu_data_) {
     CaffeFreeHost(cpu_ptr_);
@@ -203,8 +180,6 @@ void SyncedMemory::set_cpu_data(void* data) {
 }
 
 const void* SyncedMemory::gpu_data() {
-
-  //std::cerr<<"gpu_data..........\n";
 #ifndef CPU_ONLY
   to_gpu();
   return (const void*)cpu_ptr_;
@@ -214,14 +189,12 @@ const void* SyncedMemory::gpu_data() {
 }
 
 void* SyncedMemory::mutable_cpu_data() {
-  //std::cerr<<"mutable_cpu_data..........\n";
   to_cpu();
   head_ = HEAD_AT_CPU;
   return cpu_ptr_;
 }
 
 void* SyncedMemory::mutable_gpu_data() {
- //std::cerr<<"mutable_gpu_data..........\n";
 #ifndef CPU_ONLY
   to_gpu();
   head_ = HEAD_AT_GPU;
@@ -231,10 +204,7 @@ void* SyncedMemory::mutable_gpu_data() {
 #endif
 }
 
-
 #endif
-
-
 
 }  // namespace caffe
 

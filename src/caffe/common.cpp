@@ -305,7 +305,7 @@ const char* curandGetErrorString(curandStatus_t error) {
   }
   return "Unknown curand status";
 }
-#endif //USE_CPPAMP
+#endif  // USE_CPPAMP
 #endif  // CPU_ONLY
 
 }  // namespace caffe
