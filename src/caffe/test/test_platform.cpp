@@ -53,5 +53,5 @@ TEST_F(PlatformTest, TestInitialization) {
 }
 
 }  // namespace caffe
-#endif  //USE_CPPAMP
+#endif  // USE_CPPAMP
 #endif  // CPU_ONLY

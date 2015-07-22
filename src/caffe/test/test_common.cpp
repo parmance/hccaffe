@@ -19,7 +19,7 @@ TEST_F(CommonTest, TestCublasHandlerGPU) {
   CUDA_CHECK(cudaGetDevice(&cuda_device_id));
   EXPECT_TRUE(Caffe::cublas_handle());
 }
-#endif//USE_CPPAMP
+#endif  // USE_CPPAMP
 #endif
 
 TEST_F(CommonTest, TestBrewMode) {

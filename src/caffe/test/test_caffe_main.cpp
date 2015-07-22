@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
   cudaGetDevice(&device);
   cout << "Current device id: " << device << endl;
   cudaGetDeviceProperties(&CAFFE_TEST_CUDA_PROP, device);
-#endif //USE_CPPAMP
+#endif   // USE_CPPAMP
 #endif
   // invoke the test.
   return RUN_ALL_TESTS();

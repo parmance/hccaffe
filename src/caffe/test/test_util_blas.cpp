@@ -1,10 +1,10 @@
 #ifndef CPU_ONLY
 #include <cstring>
-#include "gtest/gtest.h"
 #include "caffe/blob.hpp"
+#include "caffe/test/test_caffe_main.hpp"
 #include "caffe/util/device_alternate.hpp"
 #include "caffe/util/math_functions.hpp"
-#include "caffe/test/test_caffe_main.hpp"
+#include "gtest/gtest.h"
 
 namespace caffe {
 #ifndef USE_CPPAMP
