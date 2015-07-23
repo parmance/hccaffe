@@ -22,7 +22,6 @@ void BasePrefetchingDataLayer<Dtype>::Forward_gpu(
   }
   // Start a new prefetch thread
   CreatePrefetchThread();
-
 }
 
 INSTANTIATE_LAYER_GPU_FORWARD(BasePrefetchingDataLayer);

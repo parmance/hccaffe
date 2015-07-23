@@ -13,30 +13,28 @@ const float kBNLL_THRESHOLD = 50.;
 template <typename Dtype>
 void BNLLLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
                                    const vector<Blob<Dtype>*>& top) {
-    Dtype* bottom_data = const_cast <Dtype*>(bottom[0]->gpu_data());
-    Dtype* top_data = const_cast <Dtype*>(top[0]->mutable_gpu_data());
-    const int count = bottom[0]->count();
-    // NOLINT_NEXT_LINE(whitespace/operators)
-    BNLLForward(count, bottom_data, top_data);
+  Dtype* bottom_data = const_cast <Dtype*>(bottom[0]->gpu_data());
+  Dtype* top_data = const_cast <Dtype*>(top[0]->mutable_gpu_data());
+  const int count = bottom[0]->count();
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  BNLLForward(count, bottom_data, top_data);
 }
-
 
 template <typename Dtype>
 void BNLLLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
                                     const vector<bool>& propagate_down,
                                     const vector<Blob<Dtype>*>& bottom) {
-    if (propagate_down[0]) {
-        Dtype* bottom_data = const_cast <Dtype*>(bottom[0]->gpu_data());
-        Dtype* top_diff = const_cast <Dtype*>(top[0]->gpu_diff());
-        Dtype* bottom_diff = const_cast <Dtype*>(bottom[0]->mutable_gpu_diff());
-        const int count = bottom[0]->count();
-        // NOLINT_NEXT_LINE(whitespace/operators)
-        BNLLBackward(count, top_diff, bottom_data, bottom_diff);
-    }
+  if (propagate_down[0]) {
+    Dtype* bottom_data = const_cast <Dtype*>(bottom[0]->gpu_data());
+    Dtype* top_diff = const_cast <Dtype*>(top[0]->gpu_diff());
+    Dtype* bottom_diff = const_cast <Dtype*>(bottom[0]->mutable_gpu_diff());
+    const int count = bottom[0]->count();
+    // NOLINT_NEXT_LINE(whitespace/operators)
+    BNLLBackward(count, top_diff, bottom_data, bottom_diff);
+  }
 }
 
 INSTANTIATE_LAYER_GPU_FUNCS(BNLLLayer);
 
-
 }  // namespace caffe
-#endif
+#endif  // USE_CPPAMP
