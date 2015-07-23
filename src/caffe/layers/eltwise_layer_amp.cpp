@@ -7,15 +7,14 @@
 #ifdef USE_CPPAMP
 
 template <typename Dtype>
-void MaxForward(const int N, Dtype* a, Dtype* b, const int blob_idx, Dtype* y, int* mask);
+void MaxForward(const int N, Dtype* a, Dtype* b, const int blob_idx, Dtype* y,
+    int* mask);
 
 template <typename Dtype>
-void MaxBackward(const int N, Dtype* top_diff, int blob_idx, int* mask, Dtype* bottom_diff);
-
-
+void MaxBackward(const int N, Dtype* top_diff, int blob_idx, int* mask,
+    Dtype* bottom_diff);
 
 namespace caffe {
-
 
 template <typename Dtype>
 void EltwiseLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
@@ -33,9 +32,9 @@ void EltwiseLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     break;
   case EltwiseParameter_EltwiseOp_SUM:
     caffe_gpu_set(count, Dtype(0.), top_data);
-    // TODO(shelhamer) does cuBLAS optimize to sum for coeff = 1?
     for (int i = 0; i < bottom.size(); ++i) {
-      caffe_gpu_axpy(count, coeffs_[i], const_cast <Dtype*>(bottom[i]->gpu_data()), top_data);
+      caffe_gpu_axpy(count, coeffs_[i],
+          const_cast <Dtype*>(bottom[i]->gpu_data()), top_data);
     }
     break;
   case EltwiseParameter_EltwiseOp_MAX:
@@ -106,4 +105,4 @@ INSTANTIATE_LAYER_GPU_FUNCS(EltwiseLayer);
 
 }  // namespace caffe
 
-#endif  //USE_CPPAMP
+#endif  // USE_CPPAMP
