@@ -10,9 +10,8 @@ template <typename Dtype>
 void SigmoidForward(const int N, Dtype* in, Dtype* out);
 
 template <typename Dtype>
-void SigmoidBackward(const int N, Dtype* in_diff, Dtype* out_data, Dtype* out_diff);
-
-
+void SigmoidBackward(const int N, Dtype* in_diff, Dtype* out_data,
+    Dtype* out_diff);
 
 namespace caffe {
 
@@ -42,6 +41,5 @@ void SigmoidLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
 
 INSTANTIATE_LAYER_GPU_FUNCS(SigmoidLayer);
 
-
 }  // namespace caffe
-#endif  //USE_CPPAMP
+#endif  // USE_CPPAMP
