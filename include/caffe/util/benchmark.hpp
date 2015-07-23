@@ -34,7 +34,7 @@ class Timer {
 #else
   boost::posix_time::ptime start_gpu_;
   boost::posix_time::ptime stop_gpu_;
-#endif // USE_CPPAMP
+#endif  // USE_CPPAMP
 #endif
   boost::posix_time::ptime start_cpu_;
   boost::posix_time::ptime stop_cpu_;

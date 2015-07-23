@@ -96,7 +96,7 @@ inline int CAFFE_GET_BLOCKS(const int N) {
 }
 
 }  // namespace caffe
-#endif  //USE_CPPAMP
+#endif  // USE_CPPAMP
 #endif  // CPU_ONLY
 
 #endif  // CAFFE_UTIL_DEVICE_ALTERNATE_H_
