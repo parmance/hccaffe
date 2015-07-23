@@ -67,9 +67,12 @@ void ContrastiveLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
           static_cast<Dtype>(bottom[0]->num());
       // NOLINT_NEXT_LINE(whitespace/operators)
       CLLForward(count, channels, margin, alpha, bottom[2]->count(),
-          const_cast <Dtype*>(bottom[2]->gpu_data()),  // pair similarity 0 or 1
-          const_cast <Dtype*>(diff_.gpu_data()),  // the cached eltwise difference between a and b
-          const_cast <Dtype*>(dist_sq_.gpu_data()),  // the cached square distance between a and b
+          const_cast <Dtype*>(bottom[2]->gpu_data()),
+          // pair similarity 0 or 1
+          const_cast <Dtype*>(diff_.gpu_data()),
+          // the cached eltwise difference between a and b
+          const_cast <Dtype*>(dist_sq_.gpu_data()),
+          // the cached square distance between a and b
           bottom[i]->mutable_gpu_diff());
     }
   }
@@ -79,4 +82,4 @@ INSTANTIATE_LAYER_GPU_FUNCS(ContrastiveLossLayer);
 
 }  // namespace caffe
 
-#endif  //USE_CPPAMP
+#endif  // USE_CPPAMP
