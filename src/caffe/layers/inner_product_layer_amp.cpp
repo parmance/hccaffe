@@ -55,4 +55,4 @@ INSTANTIATE_LAYER_GPU_FUNCS(InnerProductLayer);
 
 }  // namespace caffe
 
-#endif  //USE_CPPAMP
+#endif  // USE_CPPAMP

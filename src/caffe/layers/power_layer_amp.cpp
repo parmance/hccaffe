@@ -77,4 +77,4 @@ INSTANTIATE_LAYER_GPU_FUNCS(PowerLayer);
 
 }  // namespace caffe
 
-#endif  //USE_CPPAMP
+#endif  // USE_CPPAMP

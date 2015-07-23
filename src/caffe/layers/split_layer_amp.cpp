@@ -37,4 +37,4 @@ INSTANTIATE_LAYER_GPU_FUNCS(SplitLayer);
 
 }  // namespace caffe
 
-#endif  //USE_CPPAMP
+#endif  // USE_CPPAMP
