@@ -486,16 +486,40 @@ void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const float alpha, const float* A, const float* x,
   const float beta, float* y) {
   const enum CBLAS_ORDER Order=CblasRowMajor;
-  cblas_sgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
+  AMPBLAS_TRANS ampTransA = trans;
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = noTrans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+  amp.ampblas_sgemv(ampTransA, N, M, &alpha, const_cast<float*>(A), 0, N, const_cast<float*>(x), 0, 1, &beta, y, 0, 1);
 }
+
 
 template <>
 void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const double alpha, const double* A, const double* x,
   const double beta, double* y) {
+  
   const enum CBLAS_ORDER Order=CblasRowMajor;
-  cblas_dgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
+  AMPBLAS_TRANS ampTransA = trans;
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = noTrans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+  //cblas_sgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
+  amp.ampblas_dgemv(ampTransA, N, M, &alpha, const_cast<double*>(A), 0, N, const_cast<double*>(x), 0, 1, &beta, y, 0, 1);
 }
+
 
 template <>
 void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
@@ -505,17 +529,59 @@ void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
   int ldb = (TransB == CblasNoTrans) ? N : K;
   AMPBLAS_TRANS ampTransA = noTrans;
   AMPBLAS_TRANS ampTransB = noTrans;
-  cblas_sgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, N);
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = trans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+
+  if(TransB == CblasTrans)
+  {
+      ampTransB = trans;
+  }
+
+  if(TransB == CblasConjTrans)
+  {
+      ampTransB = conjugate;
+  }
+  amp.ampblas_sgemm(ampTransB, ampTransA, N, M, K, &alpha, const_cast<float*>(B),
+                ldb, const_cast<float*>(A), lda, &beta, C, N, 0, 0, 0);
 }
 
 template <>
 void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
   const CBLAS_TRANSPOSE TransB, const int M, const int N, const int K,
   const double alpha, const double* A, const double* B, const double beta, double* C) {
-  // todo cpu version
-  int lda = (TransA == CblasNoTrans) ? K : M;
+   int lda = (TransA == CblasNoTrans) ? K : M;
   int ldb = (TransB == CblasNoTrans) ? N : K;
-  cblas_dgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, N);
+  AMPBLAS_TRANS ampTransA = noTrans;
+  AMPBLAS_TRANS ampTransB = noTrans;
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = trans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+
+  if(TransB == CblasTrans)
+  {
+      ampTransB = trans;
+  }
+
+  if(TransB == CblasConjTrans)
+  {
+      ampTransB = conjugate;
+  }
+  amp.ampblas_dgemm(ampTransB, ampTransA, N, M, K, &alpha, const_cast<double*>(B),
+                ldb, const_cast<double*>(A), lda, &beta, C, N, 0, 0, 0);
+
 }
 
 template <>
