@@ -292,12 +292,14 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_bias(Dtype* bias,
 
 #ifdef USE_CPPAMP
 template <typename Dtype>
-void BaseConvolutionLayer<Dtype>::forward_gpu_gemm2(int N1,int N2,const Dtype* input,
-    const Dtype* weights, Dtype* output, bool skip_im2col) {
+void BaseConvolutionLayer<Dtype>::forward_gpu_gemm2(int N1, int N2,
+    const Dtype* input, const Dtype* weights, Dtype* output,
+    bool skip_im2col) {
   const Dtype* col_buff = input;
   if (!is_1x1_) {
     if (!skip_im2col) {
-      conv_im2col_gpu2(N1,col_buffer_.count(),input, col_buffer_.mutable_gpu_data());
+      conv_im2col_gpu2(N1, col_buffer_.count(), input,
+          col_buffer_.mutable_gpu_data());
     }
     col_buff = col_buffer_.gpu_data();
   }
@@ -310,8 +312,8 @@ void BaseConvolutionLayer<Dtype>::forward_gpu_gemm2(int N1,int N2,const Dtype* i
 }
 
 template <typename Dtype>
-void BaseConvolutionLayer<Dtype>::backward_gpu_gemm2(int N1,int N2,const Dtype* output,
-    const Dtype* weights, Dtype* input) {
+void BaseConvolutionLayer<Dtype>::backward_gpu_gemm2(int N1, int N2,
+    const Dtype* output, const Dtype* weights, Dtype* input) {
   Dtype* col_buff = col_buffer_.mutable_gpu_data();
   if (is_1x1_) {
     col_buff = input;
@@ -323,16 +325,17 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_gemm2(int N1,int N2,const Dtype* 
         (Dtype)0., col_buff + col_offset_ * g);
   }
   if (!is_1x1_) {
-    conv_col2im_gpu2(col_buffer_.count(),N2,col_buff, input);
+    conv_col2im_gpu2(col_buffer_.count(), N2, col_buff, input);
   }
 }
 
 template <typename Dtype>
-void BaseConvolutionLayer<Dtype>::weight_gpu_gemm2(int N1,int N2,const Dtype* input,
-    const Dtype* output, Dtype* weights) {
+void BaseConvolutionLayer<Dtype>::weight_gpu_gemm2(int N1, int N2,
+    const Dtype* input, const Dtype* output, Dtype* weights) {
   const Dtype* col_buff = input;
   if (!is_1x1_) {
-    conv_im2col_gpu2(N1,col_buffer_.count(),input, col_buffer_.mutable_gpu_data());
+    conv_im2col_gpu2(N1, col_buffer_.count(), input,
+        col_buffer_.mutable_gpu_data());
     col_buff = col_buffer_.gpu_data();
   }
   for (int g = 0; g < group_; ++g) {
