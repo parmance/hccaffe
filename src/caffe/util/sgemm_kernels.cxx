@@ -585,7 +585,7 @@ ampblasStatus gemm_NoTransA(Concurrency::accelerator_view &accl_view,
     {
 #define TILESIZE 16
 #define MICROTILESIZE 2
-        cout<<"\n MICRO NBK 16 2"<<endl;
+        //cout<<"\n MICRO NBK 16 2"<<endl;
         Concurrency::extent<2> grdExt(((N >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1), ((M >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1));
         Concurrency::tiled_extent<TILESIZE, TILESIZE> t_ext(grdExt);
 
@@ -895,7 +895,7 @@ ampblasStatus gemm_NoTransA_d(Concurrency::accelerator_view &accl_view,
     {
 #define TILESIZE 16
 #define MICROTILESIZE 2
-        cout << "\n MICRO NBK 16 2" << endl;
+        //cout << "\n MICRO NBK 16 2" << endl;
         Concurrency::extent<2> grdExt(((N >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1), ((M >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1));
         Concurrency::tiled_extent<TILESIZE, TILESIZE> t_ext(grdExt);
 
@@ -1299,7 +1299,7 @@ ampblasStatus gemm_NoTransB(Concurrency::accelerator_view &accl_view,
     {
 #define TILESIZE 16
 #define MICROTILESIZE 2
-        cout<<"\n MICRO NBK 16 2"<<endl;
+        //cout<<"\n MICRO NBK 16 2"<<endl;
         Concurrency::extent<2> grdExt(((N >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1), ((M >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1));
         Concurrency::tiled_extent<TILESIZE, TILESIZE> t_ext(grdExt);
 
@@ -1704,7 +1704,7 @@ ampblasStatus gemm_NoTransB_d(Concurrency::accelerator_view &accl_view,
     {
 #define TILESIZE 16
 #define MICROTILESIZE 2
-        cout << "\n MICRO NBK 16 2" << endl;
+        //cout << "\n MICRO NBK 16 2" << endl;
         Concurrency::extent<2> grdExt(((N >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1), ((M >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1));
         Concurrency::tiled_extent<TILESIZE, TILESIZE> t_ext(grdExt);
 
@@ -2898,7 +2898,7 @@ ampblasStatus gemm_NoTransA(Concurrency::accelerator_view &accl_view,
     {
 #define TILESIZE 16
 #define MICROTILESIZE 2
-        cout<<"\n MICRO NBK 16 2"<<endl;
+        //cout<<"\n MICRO NBK 16 2"<<endl;
         Concurrency::extent<3> grdExt(batchSize,((N >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1), ((M >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1));
         Concurrency::tiled_extent<1, TILESIZE, TILESIZE> t_ext(grdExt);
 
@@ -3212,7 +3212,7 @@ ampblasStatus gemm_NoTransA_d(Concurrency::accelerator_view &accl_view,
     {
 #define TILESIZE 16
 #define MICROTILESIZE 2
-        cout << "\n MICRO NBK 16 2" << endl;
+        //cout << "\n MICRO NBK 16 2" << endl;
         Concurrency::extent<3> grdExt(batchSize, ((N >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1), ((M >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1));
         Concurrency::tiled_extent<1, TILESIZE, TILESIZE> t_ext(grdExt);
 
@@ -3622,7 +3622,7 @@ ampblasStatus gemm_NoTransB(Concurrency::accelerator_view &accl_view,
     {
 #define TILESIZE 16
 #define MICROTILESIZE 2
-        cout<<"\n MICRO NBK 16 2"<<endl;
+        //cout<<"\n MICRO NBK 16 2"<<endl;
         Concurrency::extent<3> grdExt(batchSize,((N >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1), ((M >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1));
         Concurrency::tiled_extent<1, TILESIZE, TILESIZE> t_ext(grdExt);
 
@@ -4033,7 +4033,7 @@ ampblasStatus gemm_NoTransB_d(Concurrency::accelerator_view &accl_view,
     {
 #define TILESIZE 16
 #define MICROTILESIZE 2
-        cout << "\n MICRO NBK 16 2" << endl;
+        //cout << "\n MICRO NBK 16 2" << endl;
         Concurrency::extent<3> grdExt(batchSize, ((N >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1), ((M >> 1) + (TILESIZE - 1)) & ~(TILESIZE - 1));
         Concurrency::tiled_extent<1, TILESIZE, TILESIZE> t_ext(grdExt);
 
