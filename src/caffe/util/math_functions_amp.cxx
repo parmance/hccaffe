@@ -729,11 +729,12 @@ template <>
 void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,float* r) {
   array_view<float, 1> rView(N, r);
   int rnd = (int)((long)r);
+  int coefficient = (rnd % MAX);
   parallel_for_each(
     rView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
-    float seed = (float)idx[0] * (rnd % MAX);
+    float seed = (float)idx[0] * coefficient;
     rView[idx] = srnd_kernel(seed) * (b - a) + a;
   } );
   rView.synchronize();
@@ -743,11 +744,12 @@ template <>
 void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b,double* r) {
   array_view<double, 1> rView(N, r);
   int rnd = (int)((long)r);
+  int coefficient = (rnd % MAX);
   parallel_for_each(
     rView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
-    double seed = (double)idx[0] * (rnd % MAX);
+    double seed = (double)idx[0] * coefficient;
     rView[idx] = drnd_kernel(seed) * (b - a) + a;
   } );
   rView.synchronize();
@@ -757,21 +759,23 @@ template <>
 void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, float* r) {
   array_view<float, 1> rView(N, r);
   int rnd = (int)((long)r);
+  int coefficient = (rnd % MAX);
   parallel_for_each(
     rView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
-    float seed = (float)idx[0] * (rnd % MAX);
+    float seed = (float)idx[0] * coefficient;
     float V1 = 0.0, V2 = 0.0, S=0.0;
     do {
       V1 = 2 * srnd_kernel(seed) - 1;
       V2 = 2 * srnd_kernel(seed) - 1;
       S = V1 * V1 + V2 * V2;
     } while ((S >= 1.0) || (S == 0.0));
+	float temp = sqrt(-2.0 * log(S) / S) * sigma ;
     if (2 * idx[0] < N)
-      rView[2 * idx] = V1 * sqrt(-2.0 * log(S) / S) * sigma + mu;
+      rView[2 * idx] = V1 * temp + mu;
     if (2*idx[0] + 1 < N)
-      rView[2 * idx + 1] = V2 * sqrt(-2.0 * log(S) / S) * sigma + mu;
+      rView[2 * idx + 1] = V2 * temp + mu;
   } );
   rView.synchronize();
 }
@@ -781,21 +785,23 @@ template <>
 void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, double* r) {
   array_view<double, 1> rView(N, r);
   int rnd = (int)((long)r);
+  int coefficient = (rnd % MAX);
   parallel_for_each(
     rView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
-    double seed = (double)idx[0] * (rnd % MAX);
+    double seed = (double)idx[0] * coefficient;
     double V1 = 0.0, V2 = 0.0, S=0.0;
     do {
       V1 = 2 * drnd_kernel(seed) - 1;
       V2 = 2 * drnd_kernel(seed) - 1;
       S = V1 * V1 + V2 * V2;
     } while ((S >= 1.0) || (S == 0.0));
+	double temp = sqrt(-2.0 * log(S) / S) * sigma ;
     if (2 * idx[0] < N)
-      rView[2 * idx] = V1 * sqrt(-2.0 * log(S) / S) * sigma + mu;
+      rView[2 * idx] = V1 * temp + mu;
     if (2*idx[0] + 1 < N)
-      rView[2 * idx + 1] = V2 * sqrt(-2.0 * log(S) / S) * sigma + mu;
+      rView[2 * idx + 1] = V2 * temp + mu;
   } );
   rView.synchronize();
 }
