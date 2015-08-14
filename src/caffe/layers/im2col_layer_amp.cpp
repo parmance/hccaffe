@@ -15,9 +15,12 @@ void Im2colLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   for (int n = 0; n < bottom[0]->num(); ++n) {
     im2col_gpu2(bottom[0]->count()-bottom[0]->offset(n),
         top[0]->count()-top[0]->offset(n),
-        bottom_data + bottom[0]->offset(n), channels_, height_,
-        width_, kernel_h_, kernel_w_, pad_h_, pad_w_,
-        stride_h_, stride_w_, top_data + top[0]->offset(n));
+        bottom_data, bottom[0]->offset(n), channels_,
+        height_, width_,
+        kernel_h_, kernel_w_,
+        pad_h_, pad_w_,
+        stride_h_, stride_w_,
+        top_data, top[0]->offset(n));
   }
 }
 

@@ -9,13 +9,14 @@
 #include "amp_math.h"
 using namespace Concurrency;
 template <typename Dtype>
-void im2col_amp_kernel2(int N1,int N2,const int N, Dtype* data_im,
-  const int height, const int width, const int kernel_h, const int kernel_w,
-  const int pad_h, const int pad_w,
-  const int stride_h, const int stride_w,
-  const int height_col, const int width_col,
-  Dtype* data_col) ;
-
+void im2col_amp_kernel2(int N1, int N2, const int N,
+    Dtype* data_im, const int im_offset,
+    const int height, const int width,
+    const int kernel_h, const int kernel_w,
+    const int pad_h, const int pad_w,
+    const int stride_h, const int stride_w,
+    const int height_col, const int width_col,
+    Dtype* data_col, const int col_offset);
 
 template <typename Dtype>
 void im2col_amp_kernel(const int N, Dtype* data_im,
@@ -26,7 +27,7 @@ void im2col_amp_kernel(const int N, Dtype* data_im,
   Dtype* data_col) ;
 
 template <typename Dtype>
- void col2im_amp_kernel2(int N1,int N2,const int N, Dtype* data_col,
+ void col2im_amp_kernel2(int N1, int N2,const int N, Dtype* data_col,
   const int height, const int width, const int channels,
   const int patch_h, const int patch_w,
   const int pad_h, const int pad_w,
@@ -44,20 +45,23 @@ template <typename Dtype>
   Dtype* data_im) ;
 
 template <>
-void im2col_amp_kernel2(int N1, int N2,const int N, float* data_im,
-  const int height, const int width, const int kernel_h, const int kernel_w,
-  const int pad_h, const int pad_w,
-  const int stride_h, const int stride_w,
-  const int height_col, const int width_col,
-  float* data_col) {
+void im2col_amp_kernel2(int N1, int N2, const int N,
+    float* data_im, const int im_offset,
+    const int height, const int width,
+    const int kernel_h, const int kernel_w,
+    const int pad_h, const int pad_w,
+    const int stride_h, const int stride_w,
+    const int height_col, const int width_col,
+    float* data_col, const int col_offset) {
 
-  array_view<float, 1> data_imView(N1, data_im);
-  array_view<float, 1> data_colView(N2, data_col);
+  //array_view<float, 1> data_imView(N1, data_im);
+  //array_view<float, 1> data_colView(N2, data_col);
+  Concurrency::array_view<float, 1> im =
+    *((Concurrency::array_view<float, 1>*)(data_im));
+  Concurrency::array_view<float, 1> col =
+    *((Concurrency::array_view<float, 1>*)(data_col));
   extent<1> e(N);
-  parallel_for_each(
-    e,
-    [=](index<1> idx) restrict(amp)
-  {
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
     int w_out = idx[0] % width_col;
     int h_index = idx[0] / width_col;
     int h_out = h_index % height_col;
@@ -73,16 +77,56 @@ void im2col_amp_kernel2(int N1, int N2,const int N, float* data_im,
       for (int j = 0; j < kernel_w; ++j) {
         int h = h_in + i;
         int w = w_in + j;
-        data_colView[data_col_num] = (h >= 0 && w >= 0 && h < height && w < width) ?
-          data_imView[data_im_num + i * width + j] : 0;
+        col[col_offset + data_col_num] =
+          (h >= 0 && w >= 0 && h < height && w < width) ?
+            im[im_offset + data_im_num + i * width + j] : 0;
         data_col_num += height_col * width_col;
       }
     }
-  }
-  );
-  data_colView.synchronize();
+  } );
+  //data_colView.synchronize();
 }
 
+template <>
+void im2col_amp_kernel2(int N1, int N2, const int N,
+    double* data_im, const int im_offset,
+    const int height, const int width,
+    const int kernel_h, const int kernel_w,
+    const int pad_h, const int pad_w,
+    const int stride_h, const int stride_w,
+    const int height_col, const int width_col,
+    double* data_col, const int col_offset) {
+
+  Concurrency::array_view<double, 1> im =
+    *((Concurrency::array_view<double, 1>*)(data_im));
+  Concurrency::array_view<double, 1> col =
+    *((Concurrency::array_view<double, 1>*)(data_col));
+  extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+    int w_out = idx[0] % width_col;
+    int h_index = idx[0] / width_col;
+    int h_out = h_index % height_col;
+    int channel_in = h_index / height_col;
+    int channel_out = channel_in * kernel_h * kernel_w;
+    int h_in = h_out * stride_h - pad_h;
+    int w_in = w_out * stride_w - pad_w;
+    int data_col_num = 0;
+    data_col_num += (channel_out * height_col + h_out) * width_col + w_out;
+    int data_im_num = 0;
+    data_im_num += (channel_in * height + h_in) * width + w_in;
+    for (int i = 0; i < kernel_h; ++i) {
+      for (int j = 0; j < kernel_w; ++j) {
+        int h = h_in + i;
+        int w = w_in + j;
+        col[col_offset + data_col_num] =
+          (h >= 0 && w >= 0 && h < height && w < width) ?
+            im[im_offset + data_im_num + i * width + j] : 0;
+        data_col_num += height_col * width_col;
+      }
+    }
+  } );
+  //data_colView.synchronize();
+}
 
 template <>
 void im2col_amp_kernel(const int N, float* data_im,
@@ -123,7 +167,7 @@ void im2col_amp_kernel(const int N, float* data_im,
   data_colView.synchronize();
 }
 template <>
- void col2im_amp_kernel2(int N1,int N2,const int N, float* data_col,
+ void col2im_amp_kernel2(int N1, int N2,const int N, float* data_col,
   const int height, const int width, const int channels,
   const int patch_h, const int patch_w,
   const int pad_h, const int pad_w,
@@ -201,46 +245,6 @@ template <>
    data_imView.synchronize();
     
 }
-template <>
-void im2col_amp_kernel2(int N1,int N2,const int N, double* data_im,
-  const int height, const int width, const int kernel_h, const int kernel_w,
-  const int pad_h, const int pad_w,
-  const int stride_h, const int stride_w,
-  const int height_col, const int width_col,
-  double* data_col) {
-
-  array_view<double, 1> data_imView(N1, data_im);
-  array_view<double, 1> data_colView(N2, data_col);
-  extent<1>  e(N);
-  parallel_for_each(
-    e,
-    [=](index<1> idx) restrict(amp)
-  {
-    int w_out = idx[0] % width_col;
-    int h_index = idx[0] / width_col;
-    int h_out = h_index % height_col;
-    int channel_in = h_index / height_col;
-    int channel_out = channel_in * kernel_h * kernel_w;
-    int h_in = h_out * stride_h - pad_h;
-    int w_in = w_out * stride_w - pad_w;
-    int data_col_num = 0;
-    data_col_num += (channel_out * height_col + h_out) * width_col + w_out;
-    int data_im_num = 0;
-    data_im_num += (channel_in * height + h_in) * width + w_in;
-    for (int i = 0; i < kernel_h; ++i) {
-      for (int j = 0; j < kernel_w; ++j) {
-        int h = h_in + i;
-        int w = w_in + j;
-        data_colView[data_col_num] = (h >= 0 && w >= 0 && h < height && w < width) ?
-          data_imView[data_im_num + i * width + j] : 0;
-        data_col_num += height_col * width_col;
-      }
-    }
-  }
-  );
-  data_colView.synchronize();
-}
-
 
 template <>
 void im2col_amp_kernel(const int N, double* data_im,

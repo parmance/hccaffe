@@ -9,12 +9,14 @@
 
 #ifdef USE_CPPAMP
 template <typename Dtype>
-void im2col_amp_kernel2(int N1, int N2, const int N, Dtype* data_im,
-  const int height, const int width, const int kernel_h, const int kernel_w,
-  const int pad_h, const int pad_w,
-  const int stride_h, const int stride_w,
-  const int height_col, const int width_col,
-  Dtype* data_col);
+void im2col_amp_kernel2(int N1, int N2, const int N,
+    Dtype* data_im, const int im_offset,
+    const int height, const int width,
+    const int kernel_h, const int kernel_w,
+    const int pad_h, const int pad_w,
+    const int stride_h, const int stride_w,
+    const int height_col, const int width_col,
+    Dtype* data_col, const int col_offset);
 
 template <typename Dtype>
 void im2col_amp_kernel(const int N, Dtype* data_im,
@@ -44,11 +46,14 @@ void col2im_amp_kernel(const int N, Dtype* data_col,
 
 namespace caffe {
 template <typename Dtype>
-void im2col_gpu2(int N1, int N2, const Dtype* data_im, const int channels,
-    const int height, const int width, const int kernel_h, const int kernel_w,
+void im2col_gpu2(int N1, int N2,
+    const Dtype* data_im, const int im_offset,
+    const int channels,
+    const int height, const int width,
+    const int kernel_h, const int kernel_w,
     const int pad_h, const int pad_w,
     const int stride_h, const int stride_w,
-    Dtype* data_col) {
+    Dtype* data_col, const int col_offset) {
   // We are going to launch channels * height_col * width_col kernels, each
   // kernel responsible for copying a single-channel grid.
   int height_col = (height + 2 * pad_h - kernel_h) / stride_h + 1;
@@ -56,10 +61,14 @@ void im2col_gpu2(int N1, int N2, const Dtype* data_im, const int channels,
   int num_kernels = channels * height_col * width_col;
   Dtype* data_im_amp = const_cast<Dtype*>(data_im);
   // NOLINT_NEXT_LINE(whitespace/operators)
-  im2col_amp_kernel2(N1, N2,
-      num_kernels, data_im_amp, height, width, kernel_h, kernel_w, pad_h,
-      pad_w, stride_h, stride_w, height_col,
-      width_col, data_col);
+  im2col_amp_kernel2(N1, N2, num_kernels,
+      data_im_amp, im_offset,
+      height, width,
+      kernel_h, kernel_w,
+      pad_h, pad_w,
+      stride_h, stride_w,
+      height_col, width_col,
+      data_col, col_offset);
 }
 
 template <typename Dtype>
@@ -87,18 +96,26 @@ template void im2col_gpu<float>(const float* data_im, const int channels,
     const int height, const int width, const int kernel_h, const int kernel_w,
     const int pad_h, const int pad_w, const int stride_h, const int stride_w,
     float* data_col);
-template void im2col_gpu2<float>(int N1, int N2, const float* data_im,
-    const int channels, const int height, const int width, const int kernel_h,
-    const int kernel_w, const int pad_h, const int pad_w, const int stride_h,
-    const int stride_w, float* data_col);
+template void im2col_gpu2<float>(int N1, int N2, 
+    const float* data_im, const int im_offset,
+    const int channels,
+    const int height, const int width,
+    const int kernel_h, const int kernel_w,
+    const int pad_h, const int pad_w,
+    const int stride_h, const int stride_w,
+    float* data_col, const int col_offset);
 template void im2col_gpu<double>(const double* data_im, const int channels,
     const int height, const int width, const int kernel_h, const int kernel_w,
     const int pad_h, const int pad_w, const int stride_h, const int stride_w,
     double* data_col);
-template void im2col_gpu2<double>(int N1, int N2, const double* data_im,
-    const int channels, const int height, const int width, const int kernel_h,
-    const int kernel_w, const int pad_h, const int pad_w, const int stride_h,
-    const int stride_w, double* data_col);
+template void im2col_gpu2<double>(int N1, int N2,
+    const double* data_im, const int im_offset,
+    const int channels,
+    const int height, const int width,
+    const int kernel_h, const int kernel_w,
+    const int pad_h, const int pad_w,
+    const int stride_h, const int stride_w,
+    double* data_col, const int col_offset);
 
 template <typename Dtype>
 void col2im_gpu2(int N1, int N2, const Dtype* data_col, const int channels,
