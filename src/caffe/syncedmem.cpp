@@ -110,9 +110,13 @@ void* SyncedMemory::mutable_gpu_data() {
 }
 
 #else  // !USE_CPPAMP
+
 SyncedMemory::~SyncedMemory() {
   if (cpu_ptr_ && own_cpu_data_) {
     CaffeFreeHost(cpu_ptr_);
+  }
+  if (gpu_ptr_) {
+    caffe_amp_free(gpu_ptr_, element_size_);
   }
 }
 
@@ -125,15 +129,12 @@ inline void SyncedMemory::to_cpu() {
     own_cpu_data_ = true;
     break;
   case HEAD_AT_GPU:
-#ifndef CPU_ONLY
     if (cpu_ptr_ == NULL) {
       CaffeMallocHost(&cpu_ptr_, size_);
       own_cpu_data_ = true;
     }
+    caffe_amp_D2H(gpu_ptr_, cpu_ptr_, element_size_);
     head_ = SYNCED;
-#else
-    NO_GPU;
-#endif
     break;
   case HEAD_AT_CPU:
   case SYNCED:
@@ -142,26 +143,23 @@ inline void SyncedMemory::to_cpu() {
 }
 
 inline void SyncedMemory::to_gpu() {
-#ifndef CPU_ONLY
   switch (head_) {
   case UNINITIALIZED:
-    CaffeMallocHost(&cpu_ptr_, size_);
-    caffe_memset(size_, 0, cpu_ptr_);
+    caffe_amp_malloc(&gpu_ptr_, size_, element_size_);
+    caffe_gpu_memset(size_, 0, gpu_ptr_);
     head_ = HEAD_AT_GPU;
     break;
   case HEAD_AT_CPU:
-    if (cpu_ptr_ == NULL) {
-      CaffeMallocHost(&cpu_ptr_, size_);
+    if (gpu_ptr_ == NULL) {
+        caffe_amp_malloc(&gpu_ptr_, size_, element_size_);
     }
+    caffe_amp_H2D(cpu_ptr_, gpu_ptr_, element_size_);
     head_ = SYNCED;
     break;
   case HEAD_AT_GPU:
   case SYNCED:
     break;
   }
-#else
-  NO_GPU;
-#endif
 }
 
 const void* SyncedMemory::cpu_data() {
@@ -180,12 +178,8 @@ void SyncedMemory::set_cpu_data(void* data) {
 }
 
 const void* SyncedMemory::gpu_data() {
-#ifndef CPU_ONLY
   to_gpu();
-  return (const void*)cpu_ptr_;
-#else
-  NO_GPU;
-#endif
+  return (const void*)gpu_ptr_;
 }
 
 void* SyncedMemory::mutable_cpu_data() {
@@ -203,8 +197,7 @@ void* SyncedMemory::mutable_gpu_data() {
   NO_GPU;
 #endif
 }
-
-#endif
+#endif  // !USE_CPPAMP
 
 }  // namespace caffe
 
