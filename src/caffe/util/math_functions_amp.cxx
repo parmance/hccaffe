@@ -548,7 +548,7 @@ void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
   {
       ampTransB = conjugate;
   }
-  amp.ampblas_sgemm(ampTransB, ampTransA, N, M, K, &alpha, const_cast<float*>(B),
+  amp.ampblas_sgemm(colMajor, ampTransB, ampTransA, N, M, K, &alpha, const_cast<float*>(B),
                 ldb, const_cast<float*>(A), lda, &beta, C, N, 0, 0, 0);
 }
 
@@ -579,7 +579,7 @@ void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
   {
       ampTransB = conjugate;
   }
-  amp.ampblas_dgemm(ampTransB, ampTransA, N, M, K, &alpha, const_cast<double*>(B),
+  amp.ampblas_dgemm(colMajor, ampTransB, ampTransA, N, M, K, &alpha, const_cast<double*>(B),
                 ldb, const_cast<double*>(A), lda, &beta, C, N, 0, 0, 0);
 
 }
