@@ -20,8 +20,8 @@ void ReLUBackward(const int N, Dtype* in_diff,
 template <>
 void ReLUForward(const int N, float* in, float* out,
   float negative_slope) {
-  array_view<float, 1> inView(N, in);
-  array_view<float, 1> outView(N, out);
+  array_view<float, 1> inView = *((Concurrency::array_view<float, 1>*)(in));
+  array_view<float, 1> outView= *((Concurrency::array_view<float, 1>*)(out));
   parallel_for_each(
     outView.get_extent(),
     [=](index<1> idx) restrict(amp)
@@ -35,9 +35,9 @@ void ReLUForward(const int N, float* in, float* out,
 template <>
 void ReLUBackward(const int N, float* in_diff,
   float* in_data, float* out_diff, float negative_slope) {
-  array_view<float, 1> in_diffView(N, in_diff);
-  array_view<float, 1> out_diffView(N, out_diff);
-  array_view<float, 1> int_dataView(N, in_data);
+  array_view<float, 1> in_diffView = *((Concurrency::array_view<float, 1>*)(in_diff));
+  array_view<float, 1> out_diffView = *((Concurrency::array_view<float, 1>*)(out_diff));
+  array_view<float, 1> int_dataView = *((Concurrency::array_view<float, 1>*)(in_data));
   parallel_for_each(
     out_diffView.get_extent(),
     [=](index<1> idx) restrict(amp)
@@ -51,8 +51,9 @@ void ReLUBackward(const int N, float* in_diff,
 template <>
 void ReLUForward(const int N, double* in, double* out,
   double negative_slope) {
-  array_view<double, 1> inView(N, in);
-  array_view<double, 1> outView(N, out);
+  array_view<double, 1> inView = *((Concurrency::array_view<double, 1>*)(in));
+  array_view<double, 1> outView = *((Concurrency::array_view<double, 1>*)(out));
+
   parallel_for_each(
     outView.get_extent(),
     [=](index<1> idx) restrict(amp)
@@ -66,9 +67,10 @@ void ReLUForward(const int N, double* in, double* out,
 template <>
 void ReLUBackward(const int N, double* in_diff,
   double* in_data, double* out_diff, double negative_slope) {
-  array_view<double, 1> in_diffView(N, in_diff);
-  array_view<double, 1> out_diffView(N, out_diff);
-  array_view<double, 1> int_dataView(N, in_data);
+  array_view<double, 1> in_diffView = *((Concurrency::array_view<double, 1>*)(in_diff));
+  array_view<double, 1> out_diffView = *((Concurrency::array_view<double, 1>*)(out_diff));
+  array_view<double, 1> int_dataView = *((Concurrency::array_view<double, 1>*)(in_data));
+
   parallel_for_each(
     out_diffView.get_extent(),
     [=](index<1> idx) restrict(amp)
