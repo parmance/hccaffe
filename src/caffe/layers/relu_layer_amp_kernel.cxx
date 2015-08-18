@@ -29,7 +29,6 @@ void ReLUForward(const int N, float* in, float* out,
     outView[idx] = inView[idx] > 0 ? inView[idx] : inView[idx] * negative_slope;
   }
   );
-  outView.synchronize();
 }
 
 template <>
@@ -45,7 +44,6 @@ void ReLUBackward(const int N, float* in_diff,
     out_diffView[idx] = in_diffView[idx] * ((int_dataView[idx] > 0) + (int_dataView[idx] <= 0) * negative_slope);
   }
   );
-  out_diffView.synchronize();
 }
 
 template <>
@@ -61,7 +59,6 @@ void ReLUForward(const int N, double* in, double* out,
     outView[idx] = inView[idx] > 0 ? inView[idx] : inView[idx] * negative_slope;
   }
   );
-  outView.synchronize();
 }
 
 template <>
@@ -78,7 +75,6 @@ void ReLUBackward(const int N, double* in_diff,
     out_diffView[idx] = in_diffView[idx] * ((int_dataView[idx] > 0) + (int_dataView[idx] <= 0) * negative_slope);
   }
   );
-  out_diffView.synchronize();
 }
 
 
