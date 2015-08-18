@@ -52,11 +52,11 @@ void caffe_amp_free(void* ptr, size_t element_size){
 void caffe_amp_D2H(void* src, void* dst, size_t element_size){
   if(element_size == sizeof(float)){
     Concurrency::array_view<float, 1>* avSrc =
-      static_cast<Concurrency::array_view<float, 1>* >(src);
+      (Concurrency::array_view<float, 1>*)(src);
     Concurrency::copy(*avSrc, (float*)dst);
   } else if (element_size == sizeof(double)){
     Concurrency::array_view<double, 1>* avSrc =
-      static_cast<Concurrency::array_view<double, 1>* >(src);
+      (Concurrency::array_view<double, 1>*)(src);
     Concurrency::copy(*avSrc, (double*)dst);
   }
 }
@@ -67,9 +67,9 @@ void caffe_amp_H2D(void* src, void* dst, size_t element_size){
       (Concurrency::array_view<float, 1>*)(dst);
     Concurrency::copy((float*)src, *avDst);
   } else if (element_size == sizeof(double)){
-    //Concurrency::array_view<double, 1>* avDst =
-    //  static_cast<Concurrency::array_view<double, 1>* >(dst);
-    //Concurrency::copy((double*)src, *avDst);
+    Concurrency::array_view<double, 1>* avDst =
+      (Concurrency::array_view<double, 1>*)(dst);
+    Concurrency::copy((double*)src, *avDst);
   }
 }
 template <typename Dtype>

@@ -189,13 +189,9 @@ void* SyncedMemory::mutable_cpu_data() {
 }
 
 void* SyncedMemory::mutable_gpu_data() {
-#ifndef CPU_ONLY
   to_gpu();
   head_ = HEAD_AT_GPU;
-  return cpu_ptr_;
-#else
-  NO_GPU;
-#endif
+  return gpu_ptr_;
 }
 #endif  // !USE_CPPAMP
 
