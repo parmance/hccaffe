@@ -9,14 +9,14 @@
 #include "amp_math.h"
 using namespace Concurrency;
 template <typename Dtype>
-void im2col_amp_kernel2(int N1, int N2, const int N,
-    Dtype* data_im, const int im_offset,
+void im2col_amp_kernel2(const int N,
+    Dtype* data_im,
     const int height, const int width,
     const int kernel_h, const int kernel_w,
     const int pad_h, const int pad_w,
     const int stride_h, const int stride_w,
     const int height_col, const int width_col,
-    Dtype* data_col, const int col_offset);
+    Dtype* data_col, const int im_offset, const int col_offset);
 
 template <typename Dtype>
 void im2col_amp_kernel(const int N, Dtype* data_im,
@@ -27,13 +27,13 @@ void im2col_amp_kernel(const int N, Dtype* data_im,
   Dtype* data_col) ;
 
 template <typename Dtype>
- void col2im_amp_kernel2(int N1, int N2,const int N, Dtype* data_col,
+ void col2im_amp_kernel2(const int N, Dtype* data_col,
   const int height, const int width, const int channels,
   const int patch_h, const int patch_w,
   const int pad_h, const int pad_w,
   const int stride_h, const int stride_w,
   const int height_col, const int width_col,
-  Dtype* data_im) ;
+  Dtype* data_im, const int col_offset, const int im_offset) ;
 
 template <typename Dtype>
  void col2im_amp_kernel(const int N, Dtype* data_col,
@@ -45,20 +45,17 @@ template <typename Dtype>
   Dtype* data_im) ;
 
 template <>
-void im2col_amp_kernel2(int N1, int N2, const int N,
-    float* data_im, const int im_offset,
+void im2col_amp_kernel2(const int N,
+    float* data_im,
     const int height, const int width,
     const int kernel_h, const int kernel_w,
     const int pad_h, const int pad_w,
     const int stride_h, const int stride_w,
     const int height_col, const int width_col,
-    float* data_col, const int col_offset) {
-
-  //array_view<float, 1> data_imView(N1, data_im);
-  //array_view<float, 1> data_colView(N2, data_col);
-  Concurrency::array_view<float, 1> im =
+    float* data_col, const int im_offset, const int col_offset) {
+  Concurrency::array_view<float, 1> im_view =
     *((Concurrency::array_view<float, 1>*)(data_im));
-  Concurrency::array_view<float, 1> col =
+  Concurrency::array_view<float, 1> col_view =
     *((Concurrency::array_view<float, 1>*)(data_col));
   extent<1> e(N);
   parallel_for_each(e, [=](index<1> idx) restrict(amp) {
@@ -77,29 +74,28 @@ void im2col_amp_kernel2(int N1, int N2, const int N,
       for (int j = 0; j < kernel_w; ++j) {
         int h = h_in + i;
         int w = w_in + j;
-        col[col_offset + data_col_num] =
+        col_view[col_offset + data_col_num] =
           (h >= 0 && w >= 0 && h < height && w < width) ?
-            im[im_offset + data_im_num + i * width + j] : 0;
+            im_view[im_offset + data_im_num + i * width + j] : 0;
         data_col_num += height_col * width_col;
       }
     }
   } );
-  //data_colView.synchronize();
 }
 
 template <>
-void im2col_amp_kernel2(int N1, int N2, const int N,
-    double* data_im, const int im_offset,
+void im2col_amp_kernel2(const int N,
+    double* data_im,
     const int height, const int width,
     const int kernel_h, const int kernel_w,
     const int pad_h, const int pad_w,
     const int stride_h, const int stride_w,
     const int height_col, const int width_col,
-    double* data_col, const int col_offset) {
+    double* data_col, const int im_offset, const int col_offset) {
 
-  Concurrency::array_view<double, 1> im =
+  Concurrency::array_view<double, 1> im_view =
     *((Concurrency::array_view<double, 1>*)(data_im));
-  Concurrency::array_view<double, 1> col =
+  Concurrency::array_view<double, 1> col_view =
     *((Concurrency::array_view<double, 1>*)(data_col));
   extent<1> e(N);
   parallel_for_each(e, [=](index<1> idx) restrict(amp) {
@@ -118,14 +114,13 @@ void im2col_amp_kernel2(int N1, int N2, const int N,
       for (int j = 0; j < kernel_w; ++j) {
         int h = h_in + i;
         int w = w_in + j;
-        col[col_offset + data_col_num] =
+        col_view[col_offset + data_col_num] =
           (h >= 0 && w >= 0 && h < height && w < width) ?
-            im[im_offset + data_im_num + i * width + j] : 0;
+            im_view[im_offset + data_im_num + i * width + j] : 0;
         data_col_num += height_col * width_col;
       }
     }
   } );
-  //data_colView.synchronize();
 }
 
 template <>
@@ -167,47 +162,44 @@ void im2col_amp_kernel(const int N, float* data_im,
   data_colView.synchronize();
 }
 template <>
- void col2im_amp_kernel2(int N1, int N2,const int N, float* data_col,
-  const int height, const int width, const int channels,
-  const int patch_h, const int patch_w,
-  const int pad_h, const int pad_w,
-  const int stride_h, const int stride_w,
-  const int height_col, const int width_col,
-  float* data_im) {
-   array_view<float, 1> data_imView(N2, data_im);
-   array_view<float, 1> data_colView(N1, data_col);
-   extent<1> e(N);
-   parallel_for_each(
-     e,
-     [=](index<1> idx) restrict(amp)
-   {
-     float val = 0;
-     int w = idx[0] % width + pad_w;
-     int h = (idx[0] / width) % height + pad_h;
-     int c = idx[0] / (width * height);
-     // compute the start and end of the output
-     int w_col_start = (w < patch_w) ? 0 : (w - patch_w) / stride_w + 1;
-     int w_col_end = Concurrency::fast_math::fmin(w / stride_w + 1, width_col);
-     int h_col_start = (h < patch_h) ? 0 : (h - patch_h) / stride_h + 1;
-     int h_col_end = Concurrency::fast_math::fmin(h / stride_h + 1, height_col);
-     // equivalent implementation
-     int offset =
-       (c * patch_h * patch_w + h * patch_w + w) * height_col * width_col;
-     int coeff_h_col = (1 - stride_h * patch_w * height_col) * width_col;
-     int coeff_w_col = (1 - stride_w * height_col * width_col);
-     for (int h_col = h_col_start; h_col < h_col_end; ++h_col) {
-       for (int w_col = w_col_start; w_col < w_col_end; ++w_col) {
-         val += data_colView[offset + h_col * coeff_h_col + w_col * coeff_w_col];
-       }
-     }
-     data_imView[idx] = val;
-   }
-   );
-   data_imView.synchronize();
-    
+void col2im_amp_kernel2(const int N, float* data_col,
+    const int height, const int width, const int channels,
+    const int patch_h, const int patch_w,
+    const int pad_h, const int pad_w,
+    const int stride_h, const int stride_w,
+    const int height_col, const int width_col,
+    float* data_im, const int col_offset, const int im_offset) {
+  Concurrency::array_view<float, 1> im_view =
+    *((Concurrency::array_view<float, 1>*)(data_im));
+  Concurrency::array_view<float, 1> col_view =
+    *((Concurrency::array_view<float, 1>*)(data_col));
+  extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+    float val = 0;
+    int w = idx[0] % width + pad_w;
+    int h = (idx[0] / width) % height + pad_h;
+    int c = idx[0] / (width * height);
+    // compute the start and end of the output
+    int w_col_start = (w < patch_w) ? 0 : (w - patch_w) / stride_w + 1;
+    int w_col_end = Concurrency::fast_math::fmin(w / stride_w + 1, width_col);
+    int h_col_start = (h < patch_h) ? 0 : (h - patch_h) / stride_h + 1;
+    int h_col_end = Concurrency::fast_math::fmin(h / stride_h + 1, height_col);
+    // equivalent implementation
+    int offset =
+      (c * patch_h * patch_w + h * patch_w + w) * height_col * width_col;
+    int coeff_h_col = (1 - stride_h * patch_w * height_col) * width_col;
+    int coeff_w_col = (1 - stride_w * height_col * width_col);
+    for (int h_col = h_col_start; h_col < h_col_end; ++h_col) {
+      for (int w_col = w_col_start; w_col < w_col_end; ++w_col) {
+        val +=
+         col_view[col_offset + offset + h_col * coeff_h_col + w_col * coeff_w_col];
+      }
+    }
+     im_view[im_offset + idx] = val;
+   } );
 }
 template <>
- void col2im_amp_kernel(const int N, float* data_col,
+void col2im_amp_kernel(const int N, float* data_col,
   const int height, const int width, const int channels,
   const int patch_h, const int patch_w,
   const int pad_h, const int pad_w,
@@ -243,7 +235,6 @@ template <>
    }
    );
    data_imView.synchronize();
-    
 }
 
 template <>
@@ -253,7 +244,6 @@ void im2col_amp_kernel(const int N, double* data_im,
   const int stride_h, const int stride_w,
   const int height_col, const int width_col,
   double* data_col) {
-
   array_view<double, 1> data_imView(N, data_im);
   array_view<double, 1> data_colView(N, data_col);
   parallel_for_each(
@@ -285,20 +275,19 @@ void im2col_amp_kernel(const int N, double* data_im,
   data_colView.synchronize();
 }
 template <>
- void col2im_amp_kernel2(int N1,int N2,const int N, double* data_col,
-  const int height, const int width, const int channels,
-  const int patch_h, const int patch_w,
-  const int pad_h, const int pad_w,
-  const int stride_h, const int stride_w,
-  const int height_col, const int width_col,
-  double* data_im) {
-   array_view<double, 1> data_imView(N2, data_im);
-   array_view<double, 1> data_colView(N1, data_col);
+void col2im_amp_kernel2(const int N, double* data_col,
+    const int height, const int width, const int channels,
+    const int patch_h, const int patch_w,
+    const int pad_h, const int pad_w,
+    const int stride_h, const int stride_w,
+    const int height_col, const int width_col,
+    double* data_im, const int col_offset, const int im_offset) {
+  Concurrency::array_view<double, 1> im_view =
+    *((Concurrency::array_view<double, 1>*)(data_im));
+  Concurrency::array_view<double, 1> col_view =
+    *((Concurrency::array_view<double, 1>*)(data_col));
    extent<1> e(N);
-   parallel_for_each(
-     e,
-     [=](index<1> idx) restrict(amp)
-   {
+   parallel_for_each(e, [=](index<1> idx) restrict(amp) {
      double val = 0;
      int w = idx[0] % width + pad_w;
      int h = (idx[0] / width) % height + pad_h;
@@ -315,14 +304,12 @@ template <>
      int coeff_w_col = (1 - stride_w * height_col * width_col);
      for (int h_col = h_col_start; h_col < h_col_end; ++h_col) {
        for (int w_col = w_col_start; w_col < w_col_end; ++w_col) {
-         val += data_colView[offset + h_col * coeff_h_col + w_col * coeff_w_col];
+         val +=
+         col_view[col_offset + offset + h_col * coeff_h_col + w_col * coeff_w_col];
        }
      }
-     data_imView[idx] = val;
-   }
-   );
-   data_imView.synchronize();
-    
+     im_view[im_offset + idx] = val;
+   } );
 }
 
 template <>
@@ -362,6 +349,5 @@ template <>
    }
    );
    data_imView.synchronize();
-    
 }
 
