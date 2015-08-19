@@ -1,3 +1,4 @@
+#include <boost/type_traits/is_same.hpp>
 #include <climits>
 #include <vector>
 
@@ -31,8 +32,15 @@ void Blob<Dtype>::Reshape(const vector<int>& shape) {
   }
   if (count_ > capacity_) {
     capacity_ = count_;
+#ifdef USE_CPPAMP
+    data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype), sizeof(Dtype),
+          boost::is_same<Dtype, int>::value));
+    diff_.reset(new SyncedMemory(capacity_ * sizeof(Dtype), sizeof(Dtype),
+          boost::is_same<Dtype, int>::value));
+#else
     data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
     diff_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
+#endif  // USE_CPPAMP
   }
 }
 
