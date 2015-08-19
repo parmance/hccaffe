@@ -15,63 +15,93 @@ namespace caffe {
 
 #ifdef USE_CPPAMP
 //The size is the total memory size
-void caffe_amp_malloc(void** ptr, size_t size, size_t element_size){
-  if(element_size == sizeof(float)){
-    Concurrency::extent<1> eA(size/sizeof(float));
-    // Allocating device array of given size
-    // Use default device
-    concurrency::accelerator currentAcc(accelerator::default_accelerator);
-    Concurrency::array<float, 1> arr =
-      Concurrency::array<float, 1>(eA, currentAcc.get_default_view());
-    Concurrency::array_view<float>* avData =
-      new Concurrency::array_view<float>(arr);
-    *ptr = (void*)avData;
-  } else if(element_size == sizeof(double)){
-    Concurrency::extent<1> eA(size/sizeof(double));
-    // Allocating device array of given size
-    // Use default device
-    concurrency::accelerator currentAcc(accelerator::default_accelerator);
-    Concurrency::array<double, 1> arr =
-      Concurrency::array<double, 1>(eA, currentAcc.get_default_view());
-    Concurrency::array_view<double>* avData =
-      new Concurrency::array_view<double>(arr);
-    *ptr = (void*)avData;
+void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
+    bool is_int){
+  if(is_int) {
+    Concurrency::extent<1> eA(size/sizeof(int));
+      // Allocating device array of given size
+      // Use default device
+      concurrency::accelerator currentAcc(accelerator::default_accelerator);
+      Concurrency::array<int, 1> arr =
+         Concurrency::array<int, 1>(eA, currentAcc.get_default_view());
+      Concurrency::array_view<int>* avData =
+        new Concurrency::array_view<int>(arr);
+      *ptr = (void*)avData;
+  } else {
+    if(element_size == sizeof(float)){
+      Concurrency::extent<1> eA(size/sizeof(float));
+      // Allocating device array of given size
+      // Use default device
+      concurrency::accelerator currentAcc(accelerator::default_accelerator);
+      Concurrency::array<float, 1> arr =
+         Concurrency::array<float, 1>(eA, currentAcc.get_default_view());
+      Concurrency::array_view<float>* avData =
+        new Concurrency::array_view<float>(arr);
+      *ptr = (void*)avData;
+    } else if(element_size == sizeof(double)){
+      Concurrency::extent<1> eA(size/sizeof(double));
+      // Allocating device array of given size
+      // Use default device
+      concurrency::accelerator currentAcc(accelerator::default_accelerator);
+     Concurrency::array<double, 1> arr =
+       Concurrency::array<double, 1>(eA, currentAcc.get_default_view());
+     Concurrency::array_view<double>* avData =
+       new Concurrency::array_view<double>(arr);
+     *ptr = (void*)avData;
+    }
   }
 }
 
-void caffe_amp_free(void* ptr, size_t element_size){
+void caffe_amp_free(void* ptr, size_t element_size, bool is_int){
   if (ptr) {
-    if(element_size == sizeof(float))
-      delete (Concurrency::array_view<float> *)ptr;
-    else if(element_size == sizeof(double))
-      delete (Concurrency::array_view<double> *)ptr;
+    if(is_int){
+        delete (Concurrency::array_view<int> *)ptr;
+    } else {
+      if(element_size == sizeof(float))
+        delete (Concurrency::array_view<float> *)ptr;
+      else if(element_size == sizeof(double))
+        delete (Concurrency::array_view<double> *)ptr;
+    }
     ptr = NULL;
   }
 }
 
-void caffe_amp_D2H(void* src, void* dst, size_t element_size){
-  if(element_size == sizeof(float)){
-    Concurrency::array_view<float, 1>* avSrc =
-      (Concurrency::array_view<float, 1>*)(src);
-    Concurrency::copy(*avSrc, (float*)dst);
-  } else if (element_size == sizeof(double)){
-    Concurrency::array_view<double, 1>* avSrc =
-      (Concurrency::array_view<double, 1>*)(src);
-    Concurrency::copy(*avSrc, (double*)dst);
+void caffe_amp_D2H(void* src, void* dst, size_t element_size, bool is_int){
+  if(is_int){
+    Concurrency::array_view<int, 1>* avSrc =
+      (Concurrency::array_view<int, 1>*)(src);
+    Concurrency::copy(*avSrc, (int*)dst);
+  } else {
+    if(element_size == sizeof(float)){
+      Concurrency::array_view<float, 1>* avSrc =
+        (Concurrency::array_view<float, 1>*)(src);
+      Concurrency::copy(*avSrc, (float*)dst);
+    } else if (element_size == sizeof(double)){
+      Concurrency::array_view<double, 1>* avSrc =
+        (Concurrency::array_view<double, 1>*)(src);
+      Concurrency::copy(*avSrc, (double*)dst);
+    }
   }
 }
 
-void caffe_amp_H2D(void* src, void* dst, size_t element_size){
-  if(element_size == sizeof(float)){
-    Concurrency::array_view<float, 1>* avDst =
-      (Concurrency::array_view<float, 1>*)(dst);
-    Concurrency::copy((float*)src, *avDst);
-  } else if (element_size == sizeof(double)){
-    Concurrency::array_view<double, 1>* avDst =
-      (Concurrency::array_view<double, 1>*)(dst);
-    Concurrency::copy((double*)src, *avDst);
+void caffe_amp_H2D(void* src, void* dst, size_t element_size, bool is_int){
+  if(is_int){
+    Concurrency::array_view<int, 1>* avDst =
+      (Concurrency::array_view<int, 1>*)(dst);
+    Concurrency::copy((int*)src, *avDst);
+  } else {
+    if(element_size == sizeof(float)){
+      Concurrency::array_view<float, 1>* avDst =
+        (Concurrency::array_view<float, 1>*)(dst);
+      Concurrency::copy((float*)src, *avDst);
+    } else if (element_size == sizeof(double)){
+      Concurrency::array_view<double, 1>* avDst =
+        (Concurrency::array_view<double, 1>*)(dst);
+      Concurrency::copy((double*)src, *avDst);
+    }
   }
 }
+
 template <typename Dtype>
 void caffe_amp_abs(const int N, Dtype* a, Dtype* y) {
   array_view<Dtype, 1> aView(N, a);

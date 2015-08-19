@@ -186,13 +186,13 @@ inline void caffe_gpu_memset(const size_t N, const int alpha, void* X) {
   //caffe_memset(N, alpha, X);
 }
 
-void caffe_amp_malloc(void** ptr, size_t size, size_t element_size);
+void caffe_amp_malloc(void** ptr, size_t size, size_t element_size, bool is_int);
 
-void caffe_amp_free(void* ptr, size_t element_size);
+void caffe_amp_free(void* ptr, size_t element_size, bool is_int);
 
-void caffe_amp_H2D(void* dst, void* src, size_t element_size);
+void caffe_amp_H2D(void* dst, void* src, size_t element_size, bool is_int);
 
-void caffe_amp_D2H(void* dst, void* src, size_t element_size);
+void caffe_amp_D2H(void* dst, void* src, size_t element_sizei, bool is_int);
 
 #endif  // !USE_CPPAMP
 
