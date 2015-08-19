@@ -568,7 +568,11 @@ void caffe_gpu_axpby<double>(const int N, const double alpha, const double* X,
   caffe_gpu_scal<double>(N, beta, Y);
   caffe_gpu_axpy<double>(N, alpha, X, Y);
 }
-
+template <typename Dtype>
+void caffe_gpu_gemv2(const CBLAS_TRANSPOSE TransA, const int M,
+  const int N, const Dtype alpha, const Dtype* A, const int offseta,
+  const Dtype* x, const int offsetx,
+  const Dtype beta, Dtype* y, const int offsety);
 template <>
 void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const float alpha, const float* A, const float* x,
@@ -586,6 +590,24 @@ void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
   }
   amp.ampblas_sgemv(ampTransA, N, M, &alpha, const_cast<float*>(A), 0, N, const_cast<float*>(x), 0, 1, &beta, y, 0, 1);
 }
+template <>
+void caffe_gpu_gemv2<float>(const CBLAS_TRANSPOSE TransA, const int M,
+  const int N, const float alpha, const float* A, const int offseta,
+  const float* x, const int offsetx,
+  const float beta, float* y, const int offsety) {
+  const enum CBLAS_ORDER Order=CblasRowMajor;
+  AMPBLAS_TRANS ampTransA = trans;
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = noTrans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+  amp.ampblas_sgemv2(ampTransA, N, M, &alpha, const_cast<float*>(A), offseta, N, const_cast<float*>(x), offsetx, 1, &beta, y, offsety, 1);
+}
 
 
 template <>
@@ -593,7 +615,7 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const double alpha, const double* A, const double* x,
   const double beta, double* y) {
   
-  const enum CBLAS_ORDER Order=CblasRowMajor;
+  //const enum CBLAS_ORDER Order=CblasRowMajor;
   AMPBLAS_TRANS ampTransA = trans;
   Ampblaslibrary amp;
   if(TransA == CblasTrans)
@@ -607,6 +629,25 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   //cblas_sgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
   amp.ampblas_dgemv(ampTransA, N, M, &alpha, const_cast<double*>(A), 0, N, const_cast<double*>(x), 0, 1, &beta, y, 0, 1);
 }
+template <>
+void caffe_gpu_gemv2<double>(const CBLAS_TRANSPOSE TransA, const int M,
+  const int N, const double alpha, const double* A, const int offseta,
+  const double* x, const int offsetx,
+  const double beta, double* y, const int offsety) {
+  //const enum CBLAS_ORDER Order=CblasRowMajor;
+  AMPBLAS_TRANS ampTransA = trans;
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = noTrans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+  amp.ampblas_dgemv2(ampTransA, N, M, &alpha, const_cast<double*>(A), offseta, N, const_cast<double*>(x), offsetx, 1, &beta, y, offsety, 1);
+}
+
 
 
 template <>
@@ -671,7 +712,105 @@ void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
                 ldb, const_cast<double*>(A), lda, &beta, C, N, 0, 0, 0);
 
 }
+template <typename Dtype>
+void caffe_gpu_gemm2(const CBLAS_TRANSPOSE TransA,
+  const CBLAS_TRANSPOSE TransB,
+  const int M, const int N, const int K,
+  const Dtype alpha, const Dtype* A, const int offet_A,const Dtype* B,
+  const int offset_B, const Dtype beta, Dtype* C, const int offset_C);
 
+
+
+template <>
+void caffe_gpu_gemm2<float>(const CBLAS_TRANSPOSE TransA,
+  const CBLAS_TRANSPOSE TransB,
+  const int M, const int N, const int K,
+  const float alpha, const float* A, const int offset_A,const float* B,
+  const int offset_B, const float beta, float* C, const int offset_C) {
+  int lda = (TransA == CblasNoTrans) ? K : M;
+  int ldb = (TransB == CblasNoTrans) ? N : K;
+  AMPBLAS_TRANS ampTransA = noTrans;
+  AMPBLAS_TRANS ampTransB = noTrans;
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = trans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+
+  if(TransB == CblasTrans)
+  {
+      ampTransB = trans;
+  }
+
+  if(TransB == CblasConjTrans)
+  {
+      ampTransB = conjugate;
+  }
+  Concurrency::array_view<float, 1> A_mat =
+    *((Concurrency::array_view<float, 1>*)(A));
+  Concurrency::array_view<float, 1> B_mat =
+    *((Concurrency::array_view<float, 1>*)(B));
+  Concurrency::array_view<float, 1> C_mat =
+    *((Concurrency::array_view<float, 1>*)(C));
+  //Concurrency::array_view<float> A_mat(all_A, const_cast<float*>(A));
+  //Concurrency::array_view<float> B_mat(all_B, const_cast<float*>(B));
+  //Concurrency::array_view<float> C_mat(all_C, C);
+  //printf("======All_A = %d,ALL_B = %d, ALL_C = %d, group = %d, offset_A=%d,offset_B=%d,offset_C=%d,M=%d,N=%d,K=%d\n",all_A,all_B,all_C,group,offset_A,offset_B,offset_C,M,N,K);
+    //PPAStartCpuEventFunc(GPU_GEMM);
+    amp.ampblas_sgemm2(colMajor,ampTransB, ampTransA, N, M, K, &alpha, B_mat,
+                ldb, A_mat, lda, &beta, C_mat, N, offset_B, offset_A, offset_C);
+   // PPAStopCpuEventFunc(GPU_GEMM);
+}
+
+
+template <>
+void caffe_gpu_gemm2<double>(const CBLAS_TRANSPOSE TransA,
+  const CBLAS_TRANSPOSE TransB,
+  const int M, const int N, const int K,
+  const double alpha, const double* A, const int offset_A,const double* B,
+  const int offset_B, const double beta, double* C, const int offset_C) {
+  int lda = (TransA == CblasNoTrans) ? K : M;
+  int ldb = (TransB == CblasNoTrans) ? N : K;
+  AMPBLAS_TRANS ampTransA = noTrans;
+  AMPBLAS_TRANS ampTransB = noTrans;
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = trans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+
+  if(TransB == CblasTrans)
+  {
+      ampTransB = trans;
+  }
+
+  if(TransB == CblasConjTrans)
+  {
+      ampTransB = conjugate;
+  }
+  Concurrency::array_view<double, 1> A_mat =
+    *((Concurrency::array_view<double, 1>*)(A));
+  Concurrency::array_view<double, 1> B_mat =
+    *((Concurrency::array_view<double, 1>*)(B));
+  Concurrency::array_view<double, 1> C_mat =
+    *((Concurrency::array_view<double, 1>*)(C));
+  //Concurrency::array_view<float> A_mat(all_A, const_cast<float*>(A));
+  //Concurrency::array_view<float> B_mat(all_B, const_cast<float*>(B));
+  //Concurrency::array_view<float> C_mat(all_C, C);
+  //printf("======All_A = %d,ALL_B = %d, ALL_C = %d, group = %d, offset_A=%d,offset_B=%d,offset_C=%d,M=%d,N=%d,K=%d\n",all_A,all_B,all_C,group,offset_A,offset_B,offset_C,M,N,K);
+    //PPAStartCpuEventFunc(GPU_GEMM);
+    amp.ampblas_dgemm2(colMajor, ampTransB, ampTransA, N, M, K, &alpha, B_mat,
+                ldb, A_mat, lda, &beta, C_mat, N, offset_B, offset_A, offset_C);
+   // PPAStopCpuEventFunc(GPU_GEMM);
+}
 template <>
 void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
   array_view<float, 1> xView(n, const_cast <float*>(x));

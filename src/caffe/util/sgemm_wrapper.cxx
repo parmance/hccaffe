@@ -317,6 +317,35 @@ ampblasStatus Ampblaslibrary :: ampblas_sgemm(Concurrency::accelerator_view &acc
 
     return AMPBLAS_SUCCESS;
 }
+// Sgemm Call Type 1: Inputs and Outputs are host float pointers
+ampblasStatus Ampblaslibrary :: ampblas_sgemm2(const enum AMPBLAS_ORDER order,
+        const enum AMPBLAS_TRANS typeA,
+        const enum AMPBLAS_TRANS typeB,
+        const int M, const int N,
+        const int K, const float *alpha,
+        Concurrency::array_view<float> A_mat, const long lda,
+        Concurrency::array_view<float> B_mat, const long ldb,
+        const float *beta, Concurrency::array_view<float> C_mat,
+        const long ldc, const long aOffset,
+        const long bOffset,
+        const long cOffset)
+{
+    //Concurrency::array_view<float> A_mat(K * M, A);
+    //Concurrency::array_view<float> B_mat(N * K, B);
+    //Concurrency::array_view<float> C_mat(M * N, C);
+    Concurrency::array_view<float> *temp_buf = NULL;
+    std::vector<Concurrency::accelerator>acc = Concurrency::accelerator::get_all();
+    accelerator_view accl_view = (acc[1].create_view());
+
+    //printf("======offset_A=%d,offset_B=%d,offset_C=%d,M=%d,N=%d,K=%d\n",aOffset,bOffset,cOffset,M,N,K);
+
+    ampblasStatus status = gemm_AMP(accl_view, order, typeA, typeB, M, N, K, *alpha,
+                                    A_mat, aOffset, lda, B_mat, bOffset, ldb,
+                                    *beta, C_mat, cOffset, ldc, *temp_buf);
+
+    //C_mat.synchronize();
+    return status;
+}
 ampblasStatus Ampblaslibrary::ampblas_dgemm(Concurrency::accelerator_view &accl_view,
         const enum AMPBLAS_ORDER order,
         const enum AMPBLAS_TRANS typeA,
@@ -335,4 +364,30 @@ ampblasStatus Ampblaslibrary::ampblas_dgemm(Concurrency::accelerator_view &accl_
 
     return AMPBLAS_SUCCESS;
 }
+ampblasStatus Ampblaslibrary :: ampblas_dgemm2(const enum AMPBLAS_ORDER order,
+        const enum AMPBLAS_TRANS typeA,
+        const enum AMPBLAS_TRANS typeB,
+        const int M, const int N,
+        const int K, const double *alpha,
+        Concurrency::array_view<double> A_mat, const long lda,
+        Concurrency::array_view<double> B_mat, const long ldb,
+        const double *beta, Concurrency::array_view<double> C_mat,
+        const long ldc, const long aOffset,
+        const long bOffset,
+        const long cOffset)
+{
+    //Concurrency::array_view<float> A_mat(K * M, A);
+    //Concurrency::array_view<float> B_mat(N * K, B);
+    //Concurrency::array_view<float> C_mat(M * N, C);
+    Concurrency::array_view<double> *temp_buf = NULL;
+    std::vector<Concurrency::accelerator>acc = Concurrency::accelerator::get_all();
+    accelerator_view accl_view = (acc[1].create_view());
 
+
+    ampblasStatus status = gemm_AMP_d(accl_view, order, typeA, typeB, M, N, K,
+                                    *alpha, A_mat, aOffset, lda, B_mat, bOffset,
+                                    ldb, *beta, C_mat, cOffset, ldc, *temp_buf);
+
+    //C_mat.synchronize();
+    return status;
+}

@@ -240,6 +240,13 @@ void BaseConvolutionLayer<Dtype>::forward_gpu_gemm(const Dtype* input,
         (Dtype)0., output + output_offset_ * g);
   }
 }
+template <typename Dtype>
+void caffe_gpu_gemm2(const CBLAS_TRANSPOSE TransA,
+  const CBLAS_TRANSPOSE TransB,
+  const int M, const int N, const int K,
+  const Dtype alpha, const Dtype* A, const int offet_A,const Dtype* B,
+  const int offset_B, const Dtype beta, Dtype* C, const int offset_C);
+
 
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::forward_gpu_bias(Dtype* output,
@@ -247,6 +254,13 @@ void BaseConvolutionLayer<Dtype>::forward_gpu_bias(Dtype* output,
   caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_output_,
       height_out_ * width_out_, 1, (Dtype)1., bias, bias_multiplier_.gpu_data(),
       (Dtype)1., output);
+}
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::forward_gpu_bias2(Dtype* output,
+    const int offset, const Dtype* bias) {
+  caffe_gpu_gemm2<Dtype>(CblasNoTrans, CblasNoTrans, num_output_,
+      height_out_ * width_out_, 1, (Dtype)1., bias, 0, bias_multiplier_.gpu_data(),
+      0, (Dtype)1., output, offset);
 }
 
 template <typename Dtype>
@@ -289,8 +303,52 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_bias(Dtype* bias,
   caffe_gpu_gemv<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_, 1.,
       input, bias_multiplier_.gpu_data(), 1., bias);
 }
-
 #ifdef USE_CPPAMP
+template <typename Dtype>
+void caffe_gpu_gemv2(const CBLAS_TRANSPOSE TransA, const int M,
+  const int N, const Dtype alpha, const Dtype* A, const int offseta,
+  const Dtype* x, const int offsetx,
+  const Dtype beta, Dtype* y, const int offsety);
+
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::backward_gpu_bias2(Dtype* bias,
+    const Dtype* input, const int offset) {
+  caffe_gpu_gemv2<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_, 1.,
+      input, offset, bias_multiplier_.gpu_data(), 0, 1., bias, 0);
+}
+
+
+template <typename Dtype>
+void caffe_gpu_gemm2(const CBLAS_TRANSPOSE TransA,
+  const CBLAS_TRANSPOSE TransB,
+  const int M, const int N, const int K,
+  const Dtype alpha, const Dtype* A, const int offet_A,const Dtype* B,
+  const int offset_B, const Dtype beta, Dtype* C, const int offset_C);
+
+
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::forward_gpu_gemm3(int N1, int N2,
+      const Dtype* input, const int offset_input, const Dtype* weights, Dtype* output,
+      const int offset_output, bool skip_im2col) {
+  const Dtype* col_buff = input;
+  int offset_col = offset_input;
+  if (!is_1x1_) {
+    if (!skip_im2col) {
+      conv_im2col_gpu2(N1, col_buffer_.count(), input, offset_input,
+          col_buffer_.mutable_gpu_data(), 0);
+    }
+    col_buff = col_buffer_.gpu_data();
+    offset_col = 0;
+  }
+  for (int g = 0; g < group_; ++g) {
+    caffe_gpu_gemm2<Dtype>(CblasNoTrans, CblasNoTrans, conv_out_channels_ /
+        group_, conv_out_spatial_dim_, kernel_dim_ / group_,
+        (Dtype)1., weights , weight_offset_ * g, col_buff, offset_col+col_offset_ * g,
+        (Dtype)0., output, offset_output+output_offset_ * g);
+  }
+}
+
+
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::forward_gpu_gemm2(int N1, int N2,
     const Dtype* input, const Dtype* weights, Dtype* output,
@@ -298,8 +356,8 @@ void BaseConvolutionLayer<Dtype>::forward_gpu_gemm2(int N1, int N2,
   const Dtype* col_buff = input;
   if (!is_1x1_) {
     if (!skip_im2col) {
-      conv_im2col_gpu2(N1, col_buffer_.count(), input,
-          col_buffer_.mutable_gpu_data());
+      conv_im2col_gpu2(N1, col_buffer_.count(), input, 0,
+          col_buffer_.mutable_gpu_data(), 0);
     }
     col_buff = col_buffer_.gpu_data();
   }
@@ -328,14 +386,34 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_gemm2(int N1, int N2,
     conv_col2im_gpu2(col_buffer_.count(), N2, col_buff, input);
   }
 }
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::backward_gpu_gemm3(int N1, int N2,
+    const Dtype* output, const int offset_output,
+    const Dtype* weights, Dtype* input, const int offset_input) {
+  Dtype* col_buff = col_buffer_.mutable_gpu_data();  int offset_col = 0;
+  if (is_1x1_) {
+    col_buff = input;
+    offset_col = offset_input;
+  }
+  for (int g = 0; g < group_; ++g) {
+    caffe_gpu_gemm2<Dtype>(CblasTrans, CblasNoTrans, kernel_dim_ / group_,
+        conv_out_spatial_dim_, conv_out_channels_ / group_,
+        (Dtype)1., weights, weight_offset_ * g, output,
+        offset_output+output_offset_ * g,
+        (Dtype)0., col_buff, offset_col+col_offset_ * g);
+  }
+  if (!is_1x1_) {
+    conv_col2im_gpu2(col_buffer_.count(), N2, col_buff, input);
+  }
+}
 
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::weight_gpu_gemm2(int N1, int N2,
     const Dtype* input, const Dtype* output, Dtype* weights) {
   const Dtype* col_buff = input;
   if (!is_1x1_) {
-    conv_im2col_gpu2(N1, col_buffer_.count(), input,
-        col_buffer_.mutable_gpu_data());
+    conv_im2col_gpu2(N1, col_buffer_.count(), input, 0,
+        col_buffer_.mutable_gpu_data(), 0);
     col_buff = col_buffer_.gpu_data();
   }
   for (int g = 0; g < group_; ++g) {
@@ -345,6 +423,28 @@ void BaseConvolutionLayer<Dtype>::weight_gpu_gemm2(int N1, int N2,
         (Dtype)1., weights + weight_offset_ * g);
   }
 }
+
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::weight_gpu_gemm3(int N1, int N2,
+    const Dtype* input, const int offset_input, const Dtype* output,
+    const int offset_output, Dtype* weights) {
+  const Dtype* col_buff = input;
+  int col_offset = offset_input;
+  if (!is_1x1_) {
+    conv_im2col_gpu2(N1, col_buffer_.count(), input, offset_input,
+        col_buffer_.mutable_gpu_data(), 0);
+    col_buff = col_buffer_.gpu_data();
+    col_offset = 0;
+  }
+  for (int g = 0; g < group_; ++g) {
+    caffe_gpu_gemm2<Dtype>(CblasNoTrans, CblasTrans, conv_out_channels_ / group_,
+        kernel_dim_ / group_, conv_out_spatial_dim_,
+        (Dtype)1., output , offset_output+output_offset_ * g,
+        col_buff ,  col_offset+col_offset_ * g,
+        (Dtype)1., weights , weight_offset_ * g);
+  }
+}
+
 #endif  // USE_CPPAMP
 #endif  // !CPU_ONLY
 
