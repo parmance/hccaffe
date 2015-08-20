@@ -194,6 +194,8 @@ void caffe_amp_H2D(void* dst, void* src, size_t element_size, bool is_int);
 
 void caffe_amp_D2H(void* dst, void* src, size_t element_sizei, bool is_int);
 
+void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int);
+
 #endif  // !USE_CPPAMP
 
 template <typename Dtype>

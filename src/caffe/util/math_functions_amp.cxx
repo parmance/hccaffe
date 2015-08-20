@@ -102,6 +102,30 @@ void caffe_amp_H2D(void* src, void* dst, size_t element_size, bool is_int){
   }
 }
 
+void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int){
+  if(is_int){
+    Concurrency::array_view<int, 1>* avSrc =
+      (Concurrency::array_view<int, 1>*)(src);
+    Concurrency::array_view<int, 1>* avDst =
+      (Concurrency::array_view<int, 1>*)(dst);
+    Concurrency::copy(*avSrc, *avDst);
+  } else {
+    if(element_size == sizeof(float)){
+      Concurrency::array_view<float, 1>* avSrc =
+        (Concurrency::array_view<float, 1>*)(src);
+      Concurrency::array_view<float, 1>* avDst =
+        (Concurrency::array_view<float, 1>*)(dst);
+      Concurrency::copy(*avSrc, *avDst);
+    } else if (element_size == sizeof(double)){
+      Concurrency::array_view<double, 1>* avSrc =
+        (Concurrency::array_view<double, 1>*)(src);
+      Concurrency::array_view<double, 1>* avDst =
+        (Concurrency::array_view<double, 1>*)(dst);
+      Concurrency::copy(*avSrc, *avDst);
+    }
+  }
+}
+
 template <typename Dtype>
 void caffe_amp_abs(const int N, Dtype* a, Dtype* y) {
   array_view<Dtype, 1> aView(N, a);
