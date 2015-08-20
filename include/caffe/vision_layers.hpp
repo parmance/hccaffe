@@ -119,17 +119,16 @@ class BaseConvolutionLayer : public Layer<Dtype> {
         kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, data);
   }
 #ifdef USE_CPPAMP
-  inline void conv_im2col_gpu2(int N1, int N2, const Dtype* data,
+  inline void conv_im2col_gpu2(const Dtype* data,
       const int offset_in, Dtype* col_buff, const int offset_out) {
-    im2col_gpu2(N1, N2, data, offset_in,
-        conv_in_channels_,
+    im2col_gpu2(data, conv_in_channels_,
         conv_in_height_, conv_in_width_,
         kernel_h_, kernel_w_,
         pad_h_, pad_w_,
         stride_h_, stride_w_,
-        col_buff, offset_in,offset_out);
+        col_buff, offset_in, offset_out);
   }
-  inline void conv_col2im_gpu2(int N1, int N2, const Dtype* col_buff,
+  inline void conv_col2im_gpu2(const Dtype* col_buff,
       Dtype* data) {
     col2im_gpu2(col_buff, conv_in_channels_, conv_in_height_,
         conv_in_width_, kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_,

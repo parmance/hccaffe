@@ -334,7 +334,7 @@ void BaseConvolutionLayer<Dtype>::forward_gpu_gemm3(int N1, int N2,
   int offset_col = offset_input;
   if (!is_1x1_) {
     if (!skip_im2col) {
-      conv_im2col_gpu2(N1, col_buffer_.count(), input, offset_input,
+      conv_im2col_gpu2(input, offset_input,
           col_buffer_.mutable_gpu_data(), 0);
     }
     col_buff = col_buffer_.gpu_data();
@@ -356,7 +356,7 @@ void BaseConvolutionLayer<Dtype>::forward_gpu_gemm2(int N1, int N2,
   const Dtype* col_buff = input;
   if (!is_1x1_) {
     if (!skip_im2col) {
-      conv_im2col_gpu2(N1, col_buffer_.count(), input, 0,
+      conv_im2col_gpu2(input, 0,
           col_buffer_.mutable_gpu_data(), 0);
     }
     col_buff = col_buffer_.gpu_data();
@@ -383,7 +383,7 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_gemm2(int N1, int N2,
         (Dtype)0., col_buff + col_offset_ * g);
   }
   if (!is_1x1_) {
-    conv_col2im_gpu2(col_buffer_.count(), N2, col_buff, input);
+    conv_col2im_gpu2(col_buff, input);
   }
 }
 template <typename Dtype>
@@ -403,7 +403,7 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_gemm3(int N1, int N2,
         (Dtype)0., col_buff, offset_col+col_offset_ * g);
   }
   if (!is_1x1_) {
-    conv_col2im_gpu2(col_buffer_.count(), N2, col_buff, input);
+    conv_col2im_gpu2(col_buff, input);
   }
 }
 
@@ -412,7 +412,7 @@ void BaseConvolutionLayer<Dtype>::weight_gpu_gemm2(int N1, int N2,
     const Dtype* input, const Dtype* output, Dtype* weights) {
   const Dtype* col_buff = input;
   if (!is_1x1_) {
-    conv_im2col_gpu2(N1, col_buffer_.count(), input, 0,
+    conv_im2col_gpu2(input, 0,
         col_buffer_.mutable_gpu_data(), 0);
     col_buff = col_buffer_.gpu_data();
   }
@@ -431,7 +431,7 @@ void BaseConvolutionLayer<Dtype>::weight_gpu_gemm3(int N1, int N2,
   const Dtype* col_buff = input;
   int col_offset = offset_input;
   if (!is_1x1_) {
-    conv_im2col_gpu2(N1, col_buffer_.count(), input, offset_input,
+    conv_im2col_gpu2(input, offset_input,
         col_buffer_.mutable_gpu_data(), 0);
     col_buff = col_buffer_.gpu_data();
     col_offset = 0;
