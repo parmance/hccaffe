@@ -841,7 +841,7 @@ void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b, 
 
 template <>
 void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, float* r) {
-  array_view<float, 1> rView(N, r);
+  array_view<float, 1> rView = *((Concurrency::array_view<float, 1>*)(r));
   float coefficient =  (float)rand() / RAND_MAX;
   parallel_for_each(
     rView.get_extent(),
@@ -860,13 +860,12 @@ void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, floa
     if (2*idx[0] + 1 < N)
       rView[2 * idx + 1] = V2 * temp + mu;
   } );
-  rView.synchronize();
 }
 
 
 template <>
 void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, double* r) {
-  array_view<double, 1> rView(N, r);
+  array_view<double, 1> rView = *((Concurrency::array_view<double, 1>*)(r));
   double coefficient = (double)rand() / RAND_MAX;
   parallel_for_each(
     rView.get_extent(),
@@ -885,7 +884,6 @@ void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, do
     if (2*idx[0] + 1 < N)
       rView[2 * idx + 1] = V2 * temp + mu;
   } );
-  rView.synchronize();
 }
 
 
