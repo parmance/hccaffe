@@ -326,7 +326,6 @@ void set_kernel(const int N, const Dtype alpha, Dtype* y) {
     [=](index<1> idx) restrict(amp){
       outView[idx] = alpha;
     } );
-  outView.synchronize();
 }
 
 template <>
