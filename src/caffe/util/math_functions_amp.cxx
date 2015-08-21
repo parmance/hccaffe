@@ -952,13 +952,19 @@ void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
   *y = *std::max_element(host_buffer.begin(), host_buffer.end());
 }
 
-void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
-  caffe_rng_uniform(n,r);
-}
-
 #define MAX 65536
 #define FACTOR 2053
 #define CONSTANT 13849
+unsigned int uirnd_kernel(unsigned int &ri) restrict(amp){
+  int temp;
+  temp = (int)(ri / (unsigned int)MAX);
+  ri = ri - temp*(unsigned int)MAX;
+  ri = (unsigned int)FACTOR * ri + (unsigned int)CONSTANT;
+  temp = (int)(ri / (unsigned int)MAX);
+  ri = ri - temp * (unsigned int)MAX;
+  return ri / (unsigned int)MAX;
+}
+
 float srnd_kernel(float &ri) restrict(amp){
   int temp;
   temp = (int)(ri / (float)MAX);
@@ -967,7 +973,7 @@ float srnd_kernel(float &ri) restrict(amp){
   temp = (int)(ri / (float)MAX);
   ri = ri - temp * (float)MAX;
   return ri / (float)MAX;
-};
+}
 
 double drnd_kernel(double &ri) restrict(amp){
   int temp;
@@ -977,7 +983,21 @@ double drnd_kernel(double &ri) restrict(amp){
   temp = (int)(ri / (double)MAX);
   ri = ri - temp * (double)MAX;
   return ri / (double)MAX;
-};
+}
+
+void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
+  array_view<unsigned int, 1> rView = *((Concurrency::array_view<unsigned int, 1>*)(r));
+  int coefficient =  rand();
+  coefficient = coefficient>=0?coefficient:-1*coefficient;
+  parallel_for_each(
+    rView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+  {
+    unsigned int seed = (unsigned int)idx[0] * coefficient;
+    rView[idx] = uirnd_kernel(seed);
+  } );
+}
+
 
 template <>
 void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,float* r) {
