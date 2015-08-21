@@ -26,6 +26,7 @@ void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
          Concurrency::array<int, 1>(eA, currentAcc.get_default_view());
       Concurrency::array_view<int>* avData =
         new Concurrency::array_view<int>(arr);
+      avData->discard_data();
       *ptr = (void*)avData;
   } else {
     if(element_size == sizeof(float)){
@@ -37,6 +38,7 @@ void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
          Concurrency::array<float, 1>(eA, currentAcc.get_default_view());
       Concurrency::array_view<float>* avData =
         new Concurrency::array_view<float>(arr);
+      avData->discard_data();
       *ptr = (void*)avData;
     } else if(element_size == sizeof(double)){
       Concurrency::extent<1> eA(size/sizeof(double));
@@ -47,6 +49,7 @@ void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
        Concurrency::array<double, 1>(eA, currentAcc.get_default_view());
      Concurrency::array_view<double>* avData =
        new Concurrency::array_view<double>(arr);
+     avData->discard_data();
      *ptr = (void*)avData;
     }
   }
