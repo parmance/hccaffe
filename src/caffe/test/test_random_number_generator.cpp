@@ -1,3 +1,4 @@
+#include <boost/type_traits/is_same.hpp>
 #include <cmath>
 #include <cstring>
 
