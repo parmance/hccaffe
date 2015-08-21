@@ -146,10 +146,10 @@ class Ampblaslibrary
                                 const int incY);
     ampblasStatus ampblas_sgemv2(const enum AMPBLAS_TRANS type,
         const int M, const int N,
-        const float *alpha, float *A, const long aOffset,
-        const int lda, float *X, const long xOffset,
+        const float *alpha, Concurrency::array_view<float> &A_mat, const long aOffset,
+        const int lda, Concurrency::array_view<float> &X_mat, const long xOffset,
         const int incX, const float *beta,
-        float *Y,const long yOffset, const int incY);
+        Concurrency::array_view<float> &Y_mat,const long yOffset, const int incY);
 
 	/*                  Y = alpha * op(A) * X + beta * Y                     */
 	ampblasStatus ampblas_dgemv(const enum AMPBLAS_TRANS type, const int M,
@@ -160,10 +160,10 @@ class Ampblaslibrary
 		const int incY);
      ampblasStatus ampblas_dgemv2(const enum AMPBLAS_TRANS type,
         const int M, const int N,
-        const double *alpha, double *A, const long aOffset,
-        const int lda, double *X, const long xOffset,
+        const double *alpha, Concurrency::array_view<double> &A_mat, const long aOffset,
+        const int lda, Concurrency::array_view<double> &X_mat, const long xOffset,
         const int incX, const double *beta,
-        double *Y, const long yOffset, const int incY);
+        Concurrency::array_view<double> &Y_mat, const long yOffset, const int incY);
 
 /* SGEMV- Overloaded function with arguments of type Concurrency::array_view */
     ampblasStatus ampblas_sgemv(Concurrency::accelerator_view &accl_view,
@@ -210,9 +210,9 @@ class Ampblaslibrary
     ampblasStatus ampblas_sgemm2(const enum AMPBLAS_ORDER order, const enum AMPBLAS_TRANS typeA, const enum AMPBLAS_TRANS typeB,
         const int M, const int N,
         const int K, const float *alpha,
-        Concurrency::array_view<float> A_mat, const long lda,
-        Concurrency::array_view<float> B_mat, const long ldb,
-        const float *beta, Concurrency::array_view<float> C_mat,
+        Concurrency::array_view<float> &A_mat, const long lda,
+        Concurrency::array_view<float> &B_mat, const long ldb,
+        const float *beta, Concurrency::array_view<float> &C_mat,
         const long ldc, const long aOffset,
         const long bOffset,
         const long cOffset);
@@ -228,9 +228,9 @@ class Ampblaslibrary
      const enum AMPBLAS_TRANS typeA, const enum AMPBLAS_TRANS typeB,
         const int M, const int N,
         const int K, const double *alpha,
-        Concurrency::array_view<double> A_mat, const long lda,
-        Concurrency::array_view<double> B_mat, const long ldb,
-        const double *beta, Concurrency::array_view<double> C_mat,
+        Concurrency::array_view<double> &A_mat, const long lda,
+        Concurrency::array_view<double> &B_mat, const long ldb,
+        const double *beta, Concurrency::array_view<double> &C_mat,
         const long ldc, const long aOffset,
         const long bOffset,
         const long cOffset);

@@ -927,23 +927,17 @@ void gemv_AMP_d(Concurrency::accelerator_view &accl_view,
 
 ampblasStatus Ampblaslibrary :: ampblas_sgemv2(const enum AMPBLAS_TRANS type,
         const int M, const int N,
-        const float *alpha, float *A, const long aOffset,
-        const int lda, float *X, const long xOffset,
+        const float *alpha,  Concurrency::array_view<float> &A_mat , const long aOffset,
+        const int lda, Concurrency::array_view<float> &X_mat, const long xOffset,
         const int incX, const float *beta,
-        float *Y,const long yOffset, const int incY)
+        Concurrency::array_view<float> &Y_mat, const long yOffset, const int incY)
 {
-
-    if(alpha == NULL || X == NULL || Y == NULL || A == NULL || M <= 0 || N <= 0 || beta == NULL )
-        return AMPBLAS_INVALID;
 
     long lenXn = 1 + (N - 1) * abs(incX);
     long lenXt = 1 + (M - 1) * abs(incX);
     long lenYn = 1 + (M - 1) * abs(incY);
     long lenYt = 1 + (N - 1) * abs(incY);
 
-    //array_view<float> aMat(M * N, A);
-    Concurrency::array_view<float, 1> aMat =
-      *((Concurrency::array_view<float, 1>*)(A));
 
     int num_blocks = lenXt / BLOCK_SIZE;
     float* temp = (float*)malloc(num_blocks * lenYt * sizeof(float));
@@ -954,59 +948,29 @@ ampblasStatus Ampblaslibrary :: ampblas_sgemv2(const enum AMPBLAS_TRANS type,
 
     if( type == 'n')
     {
-        //Concurrency::array_view<float> xView(lenXn, X);
-        //Concurrency::array_view<float> yView(lenYn, Y);
-        Concurrency::array_view<float, 1> xView =
-          *((Concurrency::array_view<float, 1>*)(X));
-        Concurrency::array_view<float, 1> yView =
-          *((Concurrency::array_view<float, 1>*)(Y));
-        gemv_AMP(accl_view, type, M, N, *alpha, aMat, aOffset, xView, xOffset, incX, *beta, yView, yOffset, incY, tempBuf);
-        //aMat.synchronize();
-        /* Print Output */
-        /*    for (int i = 0 ;i < M; i++) {
-                cout << "[Y" << i << "] " << yView[i] << endl;
-            }*/
+        gemv_AMP(accl_view, type, M, N, *alpha, A_mat, aOffset, X_mat, xOffset, incX, *beta, Y_mat, yOffset, incY, tempBuf);
     }
 
 
     if( type == 't')
     {
-        //Concurrency::array_view<float> xView(lenXt, X);
-        //Concurrency::array_view<float> yView(lenYt, Y);
-        Concurrency::array_view<float, 1> xView =
-          *((Concurrency::array_view<float, 1>*)(X));
-        Concurrency::array_view<float, 1> yView =
-          *((Concurrency::array_view<float, 1>*)(Y));
-
-        gemv_AMP(accl_view, type, M, N, *alpha, aMat, aOffset, xView, xOffset, incX, *beta, yView, yOffset, incY, tempBuf);
-        //aMat.synchronize();
-        /* Print Output */
-        /* for (int i = 0 ;i < lenYt; i++) {
-             cout << "[Y" << i << "] "<< yView[i] << endl;
-         }*/
+        gemv_AMP(accl_view, type, M, N, *alpha, A_mat, aOffset, X_mat, xOffset, incX, *beta, Y_mat, yOffset, incY, tempBuf);
     }
 
     return AMPBLAS_SUCCESS;
 }
 ampblasStatus Ampblaslibrary::ampblas_dgemv2(const enum AMPBLAS_TRANS type,
         const int M, const int N,
-        const double *alpha, double *A, const long aOffset,
-        const int lda, double *X, const long xOffset,
+        const double *alpha, Concurrency::array_view<double> &A_mat, const long aOffset,
+        const int lda, Concurrency::array_view<double> &X_mat, const long xOffset,
         const int incX, const double *beta,
-        double *Y, const long yOffset, const int incY)
+        Concurrency::array_view<double> &Y_mat, const long yOffset, const int incY)
 {
-
-    if (alpha == NULL || X == NULL || Y == NULL || A == NULL || M <= 0 || N <= 0 || beta == NULL)
-        return AMPBLAS_INVALID;
 
     long lenXn = 1 + (N - 1) * abs(incX);
     long lenXt = 1 + (M - 1) * abs(incX);
     long lenYn = 1 + (M - 1) * abs(incY);
     long lenYt = 1 + (N - 1) * abs(incY);
-
-    //array_view<double> aMat(M * N, A);
-    Concurrency::array_view<double, 1> aMat =
-      *((Concurrency::array_view<double, 1>*)(A));
 
 
     int num_blocks = lenXt / BLOCK_SIZE;
@@ -1018,37 +982,14 @@ ampblasStatus Ampblaslibrary::ampblas_dgemv2(const enum AMPBLAS_TRANS type,
 
     if (type == 'n')
     {
-        //Concurrency::array_view<double> xView(lenXn, X);
-        //Concurrency::array_view<double> yView(lenYn, Y);
-        Concurrency::array_view<double, 1> xView =
-          *((Concurrency::array_view<double, 1>*)(X));
-        Concurrency::array_view<double, 1> yView =
-          *((Concurrency::array_view<double, 1>*)(Y));
-
-        gemv_AMP_d(accl_view, type, M, N, *alpha, aMat, aOffset, xView, xOffset, incX, *beta, yView, yOffset, incY, tempBuf);
-        //aMat.synchronize();
-        /* Print Output */
-        /*    for (int i = 0 ;i < M; i++) {
-        cout << "[Y" << i << "] " << yView[i] << endl;
-        }*/
+        gemv_AMP_d(accl_view, type, M, N, *alpha, A_mat, aOffset, X_mat, xOffset, incX, *beta, Y_mat, yOffset, incY, tempBuf);
     }
 
 
     if (type == 't')
     {
-        //Concurrency::array_view<double> xView(lenXt, X);
-        //Concurrency::array_view<double> yView(lenYt, Y);
-        Concurrency::array_view<double, 1> xView =
-          *((Concurrency::array_view<double, 1>*)(X));
-        Concurrency::array_view<double, 1> yView =
-          *((Concurrency::array_view<double, 1>*)(Y));
 
-        gemv_AMP_d(accl_view, type, M, N, *alpha, aMat, aOffset, xView, xOffset, incX, *beta, yView, yOffset, incY, tempBuf);
-        //aMat.synchronize();
-        /* Print Output */
-        /* for (int i = 0 ;i < lenYt; i++) {
-        cout << "[Y" << i << "] "<< yView[i] << endl;
-        }*/
+        gemv_AMP_d(accl_view, type, M, N, *alpha, A_mat, aOffset, X_mat, xOffset, incX, *beta, Y_mat, yOffset, incY, tempBuf);
     }
 
     return AMPBLAS_SUCCESS;

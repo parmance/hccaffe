@@ -595,7 +595,6 @@ template <>
 void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const float alpha, const float* A, const float* x,
   const float beta, float* y) {
-  const enum CBLAS_ORDER Order=CblasRowMajor;
   AMPBLAS_TRANS ampTransA = trans;
   Ampblaslibrary amp;
   if(TransA == CblasTrans)
@@ -613,7 +612,6 @@ void caffe_gpu_gemv2<float>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const float alpha, const float* A, const int offseta,
   const float* x, const int offsetx,
   const float beta, float* y, const int offsety) {
-  const enum CBLAS_ORDER Order=CblasRowMajor;
   AMPBLAS_TRANS ampTransA = trans;
   Ampblaslibrary amp;
   if(TransA == CblasTrans)
@@ -624,7 +622,14 @@ void caffe_gpu_gemv2<float>(const CBLAS_TRANSPOSE TransA, const int M,
   {
       ampTransA = conjugate;
   }
-  amp.ampblas_sgemv2(ampTransA, N, M, &alpha, const_cast<float*>(A), offseta, N, const_cast<float*>(x), offsetx, 1, &beta, y, offsety, 1);
+  Concurrency::array_view<float, 1> A_mat =
+    *((Concurrency::array_view<float, 1>*)(A));
+  Concurrency::array_view<float, 1> X_mat =
+    *((Concurrency::array_view<float, 1>*)(x));
+  Concurrency::array_view<float, 1> Y_mat =
+    *((Concurrency::array_view<float, 1>*)(y));
+
+  amp.ampblas_sgemv2(ampTransA, N, M, &alpha, A_mat, offseta, N, X_mat, offsetx, 1, &beta, Y_mat, offsety, 1);
 }
 
 
@@ -633,7 +638,6 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const double alpha, const double* A, const double* x,
   const double beta, double* y) {
   
-  //const enum CBLAS_ORDER Order=CblasRowMajor;
   AMPBLAS_TRANS ampTransA = trans;
   Ampblaslibrary amp;
   if(TransA == CblasTrans)
@@ -644,15 +648,21 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   {
       ampTransA = conjugate;
   }
-  //cblas_sgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
-  amp.ampblas_dgemv(ampTransA, N, M, &alpha, const_cast<double*>(A), 0, N, const_cast<double*>(x), 0, 1, &beta, y, 0, 1);
+  Concurrency::array_view<double, 1> A_mat =
+    *((Concurrency::array_view<double, 1>*)(A));
+  Concurrency::array_view<double, 1> X_mat =
+    *((Concurrency::array_view<double, 1>*)(x));
+  Concurrency::array_view<double, 1> Y_mat =
+    *((Concurrency::array_view<double, 1>*)(y));
+
+
+  amp.ampblas_dgemv2(ampTransA, N, M, &alpha, A_mat, 0, N, X_mat, 0, 1, &beta, Y_mat, 0, 1);
 }
 template <>
 void caffe_gpu_gemv2<double>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const double alpha, const double* A, const int offseta,
   const double* x, const int offsetx,
   const double beta, double* y, const int offsety) {
-  //const enum CBLAS_ORDER Order=CblasRowMajor;
   AMPBLAS_TRANS ampTransA = trans;
   Ampblaslibrary amp;
   if(TransA == CblasTrans)
@@ -663,7 +673,15 @@ void caffe_gpu_gemv2<double>(const CBLAS_TRANSPOSE TransA, const int M,
   {
       ampTransA = conjugate;
   }
-  amp.ampblas_dgemv2(ampTransA, N, M, &alpha, const_cast<double*>(A), offseta, N, const_cast<double*>(x), offsetx, 1, &beta, y, offsety, 1);
+  Concurrency::array_view<double, 1> A_mat =
+    *((Concurrency::array_view<double, 1>*)(A));
+  Concurrency::array_view<double, 1> X_mat =
+    *((Concurrency::array_view<double, 1>*)(x));
+  Concurrency::array_view<double, 1> Y_mat =
+    *((Concurrency::array_view<double, 1>*)(y));
+
+  amp.ampblas_dgemv2(ampTransA, N, M, &alpha, A_mat, 0, N, X_mat, 0, 1, &beta, Y_mat, 0, 1);
+
 }
 
 
@@ -774,10 +792,6 @@ void caffe_gpu_gemm2<float>(const CBLAS_TRANSPOSE TransA,
     *((Concurrency::array_view<float, 1>*)(B));
   Concurrency::array_view<float, 1> C_mat =
     *((Concurrency::array_view<float, 1>*)(C));
-  //Concurrency::array_view<float> A_mat(all_A, const_cast<float*>(A));
-  //Concurrency::array_view<float> B_mat(all_B, const_cast<float*>(B));
-  //Concurrency::array_view<float> C_mat(all_C, C);
-  //printf("======All_A = %d,ALL_B = %d, ALL_C = %d, group = %d, offset_A=%d,offset_B=%d,offset_C=%d,M=%d,N=%d,K=%d\n",all_A,all_B,all_C,group,offset_A,offset_B,offset_C,M,N,K);
     //PPAStartCpuEventFunc(GPU_GEMM);
     amp.ampblas_sgemm2(colMajor,ampTransB, ampTransA, N, M, K, &alpha, B_mat,
                 ldb, A_mat, lda, &beta, C_mat, N, offset_B, offset_A, offset_C);
