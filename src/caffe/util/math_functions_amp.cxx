@@ -318,33 +318,25 @@ void caffe_gpu_sub<double>(const int N, const double* a, const double* b,
 
 template <typename Dtype>
 void set_kernel(const int N, const Dtype alpha, Dtype* y) {
-  array_view<Dtype, 1> outView(N, y);
+  Concurrency::array_view<Dtype, 1> outView =
+    *((Concurrency::array_view<Dtype, 1>*)(y));
+
   parallel_for_each(
     outView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
+    [=](index<1> idx) restrict(amp){
       outView[idx] = alpha;
-    }
-  );
+    } );
   outView.synchronize();
 }
 
 template <>
 void caffe_gpu_set<float>(const int N, const float alpha, float* Y) {
-  if (alpha == 0) {
-    memset(Y, 0, sizeof(float) * N);
-    return;
-  }
   // NOLINT_NEXT_LINE(whitespace/operators)
   set_kernel(N, alpha, Y);
 }
 
 template <>
 void caffe_gpu_set<double>(const int N, const double alpha, double* Y) {
-  if (alpha == 0) {
-    memset(Y, 0, sizeof(double) * N);
-    return;
-  }
   // NOLINT_NEXT_LINE(whitespace/operators)
   set_kernel(N, alpha, Y);
 }
