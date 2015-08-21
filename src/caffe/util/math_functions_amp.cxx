@@ -26,6 +26,7 @@ void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
          Concurrency::array<int, 1>(eA, currentAcc.get_default_view());
       Concurrency::array_view<int>* avData =
         new Concurrency::array_view<int>(arr);
+      avData->discard_data();
       *ptr = (void*)avData;
   } else {
     if(element_size == sizeof(float)){
@@ -37,6 +38,7 @@ void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
          Concurrency::array<float, 1>(eA, currentAcc.get_default_view());
       Concurrency::array_view<float>* avData =
         new Concurrency::array_view<float>(arr);
+      avData->discard_data();
       *ptr = (void*)avData;
     } else if(element_size == sizeof(double)){
       Concurrency::extent<1> eA(size/sizeof(double));
@@ -47,6 +49,7 @@ void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
        Concurrency::array<double, 1>(eA, currentAcc.get_default_view());
      Concurrency::array_view<double>* avData =
        new Concurrency::array_view<double>(arr);
+     avData->discard_data();
      *ptr = (void*)avData;
     }
   }
@@ -98,6 +101,30 @@ void caffe_amp_H2D(void* src, void* dst, size_t element_size, bool is_int){
       Concurrency::array_view<double, 1>* avDst =
         (Concurrency::array_view<double, 1>*)(dst);
       Concurrency::copy((double*)src, *avDst);
+    }
+  }
+}
+
+void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int){
+  if(is_int){
+    Concurrency::array_view<int, 1>* avSrc =
+      (Concurrency::array_view<int, 1>*)(src);
+    Concurrency::array_view<int, 1>* avDst =
+      (Concurrency::array_view<int, 1>*)(dst);
+    Concurrency::copy(*avSrc, *avDst);
+  } else {
+    if(element_size == sizeof(float)){
+      Concurrency::array_view<float, 1>* avSrc =
+        (Concurrency::array_view<float, 1>*)(src);
+      Concurrency::array_view<float, 1>* avDst =
+        (Concurrency::array_view<float, 1>*)(dst);
+      Concurrency::copy(*avSrc, *avDst);
+    } else if (element_size == sizeof(double)){
+      Concurrency::array_view<double, 1>* avSrc =
+        (Concurrency::array_view<double, 1>*)(src);
+      Concurrency::array_view<double, 1>* avDst =
+        (Concurrency::array_view<double, 1>*)(dst);
+      Concurrency::copy(*avSrc, *avDst);
     }
   }
 }
@@ -568,7 +595,11 @@ void caffe_gpu_axpby<double>(const int N, const double alpha, const double* X,
   caffe_gpu_scal<double>(N, beta, Y);
   caffe_gpu_axpy<double>(N, alpha, X, Y);
 }
-
+template <typename Dtype>
+void caffe_gpu_gemv2(const CBLAS_TRANSPOSE TransA, const int M,
+  const int N, const Dtype alpha, const Dtype* A, const int offseta,
+  const Dtype* x, const int offsetx,
+  const Dtype beta, Dtype* y, const int offsety);
 template <>
 void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const float alpha, const float* A, const float* x,
@@ -586,6 +617,24 @@ void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
   }
   amp.ampblas_sgemv(ampTransA, N, M, &alpha, const_cast<float*>(A), 0, N, const_cast<float*>(x), 0, 1, &beta, y, 0, 1);
 }
+template <>
+void caffe_gpu_gemv2<float>(const CBLAS_TRANSPOSE TransA, const int M,
+  const int N, const float alpha, const float* A, const int offseta,
+  const float* x, const int offsetx,
+  const float beta, float* y, const int offsety) {
+  const enum CBLAS_ORDER Order=CblasRowMajor;
+  AMPBLAS_TRANS ampTransA = trans;
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = noTrans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+  amp.ampblas_sgemv2(ampTransA, N, M, &alpha, const_cast<float*>(A), offseta, N, const_cast<float*>(x), offsetx, 1, &beta, y, offsety, 1);
+}
 
 
 template <>
@@ -593,7 +642,7 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const double alpha, const double* A, const double* x,
   const double beta, double* y) {
   
-  const enum CBLAS_ORDER Order=CblasRowMajor;
+  //const enum CBLAS_ORDER Order=CblasRowMajor;
   AMPBLAS_TRANS ampTransA = trans;
   Ampblaslibrary amp;
   if(TransA == CblasTrans)
@@ -607,6 +656,25 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   //cblas_sgemv(Order, TransA, M, N, alpha, A, N, x, 1, beta, y, 1);
   amp.ampblas_dgemv(ampTransA, N, M, &alpha, const_cast<double*>(A), 0, N, const_cast<double*>(x), 0, 1, &beta, y, 0, 1);
 }
+template <>
+void caffe_gpu_gemv2<double>(const CBLAS_TRANSPOSE TransA, const int M,
+  const int N, const double alpha, const double* A, const int offseta,
+  const double* x, const int offsetx,
+  const double beta, double* y, const int offsety) {
+  //const enum CBLAS_ORDER Order=CblasRowMajor;
+  AMPBLAS_TRANS ampTransA = trans;
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = noTrans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+  amp.ampblas_dgemv2(ampTransA, N, M, &alpha, const_cast<double*>(A), offseta, N, const_cast<double*>(x), offsetx, 1, &beta, y, offsety, 1);
+}
+
 
 
 template <>
@@ -671,7 +739,105 @@ void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
                 ldb, const_cast<double*>(A), lda, &beta, C, N, 0, 0, 0);
 
 }
+template <typename Dtype>
+void caffe_gpu_gemm2(const CBLAS_TRANSPOSE TransA,
+  const CBLAS_TRANSPOSE TransB,
+  const int M, const int N, const int K,
+  const Dtype alpha, const Dtype* A, const int offet_A,const Dtype* B,
+  const int offset_B, const Dtype beta, Dtype* C, const int offset_C);
 
+
+
+template <>
+void caffe_gpu_gemm2<float>(const CBLAS_TRANSPOSE TransA,
+  const CBLAS_TRANSPOSE TransB,
+  const int M, const int N, const int K,
+  const float alpha, const float* A, const int offset_A,const float* B,
+  const int offset_B, const float beta, float* C, const int offset_C) {
+  int lda = (TransA == CblasNoTrans) ? K : M;
+  int ldb = (TransB == CblasNoTrans) ? N : K;
+  AMPBLAS_TRANS ampTransA = noTrans;
+  AMPBLAS_TRANS ampTransB = noTrans;
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = trans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+
+  if(TransB == CblasTrans)
+  {
+      ampTransB = trans;
+  }
+
+  if(TransB == CblasConjTrans)
+  {
+      ampTransB = conjugate;
+  }
+  Concurrency::array_view<float, 1> A_mat =
+    *((Concurrency::array_view<float, 1>*)(A));
+  Concurrency::array_view<float, 1> B_mat =
+    *((Concurrency::array_view<float, 1>*)(B));
+  Concurrency::array_view<float, 1> C_mat =
+    *((Concurrency::array_view<float, 1>*)(C));
+  //Concurrency::array_view<float> A_mat(all_A, const_cast<float*>(A));
+  //Concurrency::array_view<float> B_mat(all_B, const_cast<float*>(B));
+  //Concurrency::array_view<float> C_mat(all_C, C);
+  //printf("======All_A = %d,ALL_B = %d, ALL_C = %d, group = %d, offset_A=%d,offset_B=%d,offset_C=%d,M=%d,N=%d,K=%d\n",all_A,all_B,all_C,group,offset_A,offset_B,offset_C,M,N,K);
+    //PPAStartCpuEventFunc(GPU_GEMM);
+    amp.ampblas_sgemm2(colMajor,ampTransB, ampTransA, N, M, K, &alpha, B_mat,
+                ldb, A_mat, lda, &beta, C_mat, N, offset_B, offset_A, offset_C);
+   // PPAStopCpuEventFunc(GPU_GEMM);
+}
+
+
+template <>
+void caffe_gpu_gemm2<double>(const CBLAS_TRANSPOSE TransA,
+  const CBLAS_TRANSPOSE TransB,
+  const int M, const int N, const int K,
+  const double alpha, const double* A, const int offset_A,const double* B,
+  const int offset_B, const double beta, double* C, const int offset_C) {
+  int lda = (TransA == CblasNoTrans) ? K : M;
+  int ldb = (TransB == CblasNoTrans) ? N : K;
+  AMPBLAS_TRANS ampTransA = noTrans;
+  AMPBLAS_TRANS ampTransB = noTrans;
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = trans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+
+  if(TransB == CblasTrans)
+  {
+      ampTransB = trans;
+  }
+
+  if(TransB == CblasConjTrans)
+  {
+      ampTransB = conjugate;
+  }
+  Concurrency::array_view<double, 1> A_mat =
+    *((Concurrency::array_view<double, 1>*)(A));
+  Concurrency::array_view<double, 1> B_mat =
+    *((Concurrency::array_view<double, 1>*)(B));
+  Concurrency::array_view<double, 1> C_mat =
+    *((Concurrency::array_view<double, 1>*)(C));
+  //Concurrency::array_view<float> A_mat(all_A, const_cast<float*>(A));
+  //Concurrency::array_view<float> B_mat(all_B, const_cast<float*>(B));
+  //Concurrency::array_view<float> C_mat(all_C, C);
+  //printf("======All_A = %d,ALL_B = %d, ALL_C = %d, group = %d, offset_A=%d,offset_B=%d,offset_C=%d,M=%d,N=%d,K=%d\n",all_A,all_B,all_C,group,offset_A,offset_B,offset_C,M,N,K);
+    //PPAStartCpuEventFunc(GPU_GEMM);
+    amp.ampblas_dgemm2(colMajor, ampTransB, ampTransA, N, M, K, &alpha, B_mat,
+                ldb, A_mat, lda, &beta, C_mat, N, offset_B, offset_A, offset_C);
+   // PPAStopCpuEventFunc(GPU_GEMM);
+}
 template <>
 void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
   array_view<float, 1> xView(n, const_cast <float*>(x));
@@ -786,13 +952,19 @@ void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
   *y = *std::max_element(host_buffer.begin(), host_buffer.end());
 }
 
-void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
-  caffe_rng_uniform(n,r);
-}
-
 #define MAX 65536
 #define FACTOR 2053
 #define CONSTANT 13849
+unsigned int uirnd_kernel(unsigned int &ri) restrict(amp){
+  int temp;
+  temp = (int)(ri / (unsigned int)MAX);
+  ri = ri - temp*(unsigned int)MAX;
+  ri = (unsigned int)FACTOR * ri + (unsigned int)CONSTANT;
+  temp = (int)(ri / (unsigned int)MAX);
+  ri = ri - temp * (unsigned int)MAX;
+  return ri / (unsigned int)MAX;
+}
+
 float srnd_kernel(float &ri) restrict(amp){
   int temp;
   temp = (int)(ri / (float)MAX);
@@ -801,7 +973,7 @@ float srnd_kernel(float &ri) restrict(amp){
   temp = (int)(ri / (float)MAX);
   ri = ri - temp * (float)MAX;
   return ri / (float)MAX;
-};
+}
 
 double drnd_kernel(double &ri) restrict(amp){
   int temp;
@@ -811,7 +983,21 @@ double drnd_kernel(double &ri) restrict(amp){
   temp = (int)(ri / (double)MAX);
   ri = ri - temp * (double)MAX;
   return ri / (double)MAX;
-};
+}
+
+void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
+  array_view<unsigned int, 1> rView = *((Concurrency::array_view<unsigned int, 1>*)(r));
+  int coefficient =  rand();
+  coefficient = coefficient>=0?coefficient:-1*coefficient;
+  parallel_for_each(
+    rView.get_extent(),
+    [=](index<1> idx) restrict(amp)
+  {
+    unsigned int seed = (unsigned int)idx[0] * coefficient;
+    rView[idx] = uirnd_kernel(seed);
+  } );
+}
+
 
 template <>
 void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,float* r) {
