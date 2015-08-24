@@ -63,6 +63,8 @@ TYPED_TEST(InnerProductLayerTest, TestForward) {
 #ifndef CPU_ONLY
 #ifndef USE_CPPAMP
   IS_VALID_CUDA = CAFFE_TEST_CUDA_PROP.major >= 2;
+#else
+  IS_VALID_CUDA = true;
 #endif
 #endif
   if (Caffe::mode() == Caffe::CPU ||
@@ -95,6 +97,8 @@ TYPED_TEST(InnerProductLayerTest, TestGradient) {
 #ifndef CPU_ONLY
 #ifndef USE_CPPAMP
   IS_VALID_CUDA = CAFFE_TEST_CUDA_PROP.major >= 2;
+#else
+  IS_VALID_CUDA = true;
 #endif
 #endif
   if (Caffe::mode() == Caffe::CPU ||
