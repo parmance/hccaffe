@@ -50,6 +50,7 @@ void ConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
         this->backward_gpu_bias2(bias_diff, top_diff, top[i]->offset(n));
       }
     }
+
     if (this->param_propagate_down_[0] || propagate_down[i]) {
       const Dtype* bottom_data = bottom[i]->gpu_data();
       Dtype* bottom_diff = bottom[i]->mutable_gpu_diff();

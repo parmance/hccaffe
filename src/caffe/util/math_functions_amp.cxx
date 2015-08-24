@@ -608,6 +608,22 @@ void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
   amp.ampblas_sgemv(ampTransA, N, M, &alpha, const_cast<float*>(A), 0, N, const_cast<float*>(x), 0, 1, &beta, y, 0, 1);
 }
 template <>
+void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
+  const int N, const double alpha, const double* A, const double* x,
+  const double beta, double* y) {
+  AMPBLAS_TRANS ampTransA = trans;
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = noTrans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+  amp.ampblas_dgemv(ampTransA, N, M, &alpha, const_cast<double*>(A), 0, N, const_cast<double*>(x), 0, 1, &beta, y, 0, 1);
+}
+template <>
 void caffe_gpu_gemv2<float>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const float alpha, const float* A, const int offseta,
   const float* x, const int offsetx,
@@ -634,31 +650,6 @@ void caffe_gpu_gemv2<float>(const CBLAS_TRANSPOSE TransA, const int M,
 
 
 template <>
-void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
-  const int N, const double alpha, const double* A, const double* x,
-  const double beta, double* y) {
-  
-  AMPBLAS_TRANS ampTransA = trans;
-  Ampblaslibrary amp;
-  if(TransA == CblasTrans)
-  {
-      ampTransA = noTrans;
-  }
-  if(TransA == CblasConjTrans)
-  {
-      ampTransA = conjugate;
-  }
-  Concurrency::array_view<double, 1> A_mat =
-    *((Concurrency::array_view<double, 1>*)(A));
-  Concurrency::array_view<double, 1> X_mat =
-    *((Concurrency::array_view<double, 1>*)(x));
-  Concurrency::array_view<double, 1> Y_mat =
-    *((Concurrency::array_view<double, 1>*)(y));
-
-
-  amp.ampblas_dgemv2(ampTransA, N, M, &alpha, A_mat, 0, N, X_mat, 0, 1, &beta, Y_mat, 0, 1);
-}
-template <>
 void caffe_gpu_gemv2<double>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const double alpha, const double* A, const int offseta,
   const double* x, const int offsetx,
@@ -680,7 +671,7 @@ void caffe_gpu_gemv2<double>(const CBLAS_TRANSPOSE TransA, const int M,
   Concurrency::array_view<double, 1> Y_mat =
     *((Concurrency::array_view<double, 1>*)(y));
 
-  amp.ampblas_dgemv2(ampTransA, N, M, &alpha, A_mat, 0, N, X_mat, 0, 1, &beta, Y_mat, 0, 1);
+  amp.ampblas_dgemv2(ampTransA, N, M, &alpha, A_mat, offseta, N, X_mat, offsetx, 1, &beta, Y_mat, offsety, 1);
 
 }
 
@@ -991,15 +982,16 @@ double drnd_kernel(double &ri) restrict(amp){
 }
 
 void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
+ unsigned int temp[n];
+  caffe_rng_uniform(n,temp);
+  array_view<unsigned int, 1> tempView(n, temp);
   array_view<unsigned int, 1> rView = *((Concurrency::array_view<unsigned int, 1>*)(r));
-  int coefficient =  rand();
-  coefficient = coefficient>=0?coefficient:-1*coefficient;
+  Concurrency::extent<1> e(n);
   parallel_for_each(
-    rView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
   {
-    unsigned int seed = (unsigned int)idx[0] * coefficient;
-    rView[idx] = uirnd_kernel(seed);
+    rView[idx] = tempView(idx);
   } );
 }
 
@@ -1008,8 +1000,9 @@ template <>
 void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,float* r) {
   array_view<float, 1> rView = *((Concurrency::array_view<float, 1>*)(r));
   float coefficient =  (float)rand() / RAND_MAX;
+  Concurrency::extent<1> e(N);
   parallel_for_each(
-    rView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
   {
     float seed = (float)idx[0] * coefficient;
@@ -1021,8 +1014,9 @@ template <>
 void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b, double* r) {
   array_view<double, 1> rView = *((Concurrency::array_view<double, 1>*)(r));
   double coefficient =  (double)rand() / RAND_MAX;
+  Concurrency::extent<1> e(N);
   parallel_for_each(
-    rView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
   {
     double seed = (double)idx[0] * coefficient;
@@ -1034,8 +1028,9 @@ template <>
 void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, float* r) {
   array_view<float, 1> rView = *((Concurrency::array_view<float, 1>*)(r));
   float coefficient =  (float)rand() / RAND_MAX;
+  Concurrency::extent<1> e(N);
   parallel_for_each(
-    rView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
   {
     float seed = (float)idx[0] * coefficient;
@@ -1058,8 +1053,9 @@ template <>
 void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, double* r) {
   array_view<double, 1> rView = *((Concurrency::array_view<double, 1>*)(r));
   double coefficient = (double)rand() / RAND_MAX;
+  Concurrency::extent<1> e(N);
   parallel_for_each(
-    rView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
   {
     double seed = (double)idx[0] * coefficient;

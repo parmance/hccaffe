@@ -129,10 +129,10 @@ class BaseConvolutionLayer : public Layer<Dtype> {
         col_buff, offset_in, offset_out);
   }
   inline void conv_col2im_gpu2(const Dtype* col_buff,
-      Dtype* data) {
+      Dtype* data, const int col_offset, const int data_offset) {
     col2im_gpu2(col_buff, conv_in_channels_, conv_in_height_,
         conv_in_width_, kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_,
-        stride_w_, data, 0, 0);
+        stride_w_, data, col_offset, data_offset);
   }
 #endif  // USE_CPPAMP
 #endif  // CPU_ONLY
