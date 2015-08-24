@@ -130,7 +130,7 @@ void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int){
 }
 
 template <typename Dtype>
-void caffe_amp_abs(const int N, Dtype* a, Dtype* y) {
+void abs_kernel(const int N, Dtype* a, Dtype* y) {
   array_view<Dtype, 1> aView(N, a);
   array_view<Dtype, 1> yView(N, y);
   parallel_for_each(
@@ -144,7 +144,7 @@ void caffe_amp_abs(const int N, Dtype* a, Dtype* y) {
 }
 
 template <typename Dtype>
-void caffe_amp_sign(const int N, Dtype* a, Dtype* y) {
+void sign_kernel(const int N, Dtype* a, Dtype* y) {
   array_view<Dtype, 1> aView(N, a);
   array_view<Dtype, 1> yView(N, y);
   parallel_for_each(
@@ -181,7 +181,7 @@ void caffe_gpu_sgnbit<double>(const int n, const double* x, double* y){
 }
 
 template <typename Dtype>
-void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y) {
+void mul_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
   array_view<Dtype, 1> aView(N, a);
   array_view<Dtype, 1> bView(N, b);
   array_view<Dtype, 1> yView(N, y);
@@ -197,22 +197,22 @@ void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y) {
 
 template <>
 void caffe_gpu_abs<float>(const int N,const float* a, float* y) {
-  caffe_amp_abs(N, const_cast <float*>(a), y);
+  abs_kernel(N, const_cast <float*>(a), y);
 }
 
 template <>
 void caffe_gpu_abs<double>(const int N,const double* a, double* y) {
-  caffe_amp_abs(N, const_cast <double*>(a), y);
+  abs_kernel(N, const_cast <double*>(a), y);
 }
 
 template <>
 void caffe_gpu_sign<float>(const int N,const float* a, float* y) {
-  caffe_amp_sign(N, const_cast <float*>(a), y);
+  sign_kernel(N, const_cast <float*>(a), y);
 }
 
 template <>
 void caffe_gpu_sign<double>(const int N,const double* a, double* y) {
-  caffe_amp_sign(N, const_cast <double*>(a), y);
+  sign_kernel(N, const_cast <double*>(a), y);
 }
 
 
@@ -221,14 +221,14 @@ template <>
 void caffe_gpu_mul<float>(const int N, const float* a,
   const float* b, float* y) {
   // NOLINT_NEXT_LINE(whitespace/operators)
-  caffe_amp_mul(N, const_cast <float*>(a), const_cast <float*>(b), y);
+  mul_kernel(N, const_cast <float*>(a), const_cast <float*>(b), y);
 }
 
 template <>
 void caffe_gpu_mul<double>(const int N, const double* a,
   const double* b, double* y) {
   // NOLINT_NEXT_LINE(whitespace/operators)
-  caffe_amp_mul(N, const_cast <double*>(a), const_cast <double*>(b), y);
+  mul_kernel(N, const_cast <double*>(a), const_cast <double*>(b), y);
 }
 
 template <typename Dtype>
