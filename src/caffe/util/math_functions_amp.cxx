@@ -991,15 +991,15 @@ double drnd_kernel(double &ri) restrict(amp){
 }
 
 void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
+ unsigned int temp[n];
+  caffe_rng_uniform(n,temp);
+  array_view<unsigned int, 1> tempView(n, temp);
   array_view<unsigned int, 1> rView = *((Concurrency::array_view<unsigned int, 1>*)(r));
-  int coefficient =  rand();
-  coefficient = coefficient>=0?coefficient:-1*coefficient;
   parallel_for_each(
     rView.get_extent(),
     [=](index<1> idx) restrict(amp)
   {
-    unsigned int seed = (unsigned int)idx[0] * coefficient;
-    rView[idx] = uirnd_kernel(seed);
+    rView[idx] = tempView(idx);
   } );
 }
 
