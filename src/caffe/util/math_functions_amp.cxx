@@ -552,14 +552,14 @@ void caffe_gpu_axpy<double>(const int N, const double alpha, const double* X,
 template <>
 void caffe_gpu_scale<float>(const int n, const float alpha, const float *x,
                                 float* y){
-  amp_copy(n, const_cast <float*>(x), y);
+  caffe_amp_D2D((void*)x, (void*)y, sizeof(float), false);
   amp_scale(n, alpha, y);
 }
 
 template <>
 void caffe_gpu_scale<double>(const int n, const double alpha, const double *x,
                                  double* y) {
-  amp_copy(n, const_cast <double*>(x), y);
+  caffe_amp_D2D((void*)x, (void*)y, sizeof(double), false);
   amp_scale(n, alpha, y);
 }
 
