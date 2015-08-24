@@ -608,6 +608,22 @@ void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
   amp.ampblas_sgemv(ampTransA, N, M, &alpha, const_cast<float*>(A), 0, N, const_cast<float*>(x), 0, 1, &beta, y, 0, 1);
 }
 template <>
+void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
+  const int N, const double alpha, const double* A, const double* x,
+  const double beta, double* y) {
+  AMPBLAS_TRANS ampTransA = trans;
+  Ampblaslibrary amp;
+  if(TransA == CblasTrans)
+  {
+      ampTransA = noTrans;
+  }
+  if(TransA == CblasConjTrans)
+  {
+      ampTransA = conjugate;
+  }
+  amp.ampblas_dgemv(ampTransA, N, M, &alpha, const_cast<double*>(A), 0, N, const_cast<double*>(x), 0, 1, &beta, y, 0, 1);
+}
+template <>
 void caffe_gpu_gemv2<float>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const float alpha, const float* A, const int offseta,
   const float* x, const int offsetx,
@@ -634,31 +650,6 @@ void caffe_gpu_gemv2<float>(const CBLAS_TRANSPOSE TransA, const int M,
 
 
 template <>
-void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
-  const int N, const double alpha, const double* A, const double* x,
-  const double beta, double* y) {
-  
-  AMPBLAS_TRANS ampTransA = trans;
-  Ampblaslibrary amp;
-  if(TransA == CblasTrans)
-  {
-      ampTransA = noTrans;
-  }
-  if(TransA == CblasConjTrans)
-  {
-      ampTransA = conjugate;
-  }
-  Concurrency::array_view<double, 1> A_mat =
-    *((Concurrency::array_view<double, 1>*)(A));
-  Concurrency::array_view<double, 1> X_mat =
-    *((Concurrency::array_view<double, 1>*)(x));
-  Concurrency::array_view<double, 1> Y_mat =
-    *((Concurrency::array_view<double, 1>*)(y));
-
-
-  amp.ampblas_dgemv2(ampTransA, N, M, &alpha, A_mat, 0, N, X_mat, 0, 1, &beta, Y_mat, 0, 1);
-}
-template <>
 void caffe_gpu_gemv2<double>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const double alpha, const double* A, const int offseta,
   const double* x, const int offsetx,
@@ -680,7 +671,7 @@ void caffe_gpu_gemv2<double>(const CBLAS_TRANSPOSE TransA, const int M,
   Concurrency::array_view<double, 1> Y_mat =
     *((Concurrency::array_view<double, 1>*)(y));
 
-  amp.ampblas_dgemv2(ampTransA, N, M, &alpha, A_mat, 0, N, X_mat, 0, 1, &beta, Y_mat, 0, 1);
+  amp.ampblas_dgemv2(ampTransA, N, M, &alpha, A_mat, offseta, N, X_mat, offsetx, 1, &beta, Y_mat, offsety, 1);
 
 }
 

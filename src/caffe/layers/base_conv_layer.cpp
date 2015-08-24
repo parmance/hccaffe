@@ -300,8 +300,11 @@ void BaseConvolutionLayer<Dtype>::weight_gpu_gemm(const Dtype* input,
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::backward_gpu_bias(Dtype* bias,
     const Dtype* input) {
+  //caffe_gpu_gemv<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_, 1.,
+  //    input, bias_multiplier_.gpu_data(), 1., bias);
   caffe_gpu_gemv<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_, 1.,
-      input, bias_multiplier_.gpu_data(), 1., bias);
+      input, bias_multiplier_.cpu_data(), 1., bias);
+
 }
 #ifdef USE_CPPAMP
 template <typename Dtype>
@@ -315,6 +318,7 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_bias2(Dtype* bias,
     const Dtype* input, const int offset) {
   caffe_gpu_gemv2<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_, 1.,
       input, offset, bias_multiplier_.gpu_data(), 0, 1., bias, 0);
+
 }
 
 
@@ -383,7 +387,7 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_gemm2(int N1, int N2,
         (Dtype)0., col_buff + col_offset_ * g);
   }
   if (!is_1x1_) {
-    conv_col2im_gpu2(col_buff, input);
+    conv_col2im_gpu2(col_buff, input, 0, 0);
   }
 }
 template <typename Dtype>
@@ -403,7 +407,7 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_gemm3(int N1, int N2,
         (Dtype)0., col_buff, offset_col+col_offset_ * g);
   }
   if (!is_1x1_) {
-    conv_col2im_gpu2(col_buff, input);
+    conv_col2im_gpu2(col_buff, input, offset_col, offset_input);
   }
 }
 

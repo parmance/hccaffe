@@ -407,232 +407,6 @@ static void gemv_TransA_d(Concurrency::accelerator_view &accl_view,
 #define TILE_SZ_A 16
 #define TILE_SZ_A 16
 
-static void gemv_TransA_register(Concurrency::accelerator_view &accl_view,
-                                 Concurrency::array_view<float> &A_mat, long aOffset,
-                                 Concurrency::array_view<float> &X_vec, long xOffset,
-                                 Concurrency::array_view<float> &Y_vec, long yOffset,
-                                 float alpha, float beta, int lenX, int lenY,
-                                 Concurrency::array_view<float> &tempBuf)
-{
-
-    Concurrency::extent<2> grdExt(((lenX - 1) / TILE_SZ_A + 1) * TILE_SZ_A, ((lenY - 1) / TILE_SZ_A + 1)*TILE_SZ_A);
-    Concurrency::tiled_extent <TILE_SZ_A, TILE_SZ_A> t_ext(grdExt);
-    Concurrency::parallel_for_each(accl_view, t_ext,
-                                   [=] (Concurrency::tiled_index<TILE_SZ_A,TILE_SZ_A>tidx)
-    restrict(amp) {
-
-        // Shared memory for tiling input B array
-        tile_static float A_s [TILE_SZ_A][TILE_SZ_A];
-
-        // Macros for accessing flattened matrices
-#define A1(row,col) A_mat[(row) + (col) * lenX]
-        const unsigned int row = tidx.local[0];
-        const unsigned int col = tidx.global[1];
-
-        float y_reg[TILE_SZ_A] = {(float)0};
-
-        for(unsigned int tileIdx = 0; tileIdx < (lenX - 1)/TILE_SZ_A + 1; ++tileIdx) {
-            if (tileIdx*TILE_SZ_A + row < lenX && col < lenY) {
-                A_s[tidx.local[0]][tidx.local[1]] = A1(tileIdx*TILE_SZ_A + row, col);
-            }
-            else {
-                A_s[tidx.local[0]][tidx.local[1]] = 0;
-            }
-            tidx.barrier.wait();
-
-            for (unsigned int idx = 0; idx < TILE_SZ_A; ++idx) {
-                float x_reg;
-                if(tileIdx*TILE_SZ_A + idx < lenX) {
-                    x_reg = X_vec[tileIdx*TILE_SZ_A + idx];
-                }
-                else {
-                    x_reg = 0;
-                }
-
-                for(unsigned int outIdx = 0; outIdx < TILE_SZ_A; ++outIdx) {
-                    y_reg[outIdx] += x_reg*A_s[idx][outIdx];
-                }
-            }
-            tidx.barrier.wait();
-        }
-        for (unsigned int outIdx = 0; outIdx < TILE_SZ_A; ++outIdx) {
-            if (col < lenY) {
-                Y_vec[tidx.tile[1] * TILE_SZ_A + outIdx] *= beta;
-                Y_vec[tidx.tile[1] * TILE_SZ_A + outIdx] += y_reg[outIdx] * alpha;
-            }
-        }
-    });
-
-}
-static void gemv_TransA_register_d(Concurrency::accelerator_view &accl_view,
-                                   Concurrency::array_view<double> &A_mat, long aOffset,
-                                   Concurrency::array_view<double> &X_vec, long xOffset,
-                                   Concurrency::array_view<double> &Y_vec, long yOffset,
-                                   double alpha, double beta, int lenX, int lenY,
-                                   Concurrency::array_view<float> &tempBuf)
-{
-
-    Concurrency::extent<2> grdExt(((lenX - 1) / TILE_SZ_A + 1) * TILE_SZ_A, ((lenY - 1) / TILE_SZ_A + 1)*TILE_SZ_A);
-    Concurrency::tiled_extent <TILE_SZ_A, TILE_SZ_A> t_ext(grdExt);
-    Concurrency::parallel_for_each(accl_view, t_ext,
-                                   [=](Concurrency::tiled_index<TILE_SZ_A, TILE_SZ_A>tidx)
-    restrict(amp) {
-
-        // Shared memory for tiling input B array
-        tile_static double A_s[TILE_SZ_A][TILE_SZ_A];
-
-        // Macros for accessing flattened matrices
-#define A1(row,col) A_mat[(row) + (col) * lenX]
-        const unsigned int row = tidx.local[0];
-        const unsigned int col = tidx.global[1];
-
-        double y_reg[TILE_SZ_A] = { (double)0 };
-
-        for (unsigned int tileIdx = 0; tileIdx < (lenX - 1) / TILE_SZ_A + 1; ++tileIdx) {
-            if (tileIdx*TILE_SZ_A + row < lenX && col < lenY) {
-                A_s[tidx.local[0]][tidx.local[1]] = A1(tileIdx*TILE_SZ_A + row, col);
-            }
-            else {
-                A_s[tidx.local[0]][tidx.local[1]] = 0;
-            }
-            tidx.barrier.wait();
-
-            for (unsigned int idx = 0; idx < TILE_SZ_A; ++idx) {
-                float x_reg;
-                if (tileIdx*TILE_SZ_A + idx < lenX) {
-                    x_reg = X_vec[tileIdx*TILE_SZ_A + idx];
-                }
-                else {
-                    x_reg = 0;
-                }
-
-                for (unsigned int outIdx = 0; outIdx < TILE_SZ_A; ++outIdx) {
-                    y_reg[outIdx] += x_reg*A_s[idx][outIdx];
-                }
-            }
-            tidx.barrier.wait();
-        }
-        for (unsigned int outIdx = 0; outIdx < TILE_SZ_A; ++outIdx) {
-            if (col < lenY) {
-                Y_vec[tidx.tile[1] * TILE_SZ_A + outIdx] *= beta;
-                Y_vec[tidx.tile[1] * TILE_SZ_A + outIdx] += y_reg[outIdx] * alpha;
-            }
-        }
-    });
-
-}
-static void gemv_NoTransA_register(Concurrency::accelerator_view &accl_view,Concurrency::array_view<float> &A, long aOffset,
-                                   Concurrency::array_view<float> &X, long xOffset,
-                                   Concurrency::array_view<float> &Y, long yOffset,
-                                   float alpha, float beta, int lenX, int lenY)
-{
-    Concurrency::extent<2> grdExt( ((lenX - 1) / TILE_SZ_A + 1)*TILE_SZ_A, ((lenY - 1) / TILE_SZ_A + 1)*TILE_SZ_A);
-    Concurrency::tiled_extent <TILE_SZ_A, TILE_SZ_A> t_ext(grdExt);
-    Concurrency::parallel_for_each(accl_view, t_ext,
-                                   [=] (Concurrency::tiled_index<TILE_SZ_A,TILE_SZ_A> tidx)
-    restrict(amp) {
-
-        tile_static float A_s [TILE_SZ_A][TILE_SZ_A];
-
-#define A(row,col) A[(row)*lenY + (col)]
-
-        const unsigned int row = tidx.local[0];
-        const unsigned int col = tidx.global[1];
-
-        float y_reg[TILE_SZ_A] = {(float)0};
-
-        for(unsigned int tileIdx = 0; tileIdx < (lenX - 1)/TILE_SZ_A + 1; ++tileIdx) {
-            if (tileIdx*TILE_SZ_A + row < lenX && col < lenY) {
-                A_s[tidx.local[0]][tidx.local[1]] = A(tileIdx*TILE_SZ_A + row, col);
-            }
-            else {
-                A_s[tidx.local[0]][tidx.local[1]] = 0;
-            }
-            tidx.barrier.wait();
-
-            for (unsigned int idx = 0; idx < TILE_SZ_A; ++idx) {
-                float x_reg;
-                if(tileIdx*TILE_SZ_A + idx < lenX) {
-                    x_reg = X[tileIdx*TILE_SZ_A + idx];
-                }
-                else {
-                    x_reg = 0;
-                }
-
-                for(unsigned int outIdx = 0; outIdx < TILE_SZ_A; ++outIdx) {
-                    y_reg[outIdx] += x_reg*A_s[idx][outIdx];
-                }
-            }
-            tidx.barrier.wait();
-        }
-        for (unsigned int outIdx = 0; outIdx < TILE_SZ_A; ++outIdx) {
-            if (col < lenY) {
-                Y[tidx.tile[1] * TILE_SZ_A + outIdx] *= beta;
-                Y[tidx.tile[1] * TILE_SZ_A + outIdx] += y_reg[outIdx] * alpha;
-            }
-        }
-    });
-
-
-}
-
-static void gemv_NoTransA_register_d(Concurrency::accelerator_view &accl_view, Concurrency::array_view<double> &A, long aOffset,
-                                     Concurrency::array_view<double> &X, long xOffset,
-                                     Concurrency::array_view<double> &Y, long yOffset,
-                                     double alpha, double beta, int lenX, int lenY)
-{
-    Concurrency::extent<2> grdExt(((lenX - 1) / TILE_SZ_A + 1)*TILE_SZ_A, ((lenY - 1) / TILE_SZ_A + 1)*TILE_SZ_A);
-    Concurrency::tiled_extent <TILE_SZ_A, TILE_SZ_A> t_ext(grdExt);
-    Concurrency::parallel_for_each(accl_view, t_ext,
-                                   [=](Concurrency::tiled_index<TILE_SZ_A, TILE_SZ_A> tidx)
-    restrict(amp) {
-
-        tile_static double A_s[TILE_SZ_A][TILE_SZ_A];
-
-#define A(row,col) A[(row)*lenY + (col)]
-
-        const unsigned int row = tidx.local[0];
-        const unsigned int col = tidx.global[1];
-
-        double y_reg[TILE_SZ_A] = { (double)0 };
-
-        for (unsigned int tileIdx = 0; tileIdx < (lenX - 1) / TILE_SZ_A + 1; ++tileIdx) {
-            if (tileIdx*TILE_SZ_A + row < lenX && col < lenY) {
-                A_s[tidx.local[0]][tidx.local[1]] = A(tileIdx*TILE_SZ_A + row, col);
-            }
-            else {
-                A_s[tidx.local[0]][tidx.local[1]] = 0;
-            }
-            tidx.barrier.wait();
-
-            for (unsigned int idx = 0; idx < TILE_SZ_A; ++idx) {
-                float x_reg;
-                if (tileIdx*TILE_SZ_A + idx < lenX) {
-                    x_reg = X[tileIdx*TILE_SZ_A + idx];
-                }
-                else {
-                    x_reg = 0;
-                }
-
-                for (unsigned int outIdx = 0; outIdx < TILE_SZ_A; ++outIdx) {
-                    y_reg[outIdx] += x_reg*A_s[idx][outIdx];
-                }
-            }
-            tidx.barrier.wait();
-        }
-        for (unsigned int outIdx = 0; outIdx < TILE_SZ_A; ++outIdx) {
-            if (col < lenY) {
-                Y[tidx.tile[1] * TILE_SZ_A + outIdx] *= beta;
-                Y[tidx.tile[1] * TILE_SZ_A + outIdx] += y_reg[outIdx] * alpha;
-            }
-        }
-    });
-
-
-}
-
-
-
 static void gemv_NoTransA(Concurrency::accelerator_view &accl_view,
                           Concurrency::array_view<float> &A, long aOffset,
                           Concurrency::array_view<float> &X, long xOffset,
@@ -933,9 +707,7 @@ ampblasStatus Ampblaslibrary :: ampblas_sgemv2(const enum AMPBLAS_TRANS type,
         Concurrency::array_view<float> &Y_mat, const long yOffset, const int incY)
 {
 
-    long lenXn = 1 + (N - 1) * abs(incX);
     long lenXt = 1 + (M - 1) * abs(incX);
-    long lenYn = 1 + (M - 1) * abs(incY);
     long lenYt = 1 + (N - 1) * abs(incY);
 
 
@@ -945,17 +717,7 @@ ampblasStatus Ampblaslibrary :: ampblas_sgemv2(const enum AMPBLAS_TRANS type,
     std::vector<Concurrency::accelerator>acc = Concurrency::accelerator::get_all();
     accelerator_view accl_view = (acc[1].create_view());
 
-
-    if( type == 'n')
-    {
-        gemv_AMP(accl_view, type, M, N, *alpha, A_mat, aOffset, X_mat, xOffset, incX, *beta, Y_mat, yOffset, incY, tempBuf);
-    }
-
-
-    if( type == 't')
-    {
-        gemv_AMP(accl_view, type, M, N, *alpha, A_mat, aOffset, X_mat, xOffset, incX, *beta, Y_mat, yOffset, incY, tempBuf);
-    }
+    gemv_AMP(accl_view, type, M, N, *alpha, A_mat, aOffset, X_mat, xOffset, incX, *beta, Y_mat, yOffset, incY, tempBuf);
 
     return AMPBLAS_SUCCESS;
 }
@@ -967,9 +729,7 @@ ampblasStatus Ampblaslibrary::ampblas_dgemv2(const enum AMPBLAS_TRANS type,
         Concurrency::array_view<double> &Y_mat, const long yOffset, const int incY)
 {
 
-    long lenXn = 1 + (N - 1) * abs(incX);
     long lenXt = 1 + (M - 1) * abs(incX);
-    long lenYn = 1 + (M - 1) * abs(incY);
     long lenYt = 1 + (N - 1) * abs(incY);
 
 
@@ -979,18 +739,7 @@ ampblasStatus Ampblaslibrary::ampblas_dgemv2(const enum AMPBLAS_TRANS type,
     std::vector<Concurrency::accelerator>acc = Concurrency::accelerator::get_all();
     accelerator_view accl_view = (acc[1].create_view());
 
-
-    if (type == 'n')
-    {
-        gemv_AMP_d(accl_view, type, M, N, *alpha, A_mat, aOffset, X_mat, xOffset, incX, *beta, Y_mat, yOffset, incY, tempBuf);
-    }
-
-
-    if (type == 't')
-    {
-
-        gemv_AMP_d(accl_view, type, M, N, *alpha, A_mat, aOffset, X_mat, xOffset, incX, *beta, Y_mat, yOffset, incY, tempBuf);
-    }
+    gemv_AMP_d(accl_view, type, M, N, *alpha, A_mat, aOffset, X_mat, xOffset, incX, *beta, Y_mat, yOffset, incY, tempBuf);
 
     return AMPBLAS_SUCCESS;
 }
