@@ -995,8 +995,9 @@ void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
   caffe_rng_uniform(n,temp);
   array_view<unsigned int, 1> tempView(n, temp);
   array_view<unsigned int, 1> rView = *((Concurrency::array_view<unsigned int, 1>*)(r));
+  Concurrency::extent<1> e(n);
   parallel_for_each(
-    rView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
   {
     rView[idx] = tempView(idx);
@@ -1008,8 +1009,9 @@ template <>
 void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,float* r) {
   array_view<float, 1> rView = *((Concurrency::array_view<float, 1>*)(r));
   float coefficient =  (float)rand() / RAND_MAX;
+  Concurrency::extent<1> e(N);
   parallel_for_each(
-    rView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
   {
     float seed = (float)idx[0] * coefficient;
@@ -1021,8 +1023,9 @@ template <>
 void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b, double* r) {
   array_view<double, 1> rView = *((Concurrency::array_view<double, 1>*)(r));
   double coefficient =  (double)rand() / RAND_MAX;
+  Concurrency::extent<1> e(N);
   parallel_for_each(
-    rView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
   {
     double seed = (double)idx[0] * coefficient;
@@ -1034,8 +1037,9 @@ template <>
 void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, float* r) {
   array_view<float, 1> rView = *((Concurrency::array_view<float, 1>*)(r));
   float coefficient =  (float)rand() / RAND_MAX;
+  Concurrency::extent<1> e(N);
   parallel_for_each(
-    rView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
   {
     float seed = (float)idx[0] * coefficient;
@@ -1058,8 +1062,9 @@ template <>
 void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, double* r) {
   array_view<double, 1> rView = *((Concurrency::array_view<double, 1>*)(r));
   double coefficient = (double)rand() / RAND_MAX;
+  Concurrency::extent<1> e(N);
   parallel_for_each(
-    rView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
   {
     double seed = (double)idx[0] * coefficient;
