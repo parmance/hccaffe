@@ -403,8 +403,12 @@ void caffe_gpu_powx<double>(const int N, const double* a,
 template <>
 void caffe_gpu_dot<float>(const int n, const float* x, const float* y,
   float* out) {
-  array_view<float, 1> xView(n, const_cast <float*>(x));
-  array_view<float, 1> yView(n, const_cast <float*>(y));
+  
+  Concurrency::array_view<float, 1> xView =
+      *((Concurrency::array_view<float, 1>*)(x));
+  Concurrency::array_view<float, 1> yView =
+      *((Concurrency::array_view<float, 1>*)(y));
+
   // runtime sizes
   unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
   tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;
@@ -462,8 +466,12 @@ void caffe_gpu_dot<float>(const int n, const float* x, const float* y,
 template <>
 void caffe_gpu_dot<double>(const int n, const double* x, const double* y,
   double * out) {
-  array_view<double, 1> xView(n, const_cast <double*>(x));
-  array_view<double, 1> yView(n, const_cast <double*>(y));
+
+  Concurrency::array_view<double, 1> xView =
+      *((Concurrency::array_view<double, 1>*)(x));
+  Concurrency::array_view<double, 1> yView =
+      *((Concurrency::array_view<double, 1>*)(y));
+
   // runtime sizes
   unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
   tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;
@@ -764,10 +772,8 @@ void caffe_gpu_gemm2<float>(const CBLAS_TRANSPOSE TransA,
     *((Concurrency::array_view<float, 1>*)(B));
   Concurrency::array_view<float, 1> C_mat =
     *((Concurrency::array_view<float, 1>*)(C));
-    //PPAStartCpuEventFunc(GPU_GEMM);
     amp.ampblas_sgemm2(colMajor,ampTransB, ampTransA, N, M, K, &alpha, B_mat,
                 ldb, A_mat, lda, &beta, C_mat, N, offset_B, offset_A, offset_C);
-   // PPAStopCpuEventFunc(GPU_GEMM);
 }
 
 
@@ -806,18 +812,15 @@ void caffe_gpu_gemm2<double>(const CBLAS_TRANSPOSE TransA,
     *((Concurrency::array_view<double, 1>*)(B));
   Concurrency::array_view<double, 1> C_mat =
     *((Concurrency::array_view<double, 1>*)(C));
-  //Concurrency::array_view<float> A_mat(all_A, const_cast<float*>(A));
-  //Concurrency::array_view<float> B_mat(all_B, const_cast<float*>(B));
-  //Concurrency::array_view<float> C_mat(all_C, C);
-  //printf("======All_A = %d,ALL_B = %d, ALL_C = %d, group = %d, offset_A=%d,offset_B=%d,offset_C=%d,M=%d,N=%d,K=%d\n",all_A,all_B,all_C,group,offset_A,offset_B,offset_C,M,N,K);
-    //PPAStartCpuEventFunc(GPU_GEMM);
     amp.ampblas_dgemm2(colMajor, ampTransB, ampTransA, N, M, K, &alpha, B_mat,
                 ldb, A_mat, lda, &beta, C_mat, N, offset_B, offset_A, offset_C);
-   // PPAStopCpuEventFunc(GPU_GEMM);
 }
 template <>
 void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
-  array_view<float, 1> xView(n, const_cast <float*>(x));
+ 
+  Concurrency::array_view<float, 1> xView =
+    *((Concurrency::array_view<float, 1>*)(x));
+
   // runtime sizes
   unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
   tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;
@@ -874,7 +877,10 @@ void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
 
 template <>
 void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
-  array_view<double, 1> xView(n, const_cast <double*>(x));
+  
+  Concurrency::array_view<double, 1> xView =
+    *((Concurrency::array_view<double, 1>*)(x));
+
   // runtime sizes
   unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
   tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;

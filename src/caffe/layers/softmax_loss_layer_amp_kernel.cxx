@@ -26,13 +26,20 @@ void SoftmaxLossForwardGPU(int N, const int nthreads,
                            const int num, const int dim, const int spatial_dim,
                            const bool has_ignore_label_, const int ignore_label_,
                            float* counts) {
-    array_view<float, 1> probDataView(N, prob_data);
-    array_view<float, 1> labelView(nthreads, label);
-    array_view<float, 1> countsView(N, counts);
-    array_view<float, 1> lossView(N, loss);
-    //extent<1> e(nthreads);
+
+    Concurrency::array_view<float, 1> probDataView =
+      *((Concurrency::array_view<float, 1>*)(prob_data));
+    Concurrency::array_view<float, 1> labelView =
+      *((Concurrency::array_view<float, 1>*)(label));
+    Concurrency::array_view<float, 1> countsView =
+      *((Concurrency::array_view<float, 1>*)(counts));
+    Concurrency::array_view<float, 1> lossView =
+      *((Concurrency::array_view<float, 1>*)(loss));
+
+    extent<1> e(nthreads);
+
     parallel_for_each(
-        labelView.get_extent(),
+        e,
     [=](index<1> idx) restrict(amp) {
         const int n = idx[0] / spatial_dim;
         const int s = idx[0] % spatial_dim;
@@ -48,8 +55,6 @@ void SoftmaxLossForwardGPU(int N, const int nthreads,
         }
     }
     );
-    lossView.synchronize();
-    countsView.synchronize();
 }
 template <>
 void SoftmaxLossForwardGPU(int N, const int nthreads,
@@ -57,13 +62,20 @@ void SoftmaxLossForwardGPU(int N, const int nthreads,
                            const int num, const int dim, const int spatial_dim,
                            const bool has_ignore_label_, const int ignore_label_,
                            double* counts) {
-    array_view<double, 1> probDataView(N, prob_data);
-    array_view<double, 1> labelView(nthreads, label);
-    array_view<double, 1> countsView(N, counts);
-    array_view<double, 1> lossView(N, loss);
-    //extent<1> e(nthreads);
+
+    Concurrency::array_view<double, 1> probDataView =
+      *((Concurrency::array_view<double, 1>*)(prob_data));
+    Concurrency::array_view<double, 1> labelView =
+      *((Concurrency::array_view<double, 1>*)(label));
+    Concurrency::array_view<double, 1> countsView =
+      *((Concurrency::array_view<double, 1>*)(counts));
+    Concurrency::array_view<double, 1> lossView =
+      *((Concurrency::array_view<double, 1>*)(loss));
+
+    extent<1> e(nthreads);
+
     parallel_for_each(
-        labelView.get_extent(),
+        e,
     [=](index<1> idx) restrict(amp) {
         const int n = idx[0] / spatial_dim;
         const int s = idx[0] % spatial_dim;
@@ -81,8 +93,6 @@ void SoftmaxLossForwardGPU(int N, const int nthreads,
         }
     }
     );
-    lossView.synchronize();
-    countsView.synchronize();
 }
 template <>
 void SoftmaxLossBackwardGPU(int N,const int nthreads,  float* top,
@@ -90,10 +100,17 @@ void SoftmaxLossBackwardGPU(int N,const int nthreads,  float* top,
                             const int spatial_dim, const bool has_ignore_label_,
                             const int ignore_label_, float* counts) {
     const int channels = dim / spatial_dim;
-    array_view<float, 1> labelView(nthreads, label);
-    array_view<float, 1> bottomDiffView(N, bottom_diff);
-    array_view<float, 1> countsView(N, counts);
-    parallel_for_each(   labelView.get_extent(),
+
+    Concurrency::array_view<float, 1> bottomDiffView =
+      *((Concurrency::array_view<float, 1>*)(bottom_diff));
+    Concurrency::array_view<float, 1> labelView =
+      *((Concurrency::array_view<float, 1>*)(label));
+    Concurrency::array_view<float, 1> countsView =
+      *((Concurrency::array_view<float, 1>*)(counts));
+
+    extent<1> e(nthreads);
+
+    parallel_for_each(e,
                       [=](index<1> idx) restrict(amp)
     {
         const int n = idx[0] / spatial_dim;
@@ -110,8 +127,6 @@ void SoftmaxLossBackwardGPU(int N,const int nthreads,  float* top,
         }
     }
                      );
-    bottomDiffView.synchronize();
-    countsView.synchronize();
 }
 template <>
 void SoftmaxLossBackwardGPU(int N,const int nthreads, double* top,
@@ -119,10 +134,17 @@ void SoftmaxLossBackwardGPU(int N,const int nthreads, double* top,
                             const int spatial_dim, const bool has_ignore_label_,
                             const int ignore_label_, double* counts) {
     const int channels = dim / spatial_dim;
-    array_view<double, 1> labelView(nthreads, label);
-    array_view<double, 1> bottomDiffView(N, bottom_diff);
-    array_view<double, 1> countsView(N, counts);
-    parallel_for_each(labelView.get_extent(),
+
+    Concurrency::array_view<double, 1> bottomDiffView =
+      *((Concurrency::array_view<double, 1>*)(bottom_diff));
+    Concurrency::array_view<double, 1> labelView =
+      *((Concurrency::array_view<double, 1>*)(label));
+    Concurrency::array_view<double, 1> countsView =
+      *((Concurrency::array_view<double, 1>*)(counts));
+
+    extent<1> e(nthreads);
+
+    parallel_for_each(e,
                       [=](index<1> idx) restrict(amp)
     {
         const int n = idx[0] / spatial_dim;
@@ -140,6 +162,4 @@ void SoftmaxLossBackwardGPU(int N,const int nthreads, double* top,
         }
     }
                      );
-    bottomDiffView.synchronize();
-    countsView.synchronize();
 }
