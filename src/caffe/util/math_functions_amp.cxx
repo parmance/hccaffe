@@ -963,22 +963,22 @@ unsigned int uirnd_kernel(unsigned int &ri) restrict(amp){
 
 float srnd_kernel(float &ri) restrict(amp){
   int temp;
-  temp = (int)(ri / (float)MAX);
-  ri = ri - temp*(float)MAX;
-  ri = (float)FACTOR * ri + (float)CONSTANT;
-  temp = (int)(ri / (float)MAX);
-  ri = ri - temp * (float)MAX;
-  return ri / (float)MAX;
+  temp = (int)(ri / MAX);
+  ri = ri - temp*MAX;
+  ri = FACTOR * ri + CONSTANT;
+  temp = (int)(ri / MAX);
+  ri = ri - temp * MAX;
+  return (float)(ri / (float)MAX);
 }
 
 double drnd_kernel(double &ri) restrict(amp){
   int temp;
-  temp = (int)(ri / (double)MAX);
-  ri = ri - temp*(double)MAX;
-  ri = (double)FACTOR * ri + (double)CONSTANT;
-  temp = (int)(ri / (double)MAX);
-  ri = ri - temp * (double)MAX;
-  return ri / (double)MAX;
+  temp = (int)(ri / MAX);
+  ri = ri - temp*MAX;
+  ri = FACTOR * ri + CONSTANT;
+  temp = (int)(ri / MAX);
+  ri = ri - temp * MAX;
+  return (double)(ri / (double)MAX);
 }
 
 void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
@@ -1006,7 +1006,11 @@ void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,floa
     [=](index<1> idx) restrict(amp)
   {
     float seed = (float)idx[0] * coefficient;
-    rView[idx] = srnd_kernel(seed) * (b - a) + a;
+    float V = 0.0;
+    do{
+      V = srnd_kernel(seed);
+    }while(V * (b - a) + a == (float)((a+b)/2));
+    rView[idx] = V * (b - a) + a;
   } );
 };
 
@@ -1020,7 +1024,11 @@ void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b, 
     [=](index<1> idx) restrict(amp)
   {
     double seed = (double)idx[0] * coefficient;
-    rView[idx] = drnd_kernel(seed) * (b - a) + a;
+    double V = 0.0;
+    do{
+      V = drnd_kernel(seed);
+    }while(V * (b - a) + a == (double)((a+b)/2));
+    rView[idx] = V * (b - a) + a;
   } );
 };
 
@@ -1039,7 +1047,7 @@ void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, floa
       V1 = 2 * srnd_kernel(seed) - 1;
       V2 = 2 * srnd_kernel(seed) - 1;
       S = V1 * V1 + V2 * V2;
-    } while ((S >= 1.0) || (S == 0.0));
+    } while ((S >= 1.0) || (S == 0.0)||(V1 == 0.0) || (V2 == 0.0));
 	float temp = sqrt(-2.0 * log(S) / S) * sigma ;
     if (2 * idx[0] < N)
       rView[2 * idx] = V1 * temp + mu;
