@@ -244,7 +244,7 @@ template <typename Dtype>
 void caffe_gpu_gemm2(const CBLAS_TRANSPOSE TransA,
   const CBLAS_TRANSPOSE TransB,
   const int M, const int N, const int K,
-  const Dtype alpha, const Dtype* A, const int offet_A,const Dtype* B,
+  const Dtype alpha, const Dtype* A, const int offet_A, const Dtype* B,
   const int offset_B, const Dtype beta, Dtype* C, const int offset_C);
 
 
@@ -259,8 +259,8 @@ template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::forward_gpu_bias2(Dtype* output,
     const int offset, const Dtype* bias) {
   caffe_gpu_gemm2<Dtype>(CblasNoTrans, CblasNoTrans, num_output_,
-      height_out_ * width_out_, 1, (Dtype)1., bias, 0, bias_multiplier_.gpu_data(),
-      0, (Dtype)1., output, offset);
+      height_out_ * width_out_, 1, (Dtype)1., bias, 0,
+      bias_multiplier_.gpu_data(), 0, (Dtype)1., output, offset);
 }
 
 template <typename Dtype>
@@ -300,11 +300,8 @@ void BaseConvolutionLayer<Dtype>::weight_gpu_gemm(const Dtype* input,
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::backward_gpu_bias(Dtype* bias,
     const Dtype* input) {
-  //caffe_gpu_gemv<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_, 1.,
-  //    input, bias_multiplier_.gpu_data(), 1., bias);
   caffe_gpu_gemv<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_, 1.,
-      input, bias_multiplier_.cpu_data(), 1., bias);
-
+      input, bias_multiplier_.gpu_data(), 1., bias);
 }
 #ifdef USE_CPPAMP
 template <typename Dtype>
@@ -316,9 +313,8 @@ void caffe_gpu_gemv2(const CBLAS_TRANSPOSE TransA, const int M,
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::backward_gpu_bias2(Dtype* bias,
     const Dtype* input, const int offset) {
-  caffe_gpu_gemv2<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_, 1.,
-      input, offset, bias_multiplier_.gpu_data(), 0, 1., bias, 0);
-
+  caffe_gpu_gemv2<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_,
+      1., input, offset, bias_multiplier_.gpu_data(), 0, 1., bias, 0);
 }
 
 
@@ -326,14 +322,14 @@ template <typename Dtype>
 void caffe_gpu_gemm2(const CBLAS_TRANSPOSE TransA,
   const CBLAS_TRANSPOSE TransB,
   const int M, const int N, const int K,
-  const Dtype alpha, const Dtype* A, const int offet_A,const Dtype* B,
+  const Dtype alpha, const Dtype* A, const int offet_A, const Dtype* B,
   const int offset_B, const Dtype beta, Dtype* C, const int offset_C);
 
 
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::forward_gpu_gemm3(int N1, int N2,
-      const Dtype* input, const int offset_input, const Dtype* weights, Dtype* output,
-      const int offset_output, bool skip_im2col) {
+      const Dtype* input, const int offset_input, const Dtype* weights,
+      Dtype* output, const int offset_output, bool skip_im2col) {
   const Dtype* col_buff = input;
   int offset_col = offset_input;
   if (!is_1x1_) {
@@ -347,8 +343,9 @@ void BaseConvolutionLayer<Dtype>::forward_gpu_gemm3(int N1, int N2,
   for (int g = 0; g < group_; ++g) {
     caffe_gpu_gemm2<Dtype>(CblasNoTrans, CblasNoTrans, conv_out_channels_ /
         group_, conv_out_spatial_dim_, kernel_dim_ / group_,
-        (Dtype)1., weights , weight_offset_ * g, col_buff, offset_col+col_offset_ * g,
-        (Dtype)0., output, offset_output+output_offset_ * g);
+        (Dtype)1., weights , weight_offset_ * g, col_buff,
+        offset_col+col_offset_ * g, (Dtype)0., output,
+        offset_output+output_offset_ * g);
   }
 }
 
@@ -441,9 +438,10 @@ void BaseConvolutionLayer<Dtype>::weight_gpu_gemm3(int N1, int N2,
     col_offset = 0;
   }
   for (int g = 0; g < group_; ++g) {
-    caffe_gpu_gemm2<Dtype>(CblasNoTrans, CblasTrans, conv_out_channels_ / group_,
-        kernel_dim_ / group_, conv_out_spatial_dim_,
-        (Dtype)1., output , offset_output+output_offset_ * g,
+    caffe_gpu_gemm2<Dtype>(CblasNoTrans, CblasTrans,
+        conv_out_channels_ / group_, kernel_dim_ / group_,
+        conv_out_spatial_dim_, (Dtype)1., output,
+        offset_output+output_offset_ * g,
         col_buff ,  col_offset+col_offset_ * g,
         (Dtype)1., weights , weight_offset_ * g);
   }

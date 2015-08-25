@@ -24,11 +24,16 @@ void kernel_channel_dot(int count, const int N, const int channels, const int sp
 template <>
 void kernel_channel_max<float>(int count, const int N, const int channels,
   const int spatial_dim, float* data, float* out) {
-  array_view<float, 1> dataView(count, data);
-  array_view<float, 1> outView(N*spatial_dim, out);
+
+  Concurrency::array_view<float, 1> dataView =
+    *((Concurrency::array_view<float, 1>*)(data));
+  Concurrency::array_view<float, 1> outView =
+    *((Concurrency::array_view<float, 1>*)(out));
+
+  extent<1> e(N*spatial_dim);
 
   parallel_for_each(
-    outView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int n = idx[0] / spatial_dim;
@@ -42,17 +47,21 @@ void kernel_channel_max<float>(int count, const int N, const int channels,
     }
   );
 
-  outView.synchronize();
-
 }
 
 template <>
 void kernel_channel_subtract<float>(const int N, const int num, const int channels,
     const int spatial_dim, float* channel_max, float* data) {
-  array_view<float, 1> channel_maxView(num*spatial_dim, channel_max);
-  array_view<float, 1> dataView(N, data);
+
+  Concurrency::array_view<float, 1> channel_maxView =
+    *((Concurrency::array_view<float, 1>*)(channel_max));
+  Concurrency::array_view<float, 1> dataView =
+    *((Concurrency::array_view<float, 1>*)(data));
+
+  extent<1> e(N);
+ 
   parallel_for_each(
-    dataView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int n = idx[0] / channels / spatial_dim;
@@ -60,46 +69,40 @@ void kernel_channel_subtract<float>(const int N, const int num, const int channe
       dataView[idx] -= channel_maxView[n * spatial_dim + s];
     }
   );
-  dataView.synchronize();
-}
-
-template <>
-void kernel_exp<double>(const int N, double* data, double* out) {
-  array_view<double, 1> dataView(N, data);
-  array_view<double, 1> outView(N, out);
-  parallel_for_each(
-    outView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      outView[idx] = Concurrency::fast_math::exp(dataView[idx]);
-    }
-  );
-  outView.synchronize();
 }
 
 template <>
 void kernel_exp<float>(const int N, float* data, float* out) {
+  
+  Concurrency::array_view<float, 1> dataView =
+    *((Concurrency::array_view<float, 1>*)(data));
+  Concurrency::array_view<float, 1> outView =
+    *((Concurrency::array_view<float, 1>*)(out));
 
-  array_view<float, 1> dataView(N, data);
-  array_view<float, 1> outView(N, out);
-
+  extent<1> e(N);
+ 
   parallel_for_each(
-    outView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       outView[idx] = Concurrency::fast_math::exp(dataView[idx]);
     }
   );
-  outView.synchronize();
 }
 
 template <>
 void kernel_channel_sum<float>(int count, const int N, const int channels,
     const int spatial_dim, float* data, float* channel_sum) {
-  array_view<float, 1> dataView(count, data);
-  array_view<float, 1> channel_sumView(N*spatial_dim, channel_sum);
+
+  Concurrency::array_view<float, 1> dataView =
+    *((Concurrency::array_view<float, 1>*)(data));
+  Concurrency::array_view<float, 1> channel_sumView =
+    *((Concurrency::array_view<float, 1>*)(channel_sum));
+
+  extent<1> e(N*spatial_dim);
+ 
   parallel_for_each(
-    channel_sumView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int n = idx[0] / spatial_dim;
@@ -111,16 +114,21 @@ void kernel_channel_sum<float>(int count, const int N, const int channels,
       channel_sumView[idx] = sum;
     }
   );
-  channel_sumView.synchronize();
 }
 
 template <>
 void kernel_channel_div<float>(const int N, const int num, const int channels,
     const int spatial_dim, float* channel_sum, float* data) {
-  array_view<float, 1> channel_sumView(num*spatial_dim, channel_sum);
-  array_view<float, 1> dataView(N, data);
+
+  Concurrency::array_view<float, 1> dataView =
+    *((Concurrency::array_view<float, 1>*)(data));
+  Concurrency::array_view<float, 1> channel_sumView =
+    *((Concurrency::array_view<float, 1>*)(channel_sum));
+
+  extent<1> e(N);
+ 
   parallel_for_each(
-    dataView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int n = idx[0] / channels / spatial_dim;
@@ -128,17 +136,24 @@ void kernel_channel_div<float>(const int N, const int num, const int channels,
       dataView[idx] /= channel_sumView[n * spatial_dim + s];
     }
   );
-  dataView.synchronize();
 }
 
 template <>
 void kernel_channel_dot<float>(int count, const int N, const int channels, const int spatial_dim,
     float* data_1, float* data_2, float* channel_dot) {
-  array_view<float, 1> data_1View(count, data_1);
-  array_view<float, 1> data_2View(count, data_2);
-  array_view<float, 1> channel_dotView(N*spatial_dim, channel_dot);
+
+  Concurrency::array_view<float, 1> data_1View =
+    *((Concurrency::array_view<float, 1>*)(data_1));
+  Concurrency::array_view<float, 1> data_2View =
+    *((Concurrency::array_view<float, 1>*)(data_2));
+  Concurrency::array_view<float, 1> channel_dotView =
+    *((Concurrency::array_view<float, 1>*)(channel_dot));
+
+
+  extent<1> e(N*spatial_dim);
+
   parallel_for_each(
-    channel_dotView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int n = idx[0] / spatial_dim;
@@ -151,15 +166,21 @@ void kernel_channel_dot<float>(int count, const int N, const int channels, const
       channel_dotView[idx] = dot;
     }
   );
-  channel_dotView.synchronize();
 }
+
 template <>
 void kernel_channel_max<double>(int count, const int N, const int channels,
   const int spatial_dim, double* data, double* out) {
-  array_view<double, 1> dataView(count, data);
-  array_view<double, 1> outView(N*spatial_dim, out);
+
+  Concurrency::array_view<double, 1> dataView =
+    *((Concurrency::array_view<double, 1>*)(data));
+  Concurrency::array_view<double, 1> outView =
+    *((Concurrency::array_view<double, 1>*)(out));
+
+  extent<1> e(N*spatial_dim);
+
   parallel_for_each(
-    outView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int n = idx[0] / spatial_dim;
@@ -171,16 +192,21 @@ void kernel_channel_max<double>(int count, const int N, const int channels,
       outView[idx] = maxval;
     }
   );
-  outView.synchronize();
 }
 
 template <>
 void kernel_channel_subtract<double>(const int N, const int num, const int channels,
     const int spatial_dim, double* channel_max, double* data) {
-  array_view<double, 1> channel_maxView(num*spatial_dim, channel_max);
-  array_view<double, 1> dataView(N, data);
+
+  Concurrency::array_view<double, 1> channel_maxView =
+    *((Concurrency::array_view<double, 1>*)(channel_max));
+  Concurrency::array_view<double, 1> dataView =
+    *((Concurrency::array_view<double, 1>*)(data));
+
+  extent<1> e(N);
+ 
   parallel_for_each(
-    dataView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int n = idx[0] / channels / spatial_dim;
@@ -188,16 +214,42 @@ void kernel_channel_subtract<double>(const int N, const int num, const int chann
       dataView[idx] -= channel_maxView[n * spatial_dim + s];
     }
   );
-  dataView.synchronize();
 }
+
+
+template <>
+void kernel_exp<double>(const int N, double* data, double* out) {
+  
+  Concurrency::array_view<double, 1> dataView =
+    *((Concurrency::array_view<double, 1>*)(data));
+  Concurrency::array_view<double, 1> outView =
+    *((Concurrency::array_view<double, 1>*)(out));
+
+  extent<1> e(N);
+ 
+  parallel_for_each(
+    e,
+    [=](index<1> idx) restrict(amp)
+    {
+      outView[idx] = Concurrency::fast_math::exp(dataView[idx]);
+    }
+  );
+}
+
 
 template <>
 void kernel_channel_sum<double>(int count, const int N, const int channels,
     const int spatial_dim, double* data, double* channel_sum) {
-  array_view<double, 1> dataView(count, data);
-  array_view<double, 1> channel_sumView(N*spatial_dim, channel_sum);
+
+  Concurrency::array_view<double, 1> dataView =
+    *((Concurrency::array_view<double, 1>*)(data));
+  Concurrency::array_view<double, 1> channel_sumView =
+    *((Concurrency::array_view<double, 1>*)(channel_sum));
+
+  extent<1> e(N*spatial_dim);
+ 
   parallel_for_each(
-    channel_sumView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int n = idx[0] / spatial_dim;
@@ -209,16 +261,21 @@ void kernel_channel_sum<double>(int count, const int N, const int channels,
       channel_sumView[idx] = sum;
     }
   );
-  channel_sumView.synchronize();
 }
 
 template <>
 void kernel_channel_div<double>(const int N, const int num, const int channels,
     const int spatial_dim, double* channel_sum, double* data) {
-  array_view<double, 1> channel_sumView(num*spatial_dim, channel_sum);
-  array_view<double, 1> dataView(N, data);
+
+  Concurrency::array_view<double, 1> channel_sumView =
+    *((Concurrency::array_view<double, 1>*)(channel_sum));
+  Concurrency::array_view<double, 1> dataView =
+    *((Concurrency::array_view<double, 1>*)(data));
+
+  extent<1> e(N);
+ 
   parallel_for_each(
-    dataView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int n = idx[0] / channels / spatial_dim;
@@ -226,17 +283,23 @@ void kernel_channel_div<double>(const int N, const int num, const int channels,
       dataView[idx] /= channel_sumView[n * spatial_dim + s];
     }
   );
-  dataView.synchronize();
 }
 
 template <>
 void kernel_channel_dot<double>(int count, const int N, const int channels, const int spatial_dim,
     double* data_1, double* data_2, double* channel_dot) {
-  array_view<double, 1> data_1View(count, data_1);
-  array_view<double, 1> data_2View(count, data_2);
-  array_view<double, 1> channel_dotView(N*spatial_dim, channel_dot);
+  
+  Concurrency::array_view<double, 1> data_1View =
+    *((Concurrency::array_view<double, 1>*)(data_1));
+  Concurrency::array_view<double, 1> data_2View =
+    *((Concurrency::array_view<double, 1>*)(data_2));
+  Concurrency::array_view<double, 1> channel_dotView =
+    *((Concurrency::array_view<double, 1>*)(channel_dot));
+
+  extent<1> e(N*spatial_dim);
+
   parallel_for_each(
-    channel_dotView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp)
     {
       int n = idx[0] / spatial_dim;
@@ -249,5 +312,4 @@ void kernel_channel_dot<double>(int count, const int N, const int channels, cons
       channel_dotView[idx] = dot;
     }
   );
-  channel_dotView.synchronize();
 }

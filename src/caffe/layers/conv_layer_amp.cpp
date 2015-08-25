@@ -26,7 +26,6 @@ void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
       }
     }
   }
-
 }
 
 template <typename Dtype>
