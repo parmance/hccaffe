@@ -1075,12 +1075,21 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
                                   const float* y) {
   array_view<float, 1> axView = *((Concurrency::array_view<float, 1>*)(x));
   array_view<float, 1> ayView = *((Concurrency::array_view<float, 1>*)(y));
+
+  float * xTemp = (float*) malloc(sizeof(float) * (axView.get_extent().size()));  
+  float * yTemp = (float*) malloc(sizeof(float) * (ayView.get_extent().size()));  
+
+  Concurrency::copy(axView, xTemp);
+  Concurrency::copy(ayView, yTemp);
+  
   uint32_t result[n];
   uint32_t ax[n];
   uint32_t ay[n];
+
+  
   for(int i = 0; i < n; ++i ) {
-    ax[i] = static_cast<uint32_t>(axView[i]);
-    ay[i] = static_cast<uint32_t>(ayView[i]);
+    ax[i] = static_cast<uint32_t>(xTemp[i]);
+    ay[i] = static_cast<uint32_t>(yTemp[i]);
   }
 
   array_view<uint32_t, 1> resultView(n, result);
@@ -1096,6 +1105,7 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
     }
     resultView[idx] = ret;
   } );
+  resultView.synchronize();
   uint32_t sum = 0;
   for(int i = 0; i < n; ++i ) {
     sum+=result[i];
@@ -1108,12 +1118,19 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
                                    const double* y) {
   array_view<double, 1> axView = *((Concurrency::array_view<double, 1>*)(x));
   array_view<double, 1> ayView = *((Concurrency::array_view<double, 1>*)(y));
+
+  double * xTemp = (double*) malloc(sizeof(double) * (axView.get_extent().size()));  
+  double * yTemp = (double*) malloc(sizeof(double) * (ayView.get_extent().size()));  
+
+  Concurrency::copy(axView, xTemp);
+  Concurrency::copy(ayView, yTemp);
+  
   uint32_t result[n];
   uint64_t ax[n];
   uint64_t ay[n];
   for(int i = 0; i < n; ++i ) {
-    ax[i] = static_cast<uint64_t>(axView[i]);
-    ay[i] = static_cast<uint64_t>(ayView[i]);
+    ax[i] = static_cast<uint64_t>(xTemp[i]);
+    ay[i] = static_cast<uint64_t>(yTemp[i]);
   }
   array_view<uint32_t, 1> resultView(n, result);
   array_view<uint64_t, 1> xView(n, ax);
@@ -1128,6 +1145,7 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
     }
     resultView[idx] = ret;
   } );
+resultView.synchronize();
   uint32_t sum = 0;
   for(int i = 0; i < n; ++i ) {
     sum+=result[i];
