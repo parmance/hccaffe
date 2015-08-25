@@ -405,8 +405,12 @@ void caffe_gpu_powx<double>(const int N, const double* a,
 template <>
 void caffe_gpu_dot<float>(const int n, const float* x, const float* y,
   float* out) {
-  array_view<float, 1> xView(n, const_cast <float*>(x));
-  array_view<float, 1> yView(n, const_cast <float*>(y));
+  
+  Concurrency::array_view<float, 1> xView =
+      *((Concurrency::array_view<float, 1>*)(x));
+  Concurrency::array_view<float, 1> yView =
+      *((Concurrency::array_view<float, 1>*)(y));
+
   // runtime sizes
   unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
   tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;
@@ -464,8 +468,12 @@ void caffe_gpu_dot<float>(const int n, const float* x, const float* y,
 template <>
 void caffe_gpu_dot<double>(const int n, const double* x, const double* y,
   double * out) {
-  array_view<double, 1> xView(n, const_cast <double*>(x));
-  array_view<double, 1> yView(n, const_cast <double*>(y));
+
+  Concurrency::array_view<double, 1> xView =
+      *((Concurrency::array_view<double, 1>*)(x));
+  Concurrency::array_view<double, 1> yView =
+      *((Concurrency::array_view<double, 1>*)(y));
+
   // runtime sizes
   unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
   tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;
@@ -766,10 +774,8 @@ void caffe_gpu_gemm2<float>(const CBLAS_TRANSPOSE TransA,
     *((Concurrency::array_view<float, 1>*)(B));
   Concurrency::array_view<float, 1> C_mat =
     *((Concurrency::array_view<float, 1>*)(C));
-    //PPAStartCpuEventFunc(GPU_GEMM);
     amp.ampblas_sgemm2(colMajor,ampTransB, ampTransA, N, M, K, &alpha, B_mat,
                 ldb, A_mat, lda, &beta, C_mat, N, offset_B, offset_A, offset_C);
-   // PPAStopCpuEventFunc(GPU_GEMM);
 }
 
 
@@ -808,18 +814,15 @@ void caffe_gpu_gemm2<double>(const CBLAS_TRANSPOSE TransA,
     *((Concurrency::array_view<double, 1>*)(B));
   Concurrency::array_view<double, 1> C_mat =
     *((Concurrency::array_view<double, 1>*)(C));
-  //Concurrency::array_view<float> A_mat(all_A, const_cast<float*>(A));
-  //Concurrency::array_view<float> B_mat(all_B, const_cast<float*>(B));
-  //Concurrency::array_view<float> C_mat(all_C, C);
-  //printf("======All_A = %d,ALL_B = %d, ALL_C = %d, group = %d, offset_A=%d,offset_B=%d,offset_C=%d,M=%d,N=%d,K=%d\n",all_A,all_B,all_C,group,offset_A,offset_B,offset_C,M,N,K);
-    //PPAStartCpuEventFunc(GPU_GEMM);
     amp.ampblas_dgemm2(colMajor, ampTransB, ampTransA, N, M, K, &alpha, B_mat,
                 ldb, A_mat, lda, &beta, C_mat, N, offset_B, offset_A, offset_C);
-   // PPAStopCpuEventFunc(GPU_GEMM);
 }
 template <>
 void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
-  array_view<float, 1> xView(n, const_cast <float*>(x));
+ 
+  Concurrency::array_view<float, 1> xView =
+    *((Concurrency::array_view<float, 1>*)(x));
+
   // runtime sizes
   unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
   tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;
@@ -876,7 +879,10 @@ void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
 
 template <>
 void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
-  array_view<double, 1> xView(n, const_cast <double*>(x));
+  
+  Concurrency::array_view<double, 1> xView =
+    *((Concurrency::array_view<double, 1>*)(x));
+
   // runtime sizes
   unsigned int tile_count = (n+TILE_SIZE-1) / TILE_SIZE;
   tile_count = tile_count < MAX_TILES ? tile_count:MAX_TILES;
@@ -946,22 +952,22 @@ unsigned int uirnd_kernel(unsigned int &ri) restrict(amp){
 
 float srnd_kernel(float &ri) restrict(amp){
   int temp;
-  temp = (int)(ri / (float)MAX);
-  ri = ri - temp*(float)MAX;
-  ri = (float)FACTOR * ri + (float)CONSTANT;
-  temp = (int)(ri / (float)MAX);
-  ri = ri - temp * (float)MAX;
-  return ri / (float)MAX;
+  temp = (int)(ri / MAX);
+  ri = ri - temp*MAX;
+  ri = FACTOR * ri + CONSTANT;
+  temp = (int)(ri / MAX);
+  ri = ri - temp * MAX;
+  return (float)(ri / (float)MAX);
 }
 
 double drnd_kernel(double &ri) restrict(amp){
   int temp;
-  temp = (int)(ri / (double)MAX);
-  ri = ri - temp*(double)MAX;
-  ri = (double)FACTOR * ri + (double)CONSTANT;
-  temp = (int)(ri / (double)MAX);
-  ri = ri - temp * (double)MAX;
-  return ri / (double)MAX;
+  temp = (int)(ri / MAX);
+  ri = ri - temp*MAX;
+  ri = FACTOR * ri + CONSTANT;
+  temp = (int)(ri / MAX);
+  ri = ri - temp * MAX;
+  return (double)(ri / (double)MAX);
 }
 
 void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
@@ -989,7 +995,11 @@ void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,floa
     [=](index<1> idx) restrict(amp)
   {
     float seed = (float)idx[0] * coefficient;
-    rView[idx] = srnd_kernel(seed) * (b - a) + a;
+    float V = 0.0;
+    do{
+      V = srnd_kernel(seed);
+    }while(V * (b - a) + a == (float)((a+b)/2));
+    rView[idx] = V * (b - a) + a;
   } );
 };
 
@@ -1003,7 +1013,11 @@ void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b, 
     [=](index<1> idx) restrict(amp)
   {
     double seed = (double)idx[0] * coefficient;
-    rView[idx] = drnd_kernel(seed) * (b - a) + a;
+    double V = 0.0;
+    do{
+      V = drnd_kernel(seed);
+    }while(V * (b - a) + a == (double)((a+b)/2));
+    rView[idx] = V * (b - a) + a;
   } );
 };
 
@@ -1022,7 +1036,7 @@ void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, floa
       V1 = 2 * srnd_kernel(seed) - 1;
       V2 = 2 * srnd_kernel(seed) - 1;
       S = V1 * V1 + V2 * V2;
-    } while ((S >= 1.0) || (S == 0.0));
+    } while ((S >= 1.0) || (S == 0.0)||(V1 == 0.0) || (V2 == 0.0));
 	float temp = sqrt(-2.0 * log(S) / S) * sigma ;
     if (2 * idx[0] < N)
       rView[2 * idx] = V1 * temp + mu;
@@ -1061,18 +1075,21 @@ void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, do
 template <>
 uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
                                   const float* y) {
+  array_view<float, 1> axView = *((Concurrency::array_view<float, 1>*)(x));
+  array_view<float, 1> ayView = *((Concurrency::array_view<float, 1>*)(y));
   uint32_t result[n];
   uint32_t ax[n];
   uint32_t ay[n];
   for(int i = 0; i < n; ++i ) {
-    ax[i] = static_cast<uint32_t>(x[i]);
-    ay[i] = static_cast<uint32_t>(y[i]);
+    ax[i] = static_cast<uint32_t>(axView[i]);
+    ay[i] = static_cast<uint32_t>(ayView[i]);
   }
 
   array_view<uint32_t, 1> resultView(n, result);
   array_view<uint32_t, 1> xView(n, ax);
   array_view<uint32_t, 1> yView(n, ay);
-  parallel_for_each(resultView.get_extent(), [=](index<1> idx) restrict(amp) {
+  Concurrency::extent<1> e(n);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
     uint32_t ret = 0;
     uint32_t u = xView[idx] ^ yView[idx];
     while(u) {
@@ -1081,7 +1098,6 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
     }
     resultView[idx] = ret;
   } );
-  resultView.synchronize();
   uint32_t sum = 0;
   for(int i = 0; i < n; ++i ) {
     sum+=result[i];
@@ -1092,17 +1108,20 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
 template <>
 uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
                                    const double* y) {
+  array_view<double, 1> axView = *((Concurrency::array_view<double, 1>*)(x));
+  array_view<double, 1> ayView = *((Concurrency::array_view<double, 1>*)(y));
   uint32_t result[n];
   uint64_t ax[n];
   uint64_t ay[n];
   for(int i = 0; i < n; ++i ) {
-    ax[i] = static_cast<uint64_t>(x[i]);
-    ay[i] = static_cast<uint64_t>(y[i]);
+    ax[i] = static_cast<uint64_t>(axView[i]);
+    ay[i] = static_cast<uint64_t>(ayView[i]);
   }
   array_view<uint32_t, 1> resultView(n, result);
   array_view<uint64_t, 1> xView(n, ax);
   array_view<uint64_t, 1> yView(n, ay);
-  parallel_for_each(resultView.get_extent(), [=](index<1> idx) restrict(amp) {
+  Concurrency::extent<1> e(n);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
     uint32_t ret = 0;
     uint64_t u = xView[idx] ^ yView[idx];
     while(u) {
@@ -1111,7 +1130,6 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
     }
     resultView[idx] = ret;
   } );
-  resultView.synchronize();
   uint32_t sum = 0;
   for(int i = 0; i < n; ++i ) {
     sum+=result[i];
