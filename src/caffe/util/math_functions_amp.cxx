@@ -1,5 +1,6 @@
 #include <boost/math/special_functions/next.hpp>
 #include <boost/random.hpp>
+#include <glog/logging.h>
 #include <limits>
 #include "caffe/util/math_functions.hpp"
 #include "amp.h"
@@ -74,6 +75,7 @@ void caffe_amp_D2H(void* src, void* dst, size_t element_size, bool is_int){
     Concurrency::array_view<int, 1>* avSrc =
       (Concurrency::array_view<int, 1>*)(src);
     Concurrency::copy(*avSrc, (int*)dst);
+
   } else {
     if(element_size == sizeof(float)){
       Concurrency::array_view<float, 1>* avSrc =
@@ -1118,7 +1120,7 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
 }
 
 void caffe_gpu_memcpy(const size_t N, const void *X, void *Y){
-  memcpy(Y,X,N);
+  LOG(FATAL) << "Instead of caffe_gpu_memcpy with caffe_amp_X2X.";
 }
 
 #endif //USE_CPPAMP

@@ -91,7 +91,7 @@ void caffe_copy(const int N, const Dtype* X, Dtype* Y) {
       // NOLINT_NEXT_LINE(caffe/alt_fn)
       CUDA_CHECK(cudaMemcpy(Y, X, sizeof(Dtype) * N, cudaMemcpyDefault));
 #else
-      memcpy(Y, X, sizeof(Dtype) * N);  // NOLINT(caffe/alt_fn)
+      LOG(FATAL) << "Instead of caffe_copy with caffe_amp_X2X.";
 #endif  // USE_CPPAMP
 #else
       NO_GPU;
