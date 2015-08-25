@@ -58,32 +58,17 @@ void amp_axpy(const int N, const Dtype alpha, Dtype* x, Dtype* y)
 }
 
 template <typename Dtype>
-void amp_copy(const int N, Dtype* x, Dtype* y)
-{
-	array_view<Dtype, 1> xView(N, x);
-	array_view<Dtype, 1> yView(N, y);
-	concurrency::parallel_for_each(
-		yView.get_extent(),
-		[=](concurrency::index<1> idx) restrict(amp)
-	{
-		yView[idx] = xView[idx];
-	}
-	);
-	yView.synchronize();
-}
-
-template <typename Dtype>
 void amp_scale(const int N, const Dtype value, Dtype* x)
 {
-	array_view<Dtype, 1> xView(N, x);
+	//array_view<Dtype, 1> xView(N, x);
+  Concurrency::array_view<Dtype, 1> xView =
+      *((Concurrency::array_view<Dtype, 1>*)(x));
+  Concurrency::extent<1> e(N);
 	concurrency::parallel_for_each(
-		xView.get_extent(),
-		[=](concurrency::index<1> idx) restrict(amp)
-	{
+      e, [=](concurrency::index<1> idx) restrict(amp){
 		xView[idx] *= value;
-	}
-	);
-	xView.synchronize();
+	}	);
+	//xView.synchronize();
 }
 /* Class which implements the blas ( SGEMM, CGEMM, SGEMV, SGER, SAXPY )  */
 class Ampblaslibrary

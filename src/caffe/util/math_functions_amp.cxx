@@ -130,45 +130,39 @@ void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int){
 }
 
 template <typename Dtype>
-void caffe_amp_abs(const int N, Dtype* a, Dtype* y) {
-  array_view<Dtype, 1> aView(N, a);
-  array_view<Dtype, 1> yView(N, y);
-  parallel_for_each(
-    yView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-  {
+void abs_kernel(const int N, Dtype* a, Dtype* y) {
+  Concurrency::array_view<Dtype, 1> aView =
+      *((Concurrency::array_view<Dtype, 1>*)(a));
+  Concurrency::array_view<Dtype, 1> yView =
+      *((Concurrency::array_view<Dtype, 1>*)(y));
+  Concurrency::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
     yView[idx] = aView[idx] >= 0 ? aView[idx] : -1 * aView[idx];
-  }
-  );
-  yView.synchronize();
+  } );
 }
 
 template <typename Dtype>
-void caffe_amp_sign(const int N, Dtype* a, Dtype* y) {
-  array_view<Dtype, 1> aView(N, a);
-  array_view<Dtype, 1> yView(N, y);
-  parallel_for_each(
-    yView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-  {
+void sign_kernel(const int N, Dtype* a, Dtype* y) {
+  Concurrency::array_view<Dtype, 1> aView =
+      *((Concurrency::array_view<Dtype, 1>*)(a));
+  Concurrency::array_view<Dtype, 1> yView =
+      *((Concurrency::array_view<Dtype, 1>*)(y));
+  Concurrency::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
     yView[idx] = aView[idx] == 0 ? 0 : (aView[idx] < 0 ? -1 : 1);
-  }
-  );
-  yView.synchronize();
+  } );
 }
 
 template <typename Dtype>
 void sgnbit_kernel(const int N, Dtype* a, Dtype* y) {
-  array_view<Dtype, 1> aView(N, a);
-  array_view<Dtype, 1> yView(N, y);
-  parallel_for_each(
-    yView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-  {
+  Concurrency::array_view<Dtype, 1> aView =
+      *((Concurrency::array_view<Dtype, 1>*)(a));
+  Concurrency::array_view<Dtype, 1> yView =
+      *((Concurrency::array_view<Dtype, 1>*)(y));
+  Concurrency::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
     yView[idx] = Concurrency::fast_math::signbit(aView[idx]);
-  }
-  );
-  yView.synchronize();
+  } );
 }
 
 template<>
@@ -181,38 +175,37 @@ void caffe_gpu_sgnbit<double>(const int n, const double* x, double* y){
 }
 
 template <typename Dtype>
-void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y) {
-  array_view<Dtype, 1> aView(N, a);
-  array_view<Dtype, 1> bView(N, b);
-  array_view<Dtype, 1> yView(N, y);
-  parallel_for_each(
-    yView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
+void mul_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
+  Concurrency::array_view<Dtype, 1> aView =
+      *((Concurrency::array_view<Dtype, 1>*)(a));
+  Concurrency::array_view<Dtype, 1> bView =
+      *((Concurrency::array_view<Dtype, 1>*)(b));
+  Concurrency::array_view<Dtype, 1> yView =
+      *((Concurrency::array_view<Dtype, 1>*)(y));
+  Concurrency::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
       yView[idx] = (aView[idx] * bView[idx]);
-    }
-  );
-  yView.synchronize();
+  } );
 }
 
 template <>
 void caffe_gpu_abs<float>(const int N,const float* a, float* y) {
-  caffe_amp_abs(N, const_cast <float*>(a), y);
+  abs_kernel(N, const_cast <float*>(a), y);
 }
 
 template <>
 void caffe_gpu_abs<double>(const int N,const double* a, double* y) {
-  caffe_amp_abs(N, const_cast <double*>(a), y);
+  abs_kernel(N, const_cast <double*>(a), y);
 }
 
 template <>
 void caffe_gpu_sign<float>(const int N,const float* a, float* y) {
-  caffe_amp_sign(N, const_cast <float*>(a), y);
+  sign_kernel(N, const_cast <float*>(a), y);
 }
 
 template <>
 void caffe_gpu_sign<double>(const int N,const double* a, double* y) {
-  caffe_amp_sign(N, const_cast <double*>(a), y);
+  sign_kernel(N, const_cast <double*>(a), y);
 }
 
 
@@ -221,29 +214,28 @@ template <>
 void caffe_gpu_mul<float>(const int N, const float* a,
   const float* b, float* y) {
   // NOLINT_NEXT_LINE(whitespace/operators)
-  caffe_amp_mul(N, const_cast <float*>(a), const_cast <float*>(b), y);
+  mul_kernel(N, const_cast <float*>(a), const_cast <float*>(b), y);
 }
 
 template <>
 void caffe_gpu_mul<double>(const int N, const double* a,
   const double* b, double* y) {
   // NOLINT_NEXT_LINE(whitespace/operators)
-  caffe_amp_mul(N, const_cast <double*>(a), const_cast <double*>(b), y);
+  mul_kernel(N, const_cast <double*>(a), const_cast <double*>(b), y);
 }
 
 template <typename Dtype>
 void div_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
-  array_view<Dtype, 1> aView(N, a);
-  array_view<Dtype, 1> bView(N, b);
-  array_view<Dtype, 1> yView(N, y);
-  parallel_for_each(
-    yView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      yView[idx] = (aView[idx] / bView[idx]);
-    }
-  );
-  yView.synchronize();
+  Concurrency::array_view<Dtype, 1> aView =
+      *((Concurrency::array_view<Dtype, 1>*)(a));
+  Concurrency::array_view<Dtype, 1> bView =
+      *((Concurrency::array_view<Dtype, 1>*)(b));
+  Concurrency::array_view<Dtype, 1> yView =
+      *((Concurrency::array_view<Dtype, 1>*)(y));
+  Concurrency::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+    yView[idx] = (aView[idx] / bView[idx]);
+  } );
 }
 
 template <>
@@ -262,17 +254,16 @@ void caffe_gpu_div<double>(const int N, const double* a,
 
 template <typename Dtype>
 void add_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
-  array_view<Dtype, 1> aView(N, a);
-  array_view<Dtype, 1> bView(N, b);
-  array_view<Dtype, 1> yView(N, y);
-  parallel_for_each(
-    yView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      yView[idx] = (aView[idx] + bView[idx]);
-    }
-  );
-  yView.synchronize();
+  Concurrency::array_view<Dtype, 1> aView =
+      *((Concurrency::array_view<Dtype, 1>*)(a));
+  Concurrency::array_view<Dtype, 1> bView =
+      *((Concurrency::array_view<Dtype, 1>*)(b));
+  Concurrency::array_view<Dtype, 1> yView =
+      *((Concurrency::array_view<Dtype, 1>*)(y));
+  Concurrency::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+    yView[idx] = (aView[idx] + bView[idx]);
+  } );
 }
 
 template <>
@@ -289,17 +280,16 @@ void caffe_gpu_add<double>(const int N, const double* a, const double* b, double
 
 template <typename Dtype>
 void sub_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
-  array_view<Dtype, 1> aView(N, a);
-  array_view<Dtype, 1> bView(N, b);
-  array_view<Dtype, 1> yView(N, y);
-  parallel_for_each(
-    yView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      yView[idx] = (aView[idx] - bView[idx]);
-    }
-  );
-  yView.synchronize();
+  Concurrency::array_view<Dtype, 1> aView =
+      *((Concurrency::array_view<Dtype, 1>*)(a));
+  Concurrency::array_view<Dtype, 1> bView =
+      *((Concurrency::array_view<Dtype, 1>*)(b));
+  Concurrency::array_view<Dtype, 1> yView =
+      *((Concurrency::array_view<Dtype, 1>*)(y));
+  Concurrency::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+    yView[idx] = (aView[idx] - bView[idx]);
+  } );
 }
 
 template <>
@@ -320,12 +310,10 @@ template <typename Dtype>
 void set_kernel(const int N, const Dtype alpha, Dtype* y) {
   Concurrency::array_view<Dtype, 1> outView =
     *((Concurrency::array_view<Dtype, 1>*)(y));
-
-  parallel_for_each(
-    outView.get_extent(),
-    [=](index<1> idx) restrict(amp){
-      outView[idx] = alpha;
-    } );
+  Concurrency::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp){
+    outView[idx] = alpha;
+  } );
 }
 
 template <>
@@ -342,16 +330,14 @@ void caffe_gpu_set<double>(const int N, const double alpha, double* Y) {
 
 template <typename Dtype>
 void exp_kernel(const int N, Dtype* a, Dtype* y) {
-  array_view<Dtype, 1> aView(N, a);
-  array_view<Dtype, 1> yView(N, y);
-  parallel_for_each(
-    yView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      yView[idx] = Concurrency::fast_math::exp(aView[idx]);
-    }
-  );
-  yView.synchronize();
+  Concurrency::array_view<Dtype, 1> aView =
+      *((Concurrency::array_view<Dtype, 1>*)(a));
+  Concurrency::array_view<Dtype, 1> yView =
+      *((Concurrency::array_view<Dtype, 1>*)(y));
+  Concurrency::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+    yView[idx] = Concurrency::fast_math::exp(aView[idx]);
+  } );
 }
 
 template <>
@@ -368,15 +354,12 @@ void caffe_gpu_exp<double>(const int N, const double* a, double* y) {
 
 template <typename Dtype>
 void add_scalar_kernel(const int N, const Dtype alpha, Dtype* y) {
-  array_view<Dtype, 1> outView(N, y);
-  parallel_for_each(
-    outView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      outView[idx] += alpha;
-    }
-  );
-  outView.synchronize();
+  Concurrency::array_view<Dtype, 1> outView =
+    *((Concurrency::array_view<Dtype, 1>*)(y));
+  Concurrency::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+    outView[idx] += alpha;
+  } );
 }
 
 template <>
@@ -393,16 +376,14 @@ void caffe_gpu_add_scalar<double>(const int N, const double alpha, double* Y) {
 
 template <typename Dtype>
 void powx_kernel(const int N, Dtype* a, Dtype alpha, Dtype* y) {
-  array_view<Dtype, 1> aView(N, a);
-  array_view<Dtype, 1> yView(N, y);
-  parallel_for_each(
-    yView.get_extent(),
-    [=](index<1> idx) restrict(amp)
-    {
-      yView[idx] = Concurrency::fast_math::pow(aView[idx], alpha);
-    }
-  );
-  yView.synchronize();
+  Concurrency::array_view<Dtype, 1> aView =
+      *((Concurrency::array_view<Dtype, 1>*)(a));
+  Concurrency::array_view<Dtype, 1> yView =
+      *((Concurrency::array_view<Dtype, 1>*)(y));
+  Concurrency::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+    yView[idx] = Concurrency::fast_math::pow(aView[idx], alpha);
+  } );
 }
 
 template <>
@@ -552,14 +533,14 @@ void caffe_gpu_axpy<double>(const int N, const double alpha, const double* X,
 template <>
 void caffe_gpu_scale<float>(const int n, const float alpha, const float *x,
                                 float* y){
-  amp_copy(n, const_cast <float*>(x), y);
+  caffe_amp_D2D((void*)x, (void*)y, sizeof(float), false);
   amp_scale(n, alpha, y);
 }
 
 template <>
 void caffe_gpu_scale<double>(const int n, const double alpha, const double *x,
                                  double* y) {
-  amp_copy(n, const_cast <double*>(x), y);
+  caffe_amp_D2D((void*)x, (void*)y, sizeof(double), false);
   amp_scale(n, alpha, y);
 }
 

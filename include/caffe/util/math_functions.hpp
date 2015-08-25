@@ -288,16 +288,6 @@ void caffe_gpu_##name<double>(const int n, const double* x, double* y) { \
 }
 #endif
 #endif  // !CPU_ONLY
-
-#ifdef USE_CPPAMP
-template <typename Dtype>
-void caffe_amp_abs(const int N, Dtype* a, Dtype* y);
-template <typename Dtype>
-void caffe_amp_sign(const int N, Dtype* a, Dtype* y);
-template <typename Dtype>
-void caffe_amp_mul(const int N, Dtype* a, Dtype* b, Dtype* y);
-
-#endif  // USE_CPPAMP
 }  // namespace caffe
 
 #endif  // CAFFE_UTIL_MATH_FUNCTIONS_H_

@@ -773,7 +773,6 @@ ampblasStatus Ampblaslibrary :: ampblas_sgemv(const enum AMPBLAS_TRANS type,
         Concurrency::array_view<float> xView(lenXn, X);
         Concurrency::array_view<float> yView(lenYn, Y);
         gemv_AMP(accl_view, type, M, N, *alpha, aMat, aOffset, xView, xOffset, incX, *beta, yView, yOffset, incY, tempBuf);
-        aMat.synchronize();
         /* Print Output */
         /*    for (int i = 0 ;i < M; i++) {
                 cout << "[Y" << i << "] " << yView[i] << endl;
@@ -786,7 +785,6 @@ ampblasStatus Ampblaslibrary :: ampblas_sgemv(const enum AMPBLAS_TRANS type,
         Concurrency::array_view<float> xView(lenXt, X);
         Concurrency::array_view<float> yView(lenYt, Y);
         gemv_AMP(accl_view, type, M, N, *alpha, aMat, aOffset, xView, xOffset, incX, *beta, yView, yOffset, incY, tempBuf);
-        aMat.synchronize();
         /* Print Output */
         /* for (int i = 0 ;i < lenYt; i++) {
              cout << "[Y" << i << "] "<< yView[i] << endl;
@@ -824,7 +822,6 @@ ampblasStatus Ampblaslibrary::ampblas_dgemv(const enum AMPBLAS_TRANS type,
         Concurrency::array_view<double> xView(lenXn, X);
         Concurrency::array_view<double> yView(lenYn, Y);
         gemv_AMP_d(accl_view, type, M, N, *alpha, aMat, aOffset, xView, xOffset, incX, *beta, yView, yOffset, incY, tempBuf);
-        aMat.synchronize();
         /* Print Output */
         /*    for (int i = 0 ;i < M; i++) {
         cout << "[Y" << i << "] " << yView[i] << endl;
@@ -837,7 +834,6 @@ ampblasStatus Ampblaslibrary::ampblas_dgemv(const enum AMPBLAS_TRANS type,
         Concurrency::array_view<double> xView(lenXt, X);
         Concurrency::array_view<double> yView(lenYt, Y);
         gemv_AMP_d(accl_view, type, M, N, *alpha, aMat, aOffset, xView, xOffset, incX, *beta, yView, yOffset, incY, tempBuf);
-        aMat.synchronize();
         /* Print Output */
         /* for (int i = 0 ;i < lenYt; i++) {
         cout << "[Y" << i << "] "<< yView[i] << endl;
@@ -870,8 +866,6 @@ ampblasStatus Ampblaslibrary :: ampblas_sgemv(Concurrency::accelerator_view &acc
     Concurrency::array_view<float> tempBuf(num_blocks * lenYt, temp);
 
     gemv_AMP(accl_view, type, M, N, alpha, A, aOffset, X, xOffset, incX, beta, Y, yOffset, incY, tempBuf);
-    A.synchronize();
-
     return AMPBLAS_SUCCESS;
 }
 
@@ -899,8 +893,6 @@ ampblasStatus Ampblaslibrary :: ampblas_sgemv(Concurrency::accelerator_view &acc
     Concurrency::array_view<float> tempBuf(num_blocks * lenYt, temp);
 
     gemv_AMP(accl_view, type, M, N, alpha, A, aOffset, A_batchOffset, X, xOffset, X_batchOffset, incX, beta, Y, yOffset, Y_batchOffset, incY, tempBuf, batchSize);
-    A.synchronize();
-
     return AMPBLAS_SUCCESS;
 }
 
