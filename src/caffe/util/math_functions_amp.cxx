@@ -1067,18 +1067,21 @@ void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, do
 template <>
 uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
                                   const float* y) {
+  array_view<float, 1> axView = *((Concurrency::array_view<float, 1>*)(x));
+  array_view<float, 1> ayView = *((Concurrency::array_view<float, 1>*)(y));
   uint32_t result[n];
   uint32_t ax[n];
   uint32_t ay[n];
   for(int i = 0; i < n; ++i ) {
-    ax[i] = static_cast<uint32_t>(x[i]);
-    ay[i] = static_cast<uint32_t>(y[i]);
+    ax[i] = static_cast<uint32_t>(axView[i]);
+    ay[i] = static_cast<uint32_t>(ayView[i]);
   }
 
   array_view<uint32_t, 1> resultView(n, result);
   array_view<uint32_t, 1> xView(n, ax);
   array_view<uint32_t, 1> yView(n, ay);
-  parallel_for_each(resultView.get_extent(), [=](index<1> idx) restrict(amp) {
+  Concurrency::extent<1> e(n);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
     uint32_t ret = 0;
     uint32_t u = xView[idx] ^ yView[idx];
     while(u) {
@@ -1087,7 +1090,6 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
     }
     resultView[idx] = ret;
   } );
-  resultView.synchronize();
   uint32_t sum = 0;
   for(int i = 0; i < n; ++i ) {
     sum+=result[i];
@@ -1098,17 +1100,20 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
 template <>
 uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
                                    const double* y) {
+  array_view<double, 1> axView = *((Concurrency::array_view<double, 1>*)(x));
+  array_view<double, 1> ayView = *((Concurrency::array_view<double, 1>*)(y));
   uint32_t result[n];
   uint64_t ax[n];
   uint64_t ay[n];
   for(int i = 0; i < n; ++i ) {
-    ax[i] = static_cast<uint64_t>(x[i]);
-    ay[i] = static_cast<uint64_t>(y[i]);
+    ax[i] = static_cast<uint64_t>(axView[i]);
+    ay[i] = static_cast<uint64_t>(ayView[i]);
   }
   array_view<uint32_t, 1> resultView(n, result);
   array_view<uint64_t, 1> xView(n, ax);
   array_view<uint64_t, 1> yView(n, ay);
-  parallel_for_each(resultView.get_extent(), [=](index<1> idx) restrict(amp) {
+  Concurrency::extent<1> e(n);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
     uint32_t ret = 0;
     uint64_t u = xView[idx] ^ yView[idx];
     while(u) {
@@ -1117,7 +1122,6 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
     }
     resultView[idx] = ret;
   } );
-  resultView.synchronize();
   uint32_t sum = 0;
   for(int i = 0; i < n; ++i ) {
     sum+=result[i];
