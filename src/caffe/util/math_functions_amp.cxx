@@ -133,8 +133,8 @@ void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int){
 }
 
 template <typename Dtype>
-void caffe_amp_copy(const int N, void* src, void* dst,
-    const int srcOffset, const int dstOffset) {
+void caffe_amp_copy(int N, void* src, void* dst,
+    int srcOffset, int dstOffset) {
   Concurrency::array_view<Dtype, 1> avSrc =
     *((Concurrency::array_view<Dtype, 1>*)(src));
   Concurrency::array_view<Dtype, 1> avDst =
