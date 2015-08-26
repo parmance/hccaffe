@@ -183,10 +183,11 @@ inline void caffe_gpu_memset(const size_t N, const int alpha, void* X) {
 }
 #else  // !USE_CPPAMP
 inline void caffe_gpu_memset(const size_t N, const int alpha, void* X) {
-  //caffe_memset(N, alpha, X);
+  // caffe_memset(N, alpha, X);
 }
 
-void caffe_amp_malloc(void** ptr, size_t size, size_t element_size, bool is_int);
+void caffe_amp_malloc(void** ptr, size_t size,
+                        size_t element_size, bool is_int);
 
 void caffe_amp_free(void* ptr, size_t element_size, bool is_int);
 
@@ -197,8 +198,8 @@ void caffe_amp_D2H(void* dst, void* src, size_t element_sizei, bool is_int);
 void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int);
 
 template <typename Dtype>
-void caffe_amp_copy(const int N, void* src, void* dst,
-    size_t srcOffset, size_t dstOffset);
+void caffe_amp_copy(int N, void* src, void* dst,
+    int srcOffset, int dstOffset);
 #endif  // !USE_CPPAMP
 
 template <typename Dtype>

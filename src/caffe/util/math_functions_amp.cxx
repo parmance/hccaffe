@@ -133,12 +133,18 @@ void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int){
 }
 
 template <typename Dtype>
-void caffe_amp_copy(const int N, void* src, void* dst,
-    size_t srcOffset, size_t dstOffset) {
+void caffe_amp_copy(int N, void* src, void* dst,
+    int srcOffset, int dstOffset) {
   Concurrency::array_view<Dtype, 1> avSrc =
     *((Concurrency::array_view<Dtype, 1>*)(src));
   Concurrency::array_view<Dtype, 1> avDst =
       *((Concurrency::array_view<Dtype, 1>*)(dst));
+  if(src == NULL || dst == NULL ||
+      N > avSrc.get_extent().size() - srcOffset ||
+      N > avDst.get_extent().size() - dstOffset){
+    LOG(FATAL) << "Wrong Parameters for caffe_amp_copy.";
+  }
+
   if(srcOffset == 0 && dstOffset== 0 &&
       N == avSrc.get_extent().size() &&
       N >= avDst.get_extent().size()){
@@ -152,11 +158,11 @@ void caffe_amp_copy(const int N, void* src, void* dst,
 }
 
 template void caffe_amp_copy<int>(const int N, void* src, void* dst,
-    size_t srcOffset, size_t dstOffset);
+    const int srcOffset, const int dstOffset);
 template void caffe_amp_copy<float>(const int N, void* src, void* dst,
-    size_t srcOffset, size_t dstOffset);
+    const int srcOffset, const int dstOffset);
 template void caffe_amp_copy<double>(const int N, void* src, void* dst,
-    size_t srcOffset, size_t dstOffset);
+    const int srcOffset, const int dstOffset);
 
 template <typename Dtype>
 void abs_kernel(const int N, Dtype* a, Dtype* y) {
@@ -1005,8 +1011,7 @@ void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
   Concurrency::extent<1> e(n);
   parallel_for_each(
     e,
-    [=](index<1> idx) restrict(amp)
-  {
+    [=](index<1> idx) restrict(amp){
     rView[idx] = tempView(idx);
   } );
 }
@@ -1019,8 +1024,7 @@ void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,floa
   Concurrency::extent<1> e(N);
   parallel_for_each(
     e,
-    [=](index<1> idx) restrict(amp)
-  {
+    [=](index<1> idx) restrict(amp){
     float seed = (float)idx[0] * coefficient;
     float V = 0.0;
     do{
@@ -1037,8 +1041,7 @@ void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b, 
   Concurrency::extent<1> e(N);
   parallel_for_each(
     e,
-    [=](index<1> idx) restrict(amp)
-  {
+    [=](index<1> idx) restrict(amp){
     double seed = (double)idx[0] * coefficient;
     double V = 0.0;
     do{
@@ -1055,8 +1058,7 @@ void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, floa
   Concurrency::extent<1> e(N);
   parallel_for_each(
     e,
-    [=](index<1> idx) restrict(amp)
-  {
+    [=](index<1> idx) restrict(amp){
     float seed = (float)idx[0] * coefficient;
     float V1 = 0.0, V2 = 0.0, S=0.0;
     do {
@@ -1064,7 +1066,7 @@ void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, floa
       V2 = 2 * srnd_kernel(seed) - 1;
       S = V1 * V1 + V2 * V2;
     } while ((S >= 1.0) || (S == 0.0)||(V1 == 0.0) || (V2 == 0.0));
-	float temp = sqrt(-2.0 * log(S) / S) * sigma ;
+    float temp = sqrt(-2.0 * log(S) / S) * sigma ;
     if (2 * idx[0] < N)
       rView[2 * idx] = V1 * temp + mu;
     if (2*idx[0] + 1 < N)
@@ -1075,13 +1077,12 @@ void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma, floa
 
 template <>
 void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, double* r) {
-  array_view<double, 1> rView = *((Concurrency::array_view<double, 1>*)(r));
+    array_view<double, 1> rView = *((Concurrency::array_view<double, 1>*)(r));
   double coefficient = (double)rand() / RAND_MAX;
   Concurrency::extent<1> e(N);
   parallel_for_each(
     e,
-    [=](index<1> idx) restrict(amp)
-  {
+    [=](index<1> idx) restrict(amp){
     double seed = (double)idx[0] * coefficient;
     double V1 = 0.0, V2 = 0.0, S=0.0;
     do {
@@ -1089,7 +1090,7 @@ void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma, do
       V2 = 2 * drnd_kernel(seed) - 1;
       S = V1 * V1 + V2 * V2;
     } while ((S >= 1.0) || (S == 0.0));
-	double temp = sqrt(-2.0 * log(S) / S) * sigma ;
+    double temp = sqrt(-2.0 * log(S) / S) * sigma ;
     if (2 * idx[0] < N)
       rView[2 * idx] = V1 * temp + mu;
     if (2*idx[0] + 1 < N)
@@ -1115,7 +1116,6 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
   uint32_t ax[n];
   uint32_t ay[n];
 
-
   for(int i = 0; i < n; ++i ) {
     ax[i] = static_cast<uint32_t>(xTemp[i]);
     ay[i] = static_cast<uint32_t>(yTemp[i]);
@@ -1124,6 +1124,7 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
   array_view<uint32_t, 1> resultView(n, result);
   array_view<uint32_t, 1> xView(n, ax);
   array_view<uint32_t, 1> yView(n, ay);
+
   Concurrency::extent<1> e(n);
   parallel_for_each(e, [=](index<1> idx) restrict(amp) {
     uint32_t ret = 0;

@@ -20,7 +20,7 @@ class RandomNumberGeneratorTest : public ::testing::Test {
        sample_size_(10000),
        seed_(1701),
 #ifdef USE_CPPAMP
-	    data_(new SyncedMemory(sample_size_ * sizeof(Dtype), sizeof(Dtype),
+       data_(new SyncedMemory(sample_size_ * sizeof(Dtype), sizeof(Dtype),
           boost::is_same<Dtype, int>::value)),
        data_2_(new SyncedMemory(sample_size_ * sizeof(Dtype), sizeof(Dtype),
           boost::is_same<Dtype, int>::value)),
