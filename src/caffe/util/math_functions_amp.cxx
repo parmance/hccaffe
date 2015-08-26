@@ -19,40 +19,40 @@ namespace caffe {
 //The size is the total memory size
 void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
     bool is_int){
+  // Use default device
+  concurrency::accelerator currentAcc(accelerator::default_accelerator);
   if(is_int) {
-    Concurrency::extent<1> eA(size/sizeof(int));
+    if(element_size == sizeof(int)){
+      Concurrency::extent<1> eA(size/sizeof(int));
       // Allocating device array of given size
-      // Use default device
-      concurrency::accelerator currentAcc(accelerator::default_accelerator);
       Concurrency::array<int, 1> arr =
-         Concurrency::array<int, 1>(eA, currentAcc.get_default_view());
+        Concurrency::array<int, 1>(eA, currentAcc.get_default_view());
       Concurrency::array_view<int>* avData =
         new Concurrency::array_view<int>(arr);
       avData->discard_data();
       *ptr = (void*)avData;
+    } else {
+      LOG(FATAL) << "Wrong element size for caffe_amp_malloc.";
+    }
   } else {
     if(element_size == sizeof(float)){
       Concurrency::extent<1> eA(size/sizeof(float));
-      // Allocating device array of given size
-      // Use default device
-      concurrency::accelerator currentAcc(accelerator::default_accelerator);
       Concurrency::array<float, 1> arr =
-         Concurrency::array<float, 1>(eA, currentAcc.get_default_view());
+        Concurrency::array<float, 1>(eA, currentAcc.get_default_view());
       Concurrency::array_view<float>* avData =
         new Concurrency::array_view<float>(arr);
       avData->discard_data();
       *ptr = (void*)avData;
     } else if(element_size == sizeof(double)){
       Concurrency::extent<1> eA(size/sizeof(double));
-      // Allocating device array of given size
-      // Use default device
-      concurrency::accelerator currentAcc(accelerator::default_accelerator);
-     Concurrency::array<double, 1> arr =
-       Concurrency::array<double, 1>(eA, currentAcc.get_default_view());
-     Concurrency::array_view<double>* avData =
-       new Concurrency::array_view<double>(arr);
+      Concurrency::array<double, 1> arr =
+        Concurrency::array<double, 1>(eA, currentAcc.get_default_view());
+      Concurrency::array_view<double>* avData =
+        new Concurrency::array_view<double>(arr);
      avData->discard_data();
      *ptr = (void*)avData;
+    } else {
+      LOG(FATAL) << "Wrong element size for caffe_amp_malloc.";
     }
   }
 }
@@ -60,23 +60,36 @@ void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
 void caffe_amp_free(void* ptr, size_t element_size, bool is_int){
   if (ptr) {
     if(is_int){
+      if(element_size == sizeof(int)){
         delete (Concurrency::array_view<int> *)ptr;
+      } else {
+        LOG(FATAL) << "Wrong element size for caffe_amp_free.";
+      }
     } else {
-      if(element_size == sizeof(float))
+      if(element_size == sizeof(float)){
         delete (Concurrency::array_view<float> *)ptr;
-      else if(element_size == sizeof(double))
+      } else if(element_size == sizeof(double)){
         delete (Concurrency::array_view<double> *)ptr;
+      } else {
+        LOG(FATAL) << "Wrong element size for caffe_amp_free.";
+      }
     }
     ptr = NULL;
   }
 }
 
 void caffe_amp_D2H(void* src, void* dst, size_t element_size, bool is_int){
+  if(src == NULL || dst == NULL){
+    LOG(FATAL) << "Wrong source or destination for caffe_amp_D2H.";
+  }
   if(is_int){
-    Concurrency::array_view<int, 1>* avSrc =
-      (Concurrency::array_view<int, 1>*)(src);
-    Concurrency::copy(*avSrc, (int*)dst);
-
+    if(element_size == sizeof(int)){
+      Concurrency::array_view<int, 1>* avSrc =
+        (Concurrency::array_view<int, 1>*)(src);
+      Concurrency::copy(*avSrc, (int*)dst);
+    } else {
+      LOG(FATAL) << "Wrong element size for caffe_amp_D2H.";
+    }
   } else {
     if(element_size == sizeof(float)){
       Concurrency::array_view<float, 1>* avSrc =
@@ -86,15 +99,24 @@ void caffe_amp_D2H(void* src, void* dst, size_t element_size, bool is_int){
       Concurrency::array_view<double, 1>* avSrc =
         (Concurrency::array_view<double, 1>*)(src);
       Concurrency::copy(*avSrc, (double*)dst);
+    } else {
+      LOG(FATAL) << "Wrong element size for caffe_amp_D2H.";
     }
   }
 }
 
 void caffe_amp_H2D(void* src, void* dst, size_t element_size, bool is_int){
+  if(src == NULL || dst == NULL){
+    LOG(FATAL) << "Wrong source or destination for caffe_amp_H2D.";
+  }
   if(is_int){
-    Concurrency::array_view<int, 1>* avDst =
-      (Concurrency::array_view<int, 1>*)(dst);
-    Concurrency::copy((int*)src, *avDst);
+    if(element_size == sizeof(int)){
+      Concurrency::array_view<int, 1>* avDst =
+        (Concurrency::array_view<int, 1>*)(dst);
+      Concurrency::copy((int*)src, *avDst);
+    } else {
+      LOG(FATAL) << "Wrong element size for caffe_amp_H2D.";
+    }
   } else {
     if(element_size == sizeof(float)){
       Concurrency::array_view<float, 1>* avDst =
@@ -104,17 +126,26 @@ void caffe_amp_H2D(void* src, void* dst, size_t element_size, bool is_int){
       Concurrency::array_view<double, 1>* avDst =
         (Concurrency::array_view<double, 1>*)(dst);
       Concurrency::copy((double*)src, *avDst);
+    } else {
+      LOG(FATAL) << "Wrong element size for caffe_amp_H2D.";
     }
   }
 }
 
 void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int){
+  if(src == NULL || dst == NULL){
+    LOG(FATAL) << "Wrong source or destination for caffe_amp_D2D.";
+  }
   if(is_int){
-    Concurrency::array_view<int, 1>* avSrc =
-      (Concurrency::array_view<int, 1>*)(src);
-    Concurrency::array_view<int, 1>* avDst =
-      (Concurrency::array_view<int, 1>*)(dst);
-    Concurrency::copy(*avSrc, *avDst);
+    if(element_size == sizeof(int)){
+      Concurrency::array_view<int, 1>* avSrc =
+        (Concurrency::array_view<int, 1>*)(src);
+      Concurrency::array_view<int, 1>* avDst =
+        (Concurrency::array_view<int, 1>*)(dst);
+      Concurrency::copy(*avSrc, *avDst);
+    } else {
+      LOG(FATAL) << "Wrong element size for caffe_amp_D2D.";
+    }
   } else {
     if(element_size == sizeof(float)){
       Concurrency::array_view<float, 1>* avSrc =
@@ -128,6 +159,8 @@ void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int){
       Concurrency::array_view<double, 1>* avDst =
         (Concurrency::array_view<double, 1>*)(dst);
       Concurrency::copy(*avSrc, *avDst);
+    } else {
+      LOG(FATAL) << "Wrong element size for caffe_amp_D2D.";
     }
   }
 }
