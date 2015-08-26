@@ -1110,12 +1110,12 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
 
   Concurrency::copy(axView, xTemp);
   Concurrency::copy(ayView, yTemp);
-  
+
   uint32_t result[n];
   uint32_t ax[n];
   uint32_t ay[n];
 
-  
+
   for(int i = 0; i < n; ++i ) {
     ax[i] = static_cast<uint32_t>(xTemp[i]);
     ay[i] = static_cast<uint32_t>(yTemp[i]);
@@ -1153,7 +1153,7 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
 
   Concurrency::copy(axView, xTemp);
   Concurrency::copy(ayView, yTemp);
-  
+
   uint32_t result[n];
   uint64_t ax[n];
   uint64_t ay[n];

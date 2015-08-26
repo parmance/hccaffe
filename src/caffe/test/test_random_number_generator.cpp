@@ -19,8 +19,8 @@ class RandomNumberGeneratorTest : public ::testing::Test {
      : mean_bound_multiplier_(3.8),  // ~99.99% confidence for test failure.
        sample_size_(10000),
        seed_(1701),
-       #ifdef USE_CPPAMP
-	   data_(new SyncedMemory(sample_size_ * sizeof(Dtype), sizeof(Dtype),
+#ifdef USE_CPPAMP
+	    data_(new SyncedMemory(sample_size_ * sizeof(Dtype), sizeof(Dtype),
           boost::is_same<Dtype, int>::value)),
        data_2_(new SyncedMemory(sample_size_ * sizeof(Dtype), sizeof(Dtype),
           boost::is_same<Dtype, int>::value)),
@@ -28,12 +28,12 @@ class RandomNumberGeneratorTest : public ::testing::Test {
           boost::is_same<Dtype, int>::value)),
        int_data_2_(new SyncedMemory(sample_size_ * sizeof(int), sizeof(Dtype),
           boost::is_same<Dtype, int>::value)) 
-	   #else
+#else
        data_(new SyncedMemory(sample_size_ * sizeof(Dtype))),
        data_2_(new SyncedMemory(sample_size_ * sizeof(Dtype))),
        int_data_(new SyncedMemory(sample_size_ * sizeof(int))),
        int_data_2_(new SyncedMemory(sample_size_ * sizeof(int))) 
-       #endif
+#endif
        {}
 
   virtual void SetUp() {
