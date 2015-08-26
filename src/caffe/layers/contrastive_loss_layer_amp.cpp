@@ -32,15 +32,15 @@ void ContrastiveLossLayer<Dtype>::Forward_gpu(
       diff_.mutable_gpu_data(),  // a_i-b_i
       Dtype(2),
       diff_sq_.mutable_gpu_data());  // (a_i-b_i)^2
-  caffe_gpu_gemv(
+  caffe_gpu_gemv2(
       CblasNoTrans,
       bottom[0]->num(),
       bottom[0]->channels(),
       Dtype(1.0),
-      diff_sq_.gpu_data(),  // (a_i-b_i)^2
-      summer_vec_.gpu_data(),
+      diff_sq_.gpu_data(), 0,  // (a_i-b_i)^2
+      summer_vec_.gpu_data(), 0,
       Dtype(0.0),
-      dist_sq_.mutable_gpu_data());  // \Sum (a_i-b_i)^2
+      dist_sq_.mutable_gpu_data(), 0);  // \Sum (a_i-b_i)^2
   Dtype margin = this->layer_param_.contrastive_loss_param().margin();
   Dtype loss(0.0);
   for (int i = 0; i < bottom[0]->num(); ++i) {

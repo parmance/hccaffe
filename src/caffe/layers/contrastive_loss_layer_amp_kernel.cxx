@@ -33,12 +33,20 @@ void CLLForward<float>(const int N,
     float* diff,
     float* dist_sq,
     float* bottom_diff) {
-  array_view<float, 1> yView(y_count, y);
-  array_view<float, 1> diffView(N, diff);
-  array_view<float, 1> dist_sqView(y_count, dist_sq);
-  array_view<float, 1> bottom_diffView(N, bottom_diff);
+
+  Concurrency::array_view<float, 1> yView =
+    *((Concurrency::array_view<float, 1>*)(y));
+  Concurrency::array_view<float, 1> diffView =
+    *((Concurrency::array_view<float, 1>*)(diff));
+  Concurrency::array_view<float, 1> dist_sqView =
+    *((Concurrency::array_view<float, 1>*)(dist_sq));
+  Concurrency::array_view<float, 1> bottom_diffView =
+    *((Concurrency::array_view<float, 1>*)(bottom_diff));
+
+  concurrency::extent<1> e(N);
+
   parallel_for_each(
-    bottom_diffView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp){
       int n = idx[0] / channels;  // the num index, to access y and dist_sq
       if (static_cast<int>(yView[n])) {  // similar pairsS
@@ -52,7 +60,6 @@ void CLLForward<float>(const int N,
       }
     }
   );
-  bottom_diffView.synchronize();
 }
 
 template <>
@@ -65,12 +72,20 @@ void CLLForward<double>(const int N,
     double* diff,
     double* dist_sq,
     double* bottom_diff) {
-  array_view<double, 1> yView(y_count, y);
-  array_view<double, 1> diffView(N, diff);
-  array_view<double, 1> dist_sqView(y_count, dist_sq);
-  array_view<double, 1> bottom_diffView(N, bottom_diff);
+
+  Concurrency::array_view<double, 1> yView =
+    *((Concurrency::array_view<double, 1>*)(y));
+  Concurrency::array_view<double, 1> diffView =
+    *((Concurrency::array_view<double, 1>*)(diff));
+  Concurrency::array_view<double, 1> dist_sqView =
+    *((Concurrency::array_view<double, 1>*)(dist_sq));
+  Concurrency::array_view<double, 1> bottom_diffView =
+    *((Concurrency::array_view<double, 1>*)(bottom_diff));
+
+  Concurrency::extent<1> e(N);
+
   parallel_for_each(
-    bottom_diffView.get_extent(),
+    e,
     [=](index<1> idx) restrict(amp){
       int n = idx[0] / channels;  // the num index, to access y and dist_sq
       if (static_cast<int>(yView[n])) {  // similar pairsS
@@ -84,6 +99,5 @@ void CLLForward<double>(const int N,
       }
     }
   );
-  bottom_diffView.synchronize();
 }
 

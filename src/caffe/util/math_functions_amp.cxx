@@ -643,11 +643,6 @@ void caffe_gpu_axpby<double>(const int N, const double alpha, const double* X,
   caffe_gpu_scal<double>(N, beta, Y);
   caffe_gpu_axpy<double>(N, alpha, X, Y);
 }
-template <typename Dtype>
-void caffe_gpu_gemv2(const CBLAS_TRANSPOSE TransA, const int M,
-  const int N, const Dtype alpha, const Dtype* A, const int offseta,
-  const Dtype* x, const int offsetx,
-  const Dtype beta, Dtype* y, const int offsety);
 template <>
 void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const float alpha, const float* A, const float* x,
@@ -796,14 +791,6 @@ void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
                 ldb, const_cast<double*>(A), lda, &beta, C, N, 0, 0, 0);
 
 }
-template <typename Dtype>
-void caffe_gpu_gemm2(const CBLAS_TRANSPOSE TransA,
-  const CBLAS_TRANSPOSE TransB,
-  const int M, const int N, const int K,
-  const Dtype alpha, const Dtype* A, const int offet_A,const Dtype* B,
-  const int offset_B, const Dtype beta, Dtype* C, const int offset_C);
-
-
 
 template <>
 void caffe_gpu_gemm2<float>(const CBLAS_TRANSPOSE TransA,

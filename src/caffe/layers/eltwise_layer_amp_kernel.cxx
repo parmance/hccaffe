@@ -18,12 +18,20 @@ void MaxBackward(const int N, Dtype* top_diff, int blob_idx, int* mask, Dtype* b
 template <>
 void MaxForward<float>(const int N, float* a, float* b,
   const int blob_idx, float* y, int* mask) {
-  array_view<float, 1> aView(N, a);
-  array_view<float, 1> bView(N, b);
-  array_view<float, 1> yView(N, y);
-  array_view<int, 1> maskView(N, mask);
+
+  Concurrency::array_view<float, 1> aView =
+    *((Concurrency::array_view<float, 1>*)(a));
+  Concurrency::array_view<float, 1> bView =
+    *((Concurrency::array_view<float, 1>*)(b));
+  Concurrency::array_view<float, 1> yView =
+    *((Concurrency::array_view<float, 1>*)(y));
+  Concurrency::array_view<int, 1> maskView =
+    *((Concurrency::array_view<int, 1>*)(mask));
+
+  extent<1> e(N);
+
   parallel_for_each(
-    yView.get_extent(),
+    e,
     [=] (concurrency::index<1> idx) restrict(amp)
     {
       float maxval = -FLT_MAX;
@@ -44,18 +52,25 @@ void MaxForward<float>(const int N, float* a, float* b,
       }
     }
   );
-  yView.synchronize();
 }
 
 template <>
 void MaxForward<double>(const int N, double* a, double* b,
   const int blob_idx, double* y, int* mask) {
-  array_view<double, 1> aView(N, a);
-  array_view<double, 1> bView(N, b);
-  array_view<double, 1> yView(N, y);
-  array_view<int, 1> maskView(N, mask);
+
+  Concurrency::array_view<double, 1> aView =
+    *((Concurrency::array_view<double, 1>*)(a));
+  Concurrency::array_view<double, 1> bView =
+    *((Concurrency::array_view<double, 1>*)(b));
+  Concurrency::array_view<double, 1> yView =
+    *((Concurrency::array_view<double, 1>*)(y));
+  Concurrency::array_view<int, 1> maskView =
+    *((Concurrency::array_view<int, 1>*)(mask));
+
+  extent<1> e(N);
+
   parallel_for_each(
-    yView.get_extent(),
+    e,
     [=] (concurrency::index<1> idx) restrict(amp)
     {
       double maxval = -FLT_MAX;
@@ -76,17 +91,23 @@ void MaxForward<double>(const int N, double* a, double* b,
       }
     }
   );
-  yView.synchronize();
 }
 
 template <>
 void MaxBackward<float>(const int N, float* top_diff,
   int blob_idx, int* mask, float* bottom_diff) {
-  array_view<float, 1> top_diffView(N, top_diff);
-  array_view<float, 1> bottom_diffView(N, bottom_diff);
-  array_view<int, 1> maskView(N, mask);
+
+  Concurrency::array_view<float, 1> top_diffView =
+    *((Concurrency::array_view<float, 1>*)(top_diff));
+  Concurrency::array_view<float, 1> bottom_diffView =
+    *((Concurrency::array_view<float, 1>*)(bottom_diff));
+  Concurrency::array_view<int, 1> maskView =
+    *((Concurrency::array_view<int, 1>*)(mask));
+
+  extent<1> e(N);
+
   parallel_for_each(
-    bottom_diffView.get_extent(),
+    e,
     [=] (concurrency::index<1> idx) restrict(amp)
     {
       float gradient = 0;
@@ -96,17 +117,23 @@ void MaxBackward<float>(const int N, float* top_diff,
       bottom_diffView[idx] = gradient;
     }
   );
-  bottom_diffView.synchronize();
 }
 
 template <>
 void MaxBackward<double>(const int N, double* top_diff,
   int blob_idx, int* mask, double* bottom_diff) {
-  array_view<double, 1> top_diffView(N, top_diff);
-  array_view<double, 1> bottom_diffView(N, bottom_diff);
-  array_view<int, 1> maskView(N, mask);
+
+  Concurrency::array_view<double, 1> top_diffView =
+    *((Concurrency::array_view<double, 1>*)(top_diff));
+  Concurrency::array_view<double, 1> bottom_diffView =
+    *((Concurrency::array_view<double, 1>*)(bottom_diff));
+  Concurrency::array_view<int, 1> maskView =
+    *((Concurrency::array_view<int, 1>*)(mask));
+
+  extent<1> e(N);
+
   parallel_for_each(
-    bottom_diffView.get_extent(),
+    e,
     [=] (concurrency::index<1> idx) restrict(amp)
     {
       double gradient = 0;
@@ -116,6 +143,5 @@ void MaxBackward<double>(const int N, double* top_diff,
       bottom_diffView[idx] = gradient;
     }
   );
-  bottom_diffView.synchronize();
 }
 
