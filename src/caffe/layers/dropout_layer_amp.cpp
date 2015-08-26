@@ -30,8 +30,10 @@ void DropoutLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     // NOLINT_NEXT_LINE(whitespace/operators)
     DropoutForward(count, bottom_data, mask, uint_thres_, scale_, top_data);
   } else {
-    caffe_copy(count, bottom_data, top_data);
+    //caffe_copy(count, bottom_data, top_data);
+    caffe_amp_D2D((void*)bottom_data, (void*)top_data, sizeof(Dtype), boost::is_same<Dtype, int>::value);
   }
+
 }
 
 template <typename Dtype>
@@ -49,7 +51,8 @@ void DropoutLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
       DropoutBackward(count, top_diff, mask, uint_thres_, scale_,
           bottom_diff);
     } else {
-      caffe_copy(top[0]->count(), top_diff, bottom_diff);
+//      caffe_copy(top[0]->count(), top_diff, bottom_diff);
+    caffe_amp_D2D((void*)top_diff, (void*)bottom_diff, sizeof(Dtype), boost::is_same<Dtype, int>::value);
     }
   }
 }
