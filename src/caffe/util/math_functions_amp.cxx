@@ -134,11 +134,17 @@ void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int){
 
 template <typename Dtype>
 void caffe_amp_copy(const int N, void* src, void* dst,
-    size_t srcOffset, size_t dstOffset) {
+    const int srcOffset, const int dstOffset) {
   Concurrency::array_view<Dtype, 1> avSrc =
     *((Concurrency::array_view<Dtype, 1>*)(src));
   Concurrency::array_view<Dtype, 1> avDst =
       *((Concurrency::array_view<Dtype, 1>*)(dst));
+  if(src == NULL || dst == NULL ||
+      N > avSrc.get_extent().size() - srcOffset ||
+      N > avDst.get_extent().size() - dstOffset){
+    LOG(FATAL) << "Wrong Parameters for caffe_amp_copy.";
+  }
+
   if(srcOffset == 0 && dstOffset== 0 &&
       N == avSrc.get_extent().size() &&
       N >= avDst.get_extent().size()){
@@ -152,11 +158,11 @@ void caffe_amp_copy(const int N, void* src, void* dst,
 }
 
 template void caffe_amp_copy<int>(const int N, void* src, void* dst,
-    size_t srcOffset, size_t dstOffset);
+    const int srcOffset, const int dstOffset);
 template void caffe_amp_copy<float>(const int N, void* src, void* dst,
-    size_t srcOffset, size_t dstOffset);
+    const int srcOffset, const int dstOffset);
 template void caffe_amp_copy<double>(const int N, void* src, void* dst,
-    size_t srcOffset, size_t dstOffset);
+    const int srcOffset, const int dstOffset);
 
 template <typename Dtype>
 void abs_kernel(const int N, Dtype* a, Dtype* y) {
@@ -1115,7 +1121,6 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
   uint32_t ax[n];
   uint32_t ay[n];
 
-
   for(int i = 0; i < n; ++i ) {
     ax[i] = static_cast<uint32_t>(xTemp[i]);
     ay[i] = static_cast<uint32_t>(yTemp[i]);
@@ -1124,6 +1129,7 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
   array_view<uint32_t, 1> resultView(n, result);
   array_view<uint32_t, 1> xView(n, ax);
   array_view<uint32_t, 1> yView(n, ay);
+
   Concurrency::extent<1> e(n);
   parallel_for_each(e, [=](index<1> idx) restrict(amp) {
     uint32_t ret = 0;

@@ -198,7 +198,7 @@ void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int);
 
 template <typename Dtype>
 void caffe_amp_copy(const int N, void* src, void* dst,
-    size_t srcOffset, size_t dstOffset);
+    const int srcOffset, const int dstOffset);
 #endif  // !USE_CPPAMP
 
 template <typename Dtype>
