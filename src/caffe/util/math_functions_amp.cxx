@@ -1,5 +1,6 @@
 #include <boost/math/special_functions/next.hpp>
 #include <boost/random.hpp>
+#include <boost/type_traits/is_same.hpp>
 #include <glog/logging.h>
 #include <limits>
 #include "caffe/util/math_functions.hpp"
@@ -130,6 +131,32 @@ void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int){
     }
   }
 }
+
+template <typename Dtype>
+void caffe_amp_copy(const int N, void* src, void* dst,
+    size_t srcOffset, size_t dstOffset) {
+  Concurrency::array_view<Dtype, 1> avSrc =
+    *((Concurrency::array_view<Dtype, 1>*)(src));
+  Concurrency::array_view<Dtype, 1> avDst =
+      *((Concurrency::array_view<Dtype, 1>*)(dst));
+  if(srcOffset == 0 && dstOffset== 0 &&
+      N == avSrc.get_extent().size() &&
+      N >= avDst.get_extent().size()){
+    caffe_amp_D2D(src, dst, sizeof(Dtype), boost::is_same<Dtype, int>::value);
+  } else {
+    Concurrency::extent<1> e(N);
+    parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+      avDst[dstOffset + idx] = avSrc[srcOffset + idx];
+    } );
+  }
+}
+
+template void caffe_amp_copy<int>(const int N, void* src, void* dst,
+    size_t srcOffset, size_t dstOffset);
+template void caffe_amp_copy<float>(const int N, void* src, void* dst,
+    size_t srcOffset, size_t dstOffset);
+template void caffe_amp_copy<double>(const int N, void* src, void* dst,
+    size_t srcOffset, size_t dstOffset);
 
 template <typename Dtype>
 void abs_kernel(const int N, Dtype* a, Dtype* y) {
