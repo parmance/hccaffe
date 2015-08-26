@@ -1,3 +1,4 @@
+#include <boost/type_traits/is_same.hpp>
 #include <cstdio>
 
 #include <algorithm>
@@ -534,9 +535,15 @@ void SGDSolver<Dtype>::ComputeUpdateValue() {
                 net_params[param_id]->gpu_diff(), momentum,
                 history_[param_id]->mutable_gpu_data());
       // copy
+#ifdef USE_CPPAMP
+      caffe_amp_D2D((void*)history_[param_id]->gpu_data(),
+          (void*)net_params[param_id]->mutable_gpu_diff(),
+          sizeof(Dtype), boost::is_same<Dtype, int>::value);
+#else
       caffe_copy(net_params[param_id]->count(),
           history_[param_id]->gpu_data(),
           net_params[param_id]->mutable_gpu_diff());
+#endif
     }
 #else
     NO_GPU;
@@ -633,10 +640,15 @@ void NesterovSolver<Dtype>::ComputeUpdateValue() {
 #ifndef CPU_ONLY
     for (int param_id = 0; param_id < net_params.size(); ++param_id) {
       // save history momentum for stepping back
+#ifdef USE_CPPAMP
+      caffe_amp_D2D((void*)this->history_[param_id]->gpu_data(),
+          (void*)this->update_[param_id]->mutable_gpu_data(),
+          sizeof(Dtype), boost::is_same<Dtype, int>::value);
+#else
       caffe_copy(net_params[param_id]->count(),
           this->history_[param_id]->gpu_data(),
           this->update_[param_id]->mutable_gpu_data());
-
+#endif
       Dtype local_rate = rate * net_params_lr[param_id];
       Dtype local_decay = weight_decay * net_params_weight_decay[param_id];
 
@@ -671,9 +683,15 @@ void NesterovSolver<Dtype>::ComputeUpdateValue() {
           this->update_[param_id]->mutable_gpu_data());
 
       // copy
+#ifdef USE_CPPAMP
+      caffe_amp_D2D((void*)this->update_[param_id]->gpu_data(),
+          (void*)net_params[param_id]->mutable_gpu_diff(),
+          sizeof(Dtype), boost::is_same<Dtype, int>::value);
+#else
       caffe_copy(net_params[param_id]->count(),
           this->update_[param_id]->gpu_data(),
           net_params[param_id]->mutable_gpu_diff());
+#endif
     }
 #else
     NO_GPU;
