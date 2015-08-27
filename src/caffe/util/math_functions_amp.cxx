@@ -180,7 +180,7 @@ void caffe_amp_copy(int N, void* src, void* dst,
 
   if(srcOffset == 0 && dstOffset== 0 &&
       N == avSrc.get_extent().size() &&
-      N >= avDst.get_extent().size()){
+      N <= avDst.get_extent().size()){
     caffe_amp_D2D(src, dst, sizeof(Dtype), boost::is_same<Dtype, int>::value);
   } else {
     Concurrency::extent<1> e(N);
@@ -190,12 +190,58 @@ void caffe_amp_copy(int N, void* src, void* dst,
   }
 }
 
-template void caffe_amp_copy<int>(const int N, void* src, void* dst,
-    const int srcOffset, const int dstOffset);
-template void caffe_amp_copy<float>(const int N, void* src, void* dst,
-    const int srcOffset, const int dstOffset);
-template void caffe_amp_copy<double>(const int N, void* src, void* dst,
-    const int srcOffset, const int dstOffset);
+template void caffe_amp_copy<int>(int N, void* src, void* dst,
+    int srcOffset, int dstOffset);
+template void caffe_amp_copy<float>(int N, void* src, void* dst,
+    int srcOffset, int dstOffset);
+template void caffe_amp_copy<double>(int N, void* src, void* dst,
+    int srcOffset, int dstOffset);
+
+template <typename Dtype>
+void caffe_amp_copy_H2D(int N, void* src, void* dst, int dstOffset) {
+  Concurrency::array_view<Dtype, 1> avDst =
+      *((Concurrency::array_view<Dtype, 1>*)(dst));
+  if(src == NULL || dst == NULL ||
+      N > avDst.get_extent().size() - dstOffset){
+    LOG(FATAL) << "Wrong Parameters for caffe_amp_copy_H2D.";
+  }
+  Concurrency::array_view<Dtype, 1> avSrc(N, (Dtype*)src);
+
+  Concurrency::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+    avDst[dstOffset + idx] = avSrc[idx];
+  } );
+}
+
+template void caffe_amp_copy_H2D<int>(int N, void* src, void* dst,
+    int dstOffset);
+template void caffe_amp_copy_H2D<float>(int N, void* src, void* dst,
+    int dstOffset);
+template void caffe_amp_copy_H2D<double>(int N, void* srci, void* dst,
+    int dstOffset);
+
+template <typename Dtype>
+void caffe_amp_copy_D2H(int N, void* src, void* dst, int srcOffset) {
+  Concurrency::array_view<Dtype, 1> avSrc =
+    *((Concurrency::array_view<Dtype, 1>*)(src));
+  if(src == NULL || dst == NULL ||
+      N > avSrc.get_extent().size() - srcOffset){
+    LOG(FATAL) << "Wrong Parameters for caffe_amp_copy_D2H.";
+  }
+  Concurrency::array_view<Dtype, 1> avDst(N, (Dtype*)dst);
+  Concurrency::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+    avDst[idx] = avSrc[srcOffset + idx];
+  } );
+  avDst.synchronize();
+}
+
+template void caffe_amp_copy_D2H<int>(int N, void* src, void* dst,
+    int srcOffset);
+template void caffe_amp_copy_D2H<float>(int N, void* src, void* dst,
+    int srcOffset);
+template void caffe_amp_copy_D2H<double>(int N, void* src, void* dst,
+    int srcOffset);
 
 template <typename Dtype>
 void abs_kernel(const int N, Dtype* a, Dtype* y) {

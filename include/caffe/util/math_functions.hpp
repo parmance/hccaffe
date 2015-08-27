@@ -211,8 +211,14 @@ void caffe_amp_D2H(void* dst, void* src, size_t element_sizei, bool is_int);
 void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int);
 
 template <typename Dtype>
-void caffe_amp_copy(int N, void* src, void* dst,
-    int srcOffset, int dstOffset);
+void caffe_amp_copy(int N, void* src, void* dst, int srcOffset, int dstOffset);
+
+template <typename Dtype>
+void caffe_amp_copy_H2D(int N, void* src, void* dst, int dstOffset);
+
+template <typename Dtype>
+void caffe_amp_copy_D2H(int N, void* src, void* dst, int srcOffset);
+
 #endif  // !USE_CPPAMP
 
 template <typename Dtype>
