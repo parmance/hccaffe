@@ -48,6 +48,21 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   void backward_cpu_bias(Dtype* bias, const Dtype* input);
 
 #ifndef CPU_ONLY
+#ifdef USE_CPPAMP
+  void backward_gpu_bias(Dtype* bias, const Dtype* input, const int offset);
+  void forward_gpu_gemm(int N1, int N2, const Dtype* col_input,
+      const int offsetin, const Dtype* weights, Dtype* output,
+      const int offsetoutput, bool skip_im2col = false);
+  void backward_gpu_gemm(int N1, int N2, const Dtype* input,
+      const int offset_i, const Dtype* weights,
+      Dtype* col_output, const int offset_o);
+  void weight_gpu_gemm(int N1, int N2, const Dtype* col_input,
+      const int offset_i, const Dtype* output, const int output_o,
+      Dtype* weights);
+  void forward_gpu_bias(Dtype* output,
+      const int offset, const Dtype* bias);
+
+#else
   void forward_gpu_gemm(const Dtype* col_input, const Dtype* weights,
       Dtype* output, bool skip_im2col = false);
   void forward_gpu_bias(Dtype* output, const Dtype* bias);
@@ -56,27 +71,7 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   void weight_gpu_gemm(const Dtype* col_input, const Dtype* output, Dtype*
       weights);
   void backward_gpu_bias(Dtype* bias, const Dtype* input);
-#ifdef USE_CPPAMP
-  void forward_gpu_bias2(Dtype* output,
-    const int offset, const Dtype* bias);
-  void backward_gpu_bias2(Dtype* bias, const Dtype* input, const int offset);
-  void forward_gpu_gemm2(int N1, int N2, const Dtype* col_input,
-      const Dtype* weights, Dtype* output, bool skip_im2col = false);
-  void forward_gpu_gemm3(int N1, int N2, const Dtype* col_input,
-      const int offsetin, const Dtype* weights, Dtype* output,
-      const int offsetoutput, bool skip_im2col = false);
 
-  void backward_gpu_gemm2(int N1, int N2, const Dtype* input,
-      const Dtype* weights, Dtype* col_output);
-  void backward_gpu_gemm3(int N1, int N2, const Dtype* input,
-      const int offset_i, const Dtype* weights,
-      Dtype* col_output, const int offset_o);
-
-  void weight_gpu_gemm2(int N1, int N2, const Dtype* col_input,
-      const Dtype* output, Dtype* weights);
-  void weight_gpu_gemm3(int N1, int N2, const Dtype* col_input,
-      const int offset_i, const Dtype* output, const int output_o,
-      Dtype* weights);
 
 #endif  // USE_CPPAMP
 #endif  // CPU_ONLY
@@ -110,6 +105,23 @@ class BaseConvolutionLayer : public Layer<Dtype> {
         kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, data);
   }
 #ifndef CPU_ONLY
+#ifdef USE_CPPAMP
+  inline void conv_im2col_gpu(const Dtype* data,
+      const int offset_in, Dtype* col_buff, const int offset_out) {
+    im2col_gpu(data, conv_in_channels_,
+        conv_in_height_, conv_in_width_,
+        kernel_h_, kernel_w_,
+        pad_h_, pad_w_,
+        stride_h_, stride_w_,
+        col_buff, offset_in, offset_out);
+  }
+  inline void conv_col2im_gpu(const Dtype* col_buff,
+      Dtype* data, const int col_offset, const int data_offset) {
+    col2im_gpu(col_buff, conv_in_channels_, conv_in_height_,
+        conv_in_width_, kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_,
+        stride_w_, data, col_offset, data_offset);
+  }
+#else
   inline void conv_im2col_gpu(const Dtype* data, Dtype* col_buff) {
     im2col_gpu(data, conv_in_channels_, conv_in_height_, conv_in_width_,
         kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, col_buff);
@@ -118,22 +130,7 @@ class BaseConvolutionLayer : public Layer<Dtype> {
     col2im_gpu(col_buff, conv_in_channels_, conv_in_height_, conv_in_width_,
         kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, data);
   }
-#ifdef USE_CPPAMP
-  inline void conv_im2col_gpu2(const Dtype* data,
-      const int offset_in, Dtype* col_buff, const int offset_out) {
-    im2col_gpu2(data, conv_in_channels_,
-        conv_in_height_, conv_in_width_,
-        kernel_h_, kernel_w_,
-        pad_h_, pad_w_,
-        stride_h_, stride_w_,
-        col_buff, offset_in, offset_out);
-  }
-  inline void conv_col2im_gpu2(const Dtype* col_buff,
-      Dtype* data, const int col_offset, const int data_offset) {
-    col2im_gpu2(col_buff, conv_in_channels_, conv_in_height_,
-        conv_in_width_, kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_,
-        stride_w_, data, col_offset, data_offset);
-  }
+
 #endif  // USE_CPPAMP
 #endif  // CPU_ONLY
 

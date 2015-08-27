@@ -691,38 +691,6 @@ void caffe_gpu_axpby<double>(const int N, const double alpha, const double* X,
 }
 template <>
 void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
-  const int N, const float alpha, const float* A, const float* x,
-  const float beta, float* y) {
-  AMPBLAS_TRANS ampTransA = trans;
-  Ampblaslibrary amp;
-  if(TransA == CblasTrans)
-  {
-      ampTransA = noTrans;
-  }
-  if(TransA == CblasConjTrans)
-  {
-      ampTransA = conjugate;
-  }
-  amp.ampblas_sgemv(ampTransA, N, M, &alpha, const_cast<float*>(A), 0, N, const_cast<float*>(x), 0, 1, &beta, y, 0, 1);
-}
-template <>
-void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
-  const int N, const double alpha, const double* A, const double* x,
-  const double beta, double* y) {
-  AMPBLAS_TRANS ampTransA = trans;
-  Ampblaslibrary amp;
-  if(TransA == CblasTrans)
-  {
-      ampTransA = noTrans;
-  }
-  if(TransA == CblasConjTrans)
-  {
-      ampTransA = conjugate;
-  }
-  amp.ampblas_dgemv(ampTransA, N, M, &alpha, const_cast<double*>(A), 0, N, const_cast<double*>(x), 0, 1, &beta, y, 0, 1);
-}
-template <>
-void caffe_gpu_gemv2<float>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const float alpha, const float* A, const int offseta,
   const float* x, const int offsetx,
   const float beta, float* y, const int offsety) {
@@ -748,7 +716,7 @@ void caffe_gpu_gemv2<float>(const CBLAS_TRANSPOSE TransA, const int M,
 
 
 template <>
-void caffe_gpu_gemv2<double>(const CBLAS_TRANSPOSE TransA, const int M,
+void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const double alpha, const double* A, const int offseta,
   const double* x, const int offsetx,
   const double beta, double* y, const int offsety) {
@@ -774,72 +742,8 @@ void caffe_gpu_gemv2<double>(const CBLAS_TRANSPOSE TransA, const int M,
 }
 
 
-
 template <>
 void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
-  const CBLAS_TRANSPOSE TransB, const int M, const int N, const int K,
-  const float alpha, const float* A, const float* B, const float beta, float* C) {
-  int lda = (TransA == CblasNoTrans) ? K : M;
-  int ldb = (TransB == CblasNoTrans) ? N : K;
-  AMPBLAS_TRANS ampTransA = noTrans;
-  AMPBLAS_TRANS ampTransB = noTrans;
-  Ampblaslibrary amp;
-  if(TransA == CblasTrans)
-  {
-      ampTransA = trans;
-  }
-  if(TransA == CblasConjTrans)
-  {
-      ampTransA = conjugate;
-  }
-
-  if(TransB == CblasTrans)
-  {
-      ampTransB = trans;
-  }
-
-  if(TransB == CblasConjTrans)
-  {
-      ampTransB = conjugate;
-  }
-  amp.ampblas_sgemm(colMajor, ampTransB, ampTransA, N, M, K, &alpha, const_cast<float*>(B),
-                ldb, const_cast<float*>(A), lda, &beta, C, N, 0, 0, 0);
-}
-
-template <>
-void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
-  const CBLAS_TRANSPOSE TransB, const int M, const int N, const int K,
-  const double alpha, const double* A, const double* B, const double beta, double* C) {
-   int lda = (TransA == CblasNoTrans) ? K : M;
-  int ldb = (TransB == CblasNoTrans) ? N : K;
-  AMPBLAS_TRANS ampTransA = noTrans;
-  AMPBLAS_TRANS ampTransB = noTrans;
-  Ampblaslibrary amp;
-  if(TransA == CblasTrans)
-  {
-      ampTransA = trans;
-  }
-  if(TransA == CblasConjTrans)
-  {
-      ampTransA = conjugate;
-  }
-
-  if(TransB == CblasTrans)
-  {
-      ampTransB = trans;
-  }
-
-  if(TransB == CblasConjTrans)
-  {
-      ampTransB = conjugate;
-  }
-  amp.ampblas_dgemm(colMajor, ampTransB, ampTransA, N, M, K, &alpha, const_cast<double*>(B),
-                ldb, const_cast<double*>(A), lda, &beta, C, N, 0, 0, 0);
-
-}
-
-template <>
-void caffe_gpu_gemm2<float>(const CBLAS_TRANSPOSE TransA,
   const CBLAS_TRANSPOSE TransB,
   const int M, const int N, const int K,
   const float alpha, const float* A, const int offset_A,const float* B,
@@ -879,7 +783,7 @@ void caffe_gpu_gemm2<float>(const CBLAS_TRANSPOSE TransA,
 
 
 template <>
-void caffe_gpu_gemm2<double>(const CBLAS_TRANSPOSE TransA,
+void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
   const CBLAS_TRANSPOSE TransB,
   const int M, const int N, const int K,
   const double alpha, const double* A, const int offset_A,const double* B,

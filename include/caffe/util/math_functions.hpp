@@ -148,6 +148,19 @@ void caffe_cpu_scale(const int n, const Dtype alpha, const Dtype *x, Dtype* y);
 // Decaf gpu gemm provides an interface that is almost the same as the cpu
 // gemm function - following the c convention and calling the fortran-order
 // gpu code under the hood.
+#ifdef USE_CPPAMP
+template <typename Dtype>
+void caffe_gpu_gemv(const CBLAS_TRANSPOSE TransA, const int M,
+  const int N, const Dtype alpha, const Dtype* A, const int offseta,
+  const Dtype* x, const int offsetx,
+  const Dtype beta, Dtype* y, const int offsety);
+template <typename Dtype>
+void caffe_gpu_gemm(const CBLAS_TRANSPOSE TransA,
+  const CBLAS_TRANSPOSE TransB,
+  const int M, const int N, const int K,
+  const Dtype alpha, const Dtype* A, const int offet_A, const Dtype* B,
+  const int offset_B, const Dtype beta, Dtype* C, const int offset_C);
+#else
 template <typename Dtype>
 void caffe_gpu_gemm(const CBLAS_TRANSPOSE TransA,
     const CBLAS_TRANSPOSE TransB, const int M, const int N, const int K,
@@ -158,20 +171,6 @@ template <typename Dtype>
 void caffe_gpu_gemv(const CBLAS_TRANSPOSE TransA, const int M, const int N,
     const Dtype alpha, const Dtype* A, const Dtype* x, const Dtype beta,
     Dtype* y);
-#ifdef USE_CPPAMP
-template <typename Dtype>
-void caffe_gpu_gemv2(const CBLAS_TRANSPOSE TransA, const int M,
-  const int N, const Dtype alpha, const Dtype* A, const int offseta,
-  const Dtype* x, const int offsetx,
-  const Dtype beta, Dtype* y, const int offsety);
-template <typename Dtype>
-void caffe_gpu_gemm2(const CBLAS_TRANSPOSE TransA,
-  const CBLAS_TRANSPOSE TransB,
-  const int M, const int N, const int K,
-  const Dtype alpha, const Dtype* A, const int offet_A,const Dtype* B,
-  const int offset_B, const Dtype beta, Dtype* C, const int offset_C);
-
-
 #endif
 template <typename Dtype>
 void caffe_gpu_axpy(const int N, const Dtype alpha, const Dtype* X,
