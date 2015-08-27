@@ -34,8 +34,8 @@ void LRNFillScale<float>(const int N, float* in,
   const int num, const int channels, const int height,
   const int width, const int size, const float alpha_over_size,
   const float k, float* scale,int count) {
-  array_view<float, 1> inView(count, in);
-  array_view<float, 1> scaleView(count, scale);
+  array_view<float, 1> inView = *((Concurrency::array_view<float, 1>*)(in));
+  array_view<float, 1> scaleView = *((Concurrency::array_view<float, 1>*)(scale));
   extent<1> e(N);
   parallel_for_each(
     e,
@@ -74,7 +74,6 @@ void LRNFillScale<float>(const int N, float* in,
       }
     }
   );
-  scaleView.synchronize();
 }
 
 template <>
@@ -82,8 +81,8 @@ void LRNFillScale<double>(const int N, double* in,
   const int num, const int channels, const int height,
   const int width, const int size, const double alpha_over_size,
   const double k, double* scale,int count) {
-  array_view<double, 1> inView(count, in);
-  array_view<double, 1> scaleView(count, scale);
+  array_view<double, 1> inView = *((Concurrency::array_view<double, 1>*)(in));
+  array_view<double, 1> scaleView = *((Concurrency::array_view<double, 1>*)(scale));
   extent<1> e(N);
   parallel_for_each(
     e,
@@ -122,16 +121,15 @@ void LRNFillScale<double>(const int N, double* in,
       }
     }
   );
-  scaleView.synchronize();
 }
 
 // TODO: check if it would be faster to just put it into the previous kernel.
 template <>
 void LRNComputeOutput<float>(const int N, float* in,
   float* scale, const float negative_beta, float* out,int count) {
-  array_view<float, 1> inView(count, in);
-  array_view<float, 1> scaleView(count, scale);
-  array_view<float, 1> outView(count, out);
+  array_view<float, 1> inView = *((Concurrency::array_view<float, 1>*)(in));
+  array_view<float, 1> scaleView = *((Concurrency::array_view<float, 1>*)(scale));
+  array_view<float, 1> outView = *((Concurrency::array_view<float, 1>*)(out));
   extent<1> e(N);
   parallel_for_each(
     e,
@@ -140,16 +138,16 @@ void LRNComputeOutput<float>(const int N, float* in,
       outView[idx] = inView[idx] * Concurrency::fast_math::pow(scaleView[idx], negative_beta);
     }
   );
-  outView.synchronize();
+  //outView.synchronize();
 }
 
 // TODO: check if it would be faster to just put it into the previous kernel.
 template <>
 void LRNComputeOutput<double>(const int N, double* in,
   double* scale, const double negative_beta, double* out,int count) {
-  array_view<double, 1> inView(count, in);
-  array_view<double, 1> scaleView(count, scale);
-  array_view<double, 1> outView(count, out);
+  array_view<double, 1> inView = *((Concurrency::array_view<double, 1>*)(in));
+  array_view<double, 1> scaleView = *((Concurrency::array_view<double, 1>*)(scale));
+  array_view<double, 1> outView = *((Concurrency::array_view<double, 1>*)(out));
   extent<1> e(N);
   parallel_for_each(
     e,
@@ -158,7 +156,6 @@ void LRNComputeOutput<double>(const int N, double* in,
       outView[idx] = inView[idx] * Concurrency::fast_math::pow(scaleView[idx], negative_beta);
     }
   );
-  outView.synchronize();
 }
 
 template <>
@@ -167,11 +164,11 @@ void LRNComputeDiff<float>(const int N, float* bottom_data,
   const int num, const int channels, const int height,
   const int width, const int size, const float negative_beta,
   const float cache_ratio, float* bottom_diff,int count) {
-  array_view<float, 1> bottom_dataView(count, bottom_data);
-  array_view<float, 1> top_dataView(count, top_data);
-  array_view<float, 1> scaleView(count, scale);
-  array_view<float, 1> top_diffView(count, top_diff);
-  array_view<float, 1> bottom_diffView(count, bottom_diff);
+  array_view<float, 1> bottom_dataView = *((Concurrency::array_view<float, 1>*)(bottom_data));
+  array_view<float, 1> top_dataView = *((Concurrency::array_view<float, 1>*)(top_data));
+  array_view<float, 1> scaleView = *((Concurrency::array_view<float, 1>*)(scale));
+  array_view<float, 1> top_diffView = *((Concurrency::array_view<float, 1>*)(top_diff));
+  array_view<float, 1> bottom_diffView = *((Concurrency::array_view<float, 1>*)(bottom_diff));
   extent<1> e(N);
   parallel_for_each(
     e,
@@ -218,7 +215,6 @@ void LRNComputeDiff<float>(const int N, float* bottom_data,
       }
     }
   );
-  bottom_diffView.synchronize();
 }
 
 template <>
@@ -227,11 +223,11 @@ void LRNComputeDiff<double>(const int N, double* bottom_data,
   const int num, const int channels, const int height,
   const int width, const int size, const double negative_beta,
   const double cache_ratio, double* bottom_diff,int count) {
-  array_view<double, 1> bottom_dataView(count, bottom_data);
-  array_view<double, 1> top_dataView(count, top_data);
-  array_view<double, 1> scaleView(count, scale);
-  array_view<double, 1> top_diffView(count, top_diff);
-  array_view<double, 1> bottom_diffView(count, bottom_diff);
+  array_view<double, 1> bottom_dataView = *((Concurrency::array_view<double, 1>*)(bottom_data));
+  array_view<double, 1> top_dataView = *((Concurrency::array_view<double, 1>*)(top_data));
+  array_view<double, 1> scaleView = *((Concurrency::array_view<double, 1>*)(scale));
+  array_view<double, 1> top_diffView = *((Concurrency::array_view<double, 1>*)(top_diff));
+  array_view<double, 1> bottom_diffView = *((Concurrency::array_view<double, 1>*)(bottom_diff));
   extent<1> e(N);
   parallel_for_each(
     e,
@@ -278,6 +274,5 @@ void LRNComputeDiff<double>(const int N, double* bottom_data,
       }
     }
   );
-  bottom_diffView.synchronize();
 }
 
