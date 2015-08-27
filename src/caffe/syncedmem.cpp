@@ -143,10 +143,14 @@ inline void SyncedMemory::to_cpu() {
 }
 
 inline void SyncedMemory::to_gpu() {
+  int* temp;
   switch (head_) {
   case UNINITIALIZED:
     caffe_amp_malloc(&gpu_ptr_, size_, element_size_, is_integer_);
-    caffe_gpu_memset(size_, 0, gpu_ptr_);
+    temp = new int[size_/sizeof(int)];
+    memset(temp, 0, size_);
+    caffe_amp_H2D((void*)temp, gpu_ptr_, element_size_, is_integer_);
+    delete[] temp;
     head_ = HEAD_AT_GPU;
     break;
   case HEAD_AT_CPU:
