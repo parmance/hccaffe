@@ -21,7 +21,9 @@ void PowerLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     return;
   }
   const Dtype* bottom_data = bottom[0]->gpu_data();
-  caffe_amp_D2D((void *)bottom_data, (void *)top_data, sizeof(Dtype), boost::is_same<Dtype, int>::value);
+  caffe_amp_D2D(reinterpret_cast<void *>(bottom_data),
+    reinterpret_cast<void *>(top_data), sizeof(Dtype), 
+    boost::is_same<Dtype, int>::value);
   if (scale_ != Dtype(1)) {
     caffe_gpu_scal(count, scale_, top_data);
   }
