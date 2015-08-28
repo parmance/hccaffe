@@ -418,8 +418,8 @@ void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape) {
   case Caffe::GPU:
     if (copy_diff) {
 #ifdef USE_CPPAMP
-      caffe_amp_D2D((void*)source.gpu_diff(), (void*)diff_->mutable_gpu_data(),
-          sizeof(Dtype), false);
+      caffe_amp_D2D(static_cast<void*>(source.gpu_diff()),
+          static_cast<void*>(diff_->mutable_gpu_data()), sizeof(Dtype), false);
 #else
       caffe_copy(count_, source.gpu_diff(),
           static_cast<Dtype*>(diff_->mutable_gpu_data()));
@@ -427,8 +427,8 @@ void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape) {
 
     } else {
 #ifdef USE_CPPAMP
-      caffe_amp_D2D((void*)source.gpu_data(), (void*)data_->mutable_gpu_data(),
-          sizeof(Dtype), false);
+      caffe_amp_D2D(static_cast<void*>(source.gpu_data()),
+          static_cast<void*>(data_->mutable_gpu_data()), sizeof(Dtype), false);
 #else
       caffe_copy(count_, source.gpu_data(),
           static_cast<Dtype*>(data_->mutable_gpu_data()));
