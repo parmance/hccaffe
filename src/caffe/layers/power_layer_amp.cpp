@@ -58,7 +58,8 @@ void PowerLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
         caffe_gpu_div(count, top_data, bottom_data, bottom_diff);
         caffe_gpu_scal(count, power_, bottom_diff);
       } else {
-        caffe_amp_D2D(reinterpret_cast<void *>(bottom_data), reinterpret_cast<void *>(bottom_diff),
+        caffe_amp_D2D(reinterpret_cast<void *>(bottom_data), 
+          reinterpret_cast<void *>(bottom_diff),
           sizeof(Dtype), boost::is_same<Dtype, int>::value);
         if (scale_ != Dtype(1)) {
           caffe_gpu_scal(count, scale_, bottom_diff);
