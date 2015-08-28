@@ -19,7 +19,8 @@ void ConcatLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     const int bottom_concat_axis = bottom[i]->shape(concat_axis_);
     for (int n = 0; n < num_concats_; ++n) {
       caffe_amp_copy<Dtype>(bottom_concat_axis * concat_input_size_,
-        (void*)bottom_data, (void*)top_data,
+        static_cast<void*>(const_cast<Dtype*>(bottom_data)),
+        static_cast<void*>(top_data),
         n * bottom_concat_axis * concat_input_size_,
         (n * top_concat_axis + offset_concat_axis)
           * concat_input_size_);
@@ -40,8 +41,8 @@ void ConcatLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     const int bottom_concat_axis = bottom[i]->shape(concat_axis_);
     for (int n = 0; n < num_concats_; ++n) {
       caffe_amp_copy<Dtype>(bottom_concat_axis * concat_input_size_,
-          (void*)top_diff,
-          (void*)bottom_diff,
+          static_cast<void*>(const_cast<Dtype*>(top_diff)),
+          static_cast<void*>(bottom_diff),
           (n * top_concat_axis + offset_concat_axis) * concat_input_size_,
           n * bottom_concat_axis * concat_input_size_);
     }
