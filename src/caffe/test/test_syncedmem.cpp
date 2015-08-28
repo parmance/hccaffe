@@ -121,8 +121,8 @@ TEST_F(SyncedMemoryTest, TestGPUWrite) {
   caffe_gpu_memset(mem.size(), 1, gpu_data);
 #else
   int* temp = new int[TEST_SIZE/sizeof(int)];
-  memset(temp, 1, TEST_SIZE);
-  caffe_amp_H2D((void*)temp, gpu_data, sizeof(float), false);
+  memset(temp, 1, TEST_SIZE);  // NOLINT(caffe/alt_fn)
+  caffe_amp_H2D(static_cast<void*>(temp), gpu_data, sizeof(float), false);
 #endif
   const void* cpu_data = mem.cpu_data();
   for (int i = 0; i < mem.size(); ++i) {
@@ -135,8 +135,8 @@ TEST_F(SyncedMemoryTest, TestGPUWrite) {
 #ifndef USE_CPPAMP
   caffe_gpu_memset(mem.size(), 2, gpu_data);
 #else
-  memset(temp, 2, TEST_SIZE);
-  caffe_amp_H2D((void*)temp, gpu_data, sizeof(float), false);
+  memset(temp, 2, TEST_SIZE);  // NOLINT(caffe/alt_fn)
+  caffe_amp_H2D(static_cast<void*>(temp), gpu_data, sizeof(float), false);
   delete[] temp;
 #endif
   cpu_data = mem.cpu_data();
