@@ -22,8 +22,8 @@ void SliceLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
       const int bottom_offset =
           (n * bottom_slice_axis + offset_slice_axis) * slice_size_;
       caffe_amp_copy<Dtype>(top_slice_axis * slice_size_,
-          reinterpret_cast<void*>(bottom_data),
-          reinterpret_cast<void*>(top_data), bottom_offset, top_offset);
+          static_cast<void*>(const_cast<Dtype*>(bottom_data)),
+          static_cast<void*>(top_data), bottom_offset, top_offset);
     }
     offset_slice_axis += top_slice_axis;
   }
