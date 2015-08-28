@@ -44,7 +44,8 @@ void SliceLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
       const int bottom_offset =
           (n * bottom_slice_axis + offset_slice_axis) * slice_size_;
       caffe_amp_copy<Dtype>(top_slice_axis * slice_size_,
-          (void*)top_diff, (void*)bottom_diff, top_offset, bottom_offset);
+          static_cast<void*>(const_cast<Dtype*>(top_diff)),
+          static_cast<void*>(bottom_diff), top_offset, bottom_offset);
     }
     offset_slice_axis += top_slice_axis;
   }
