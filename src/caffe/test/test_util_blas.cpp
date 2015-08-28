@@ -37,9 +37,17 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     for (int i = 0; i < 8; ++i) {
       EXPECT_EQ(C.cpu_data()[i], result[i]);
     }
+#ifdef USE_CPPAMP
     caffe_gpu_gemm<TypeParam>(CblasNoTrans, CblasNoTrans, 2, 4, 3, 1.,
         A.gpu_data(), 0, B.gpu_data(), 0,
         0., C.mutable_gpu_data(), 0);
+#else
+    caffe_gpu_gemm<TypeParam>(CblasNoTrans, CblasNoTrans, 2, 4, 3, 1.,
+        A.gpu_data(), B.gpu_data(),
+        0., C.mutable_gpu_data());
+#endif
+
+
     for (int i = 0; i < 8; ++i) {
       EXPECT_EQ(C.cpu_data()[i], result[i]);
     }
@@ -52,9 +60,15 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     for (int i = 0; i < 8; ++i) {
       EXPECT_EQ(C.cpu_data()[i], result[i]);
     }
+#ifdef USE_CPPAMP
     caffe_gpu_gemm<TypeParam>(CblasTrans, CblasNoTrans, 2, 4, 3, 1.,
         A.gpu_data(), 0,  B.gpu_data(), 0,
         0., C.mutable_gpu_data(), 0);
+#else
+    caffe_gpu_gemm<TypeParam>(CblasTrans, CblasNoTrans, 2, 4, 3, 1.,
+        A.gpu_data(), B.gpu_data(),
+        0., C.mutable_gpu_data());
+#endif
     for (int i = 0; i < 8; ++i) {
       EXPECT_EQ(C.cpu_data()[i], result[i]);
     }
@@ -67,9 +81,15 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     for (int i = 0; i < 8; ++i) {
       EXPECT_EQ(C.cpu_data()[i], result[i]);
     }
+#ifdef USE_CPPAMP
     caffe_gpu_gemm<TypeParam>(CblasTrans, CblasTrans, 2, 4, 3, 1.,
         A.gpu_data(), 0, B.gpu_data(), 0, 0.,
         C.mutable_gpu_data(), 0);
+#else
+    caffe_gpu_gemm<TypeParam>(CblasTrans, CblasTrans, 2, 4, 3, 1.,
+        A.gpu_data(), B.gpu_data(), 0.,
+        C.mutable_gpu_data());
+#endif
     for (int i = 0; i < 8; ++i) {
       EXPECT_EQ(C.cpu_data()[i], result[i]);
     }
@@ -82,9 +102,15 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     for (int i = 0; i < 8; ++i) {
       EXPECT_EQ(C.cpu_data()[i], result[i]);
     }
+#ifdef USE_CPPAMP
     caffe_gpu_gemm<TypeParam>(CblasNoTrans, CblasTrans, 2, 4, 3, 1.,
         A.gpu_data(), 0, B.gpu_data(), 0, 0.,
         C.mutable_gpu_data(), 0);
+#else
+    caffe_gpu_gemm<TypeParam>(CblasNoTrans, CblasTrans, 2, 4, 3, 1.,
+        A.gpu_data(), B.gpu_data(), 0.,
+        C.mutable_gpu_data());
+#endif
     for (int i = 0; i < 8; ++i) {
       EXPECT_EQ(C.cpu_data()[i], result[i]);
     }
@@ -113,8 +139,13 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
     for (int i = 0; i < 2; ++i) {
       EXPECT_EQ(y.cpu_data()[i], result_2[i]);
     }
+#ifdef USE_CPPAMP
     caffe_gpu_gemv<TypeParam>(CblasNoTrans, 2, 3, 1., A.gpu_data(), 0,
         x.gpu_data(), 0, 0., y.mutable_gpu_data(), 0);
+#else
+    caffe_gpu_gemv<TypeParam>(CblasNoTrans, 2, 3, 1., A.gpu_data(),
+        x.gpu_data(), 0., y.mutable_gpu_data());
+#endif
     for (int i = 0; i < 2; ++i) {
       EXPECT_EQ(y.cpu_data()[i], result_2[i]);
     }
@@ -126,8 +157,14 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
     for (int i = 0; i < 3; ++i) {
       EXPECT_EQ(x.cpu_data()[i], result_3[i]);
     }
+#ifdef USE_CPPAMP
     caffe_gpu_gemv<TypeParam>(CblasTrans, 2, 3, 1., A.gpu_data(), 0,
         y.gpu_data(), 0, 0., x.mutable_gpu_data(), 0);
+#else
+    caffe_gpu_gemv<TypeParam>(CblasTrans, 2, 3, 1., A.gpu_data(),
+        y.gpu_data(), 0., x.mutable_gpu_data());
+#endif
+
     for (int i = 0; i < 3; ++i) {
       EXPECT_EQ(x.cpu_data()[i], result_3[i]);
     }
