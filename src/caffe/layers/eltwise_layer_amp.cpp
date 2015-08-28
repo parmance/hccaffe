@@ -71,8 +71,9 @@ void EltwiseLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
           for (int j = 0; j < bottom.size(); ++j) {
             if (i == j) { continue; }
             if (!initialized) {
-              caffe_amp_copy<Dtype>(count, (void*)bottom[j]->gpu_data(),
-                (void*)bottom_diff, 0, 0);
+              caffe_amp_copy<Dtype>(count,
+                 static_cast<void*>(const_cast<Dtype*>(bottom[j]->gpu_data())),
+                 static_cast<void*>(bottom_diff), 0, 0);
               initialized = true;
             } else {
               caffe_gpu_mul(count, bottom[j]->gpu_data(), bottom_diff,
@@ -86,7 +87,9 @@ void EltwiseLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
         break;
       case EltwiseParameter_EltwiseOp_SUM:
         if (coeffs_[i] == Dtype(1.)) {
-          caffe_amp_copy<Dtype>(count, (void*)top_diff, (void*)bottom_diff,
+          caffe_amp_copy<Dtype>(count,
+              static_cast<void*>(const_cast<Dtype*>(top_diff)),
+              static_cast<void*>(bottom_diff),
             0, 0);
         } else {
           caffe_gpu_scale(count, coeffs_[i], top_diff, bottom_diff);
