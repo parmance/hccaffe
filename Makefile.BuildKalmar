@@ -64,7 +64,7 @@ NONGEN_CXX_SRCS := $(shell find \
 	matlab/$(PROJECT) \
 	examples \
 	tools \
-	-name "*.cpp" -or -name "*.hpp" -or -name "*.cu" -or -name "*.cuh")
+	-name "*.cpp" -or -name "*.hpp" -or -name "*.cu" -or -name "*.cuh" -or -name "*.cxx")
 LINT_SCRIPT := scripts/cpp_lint.py
 LINT_OUTPUT_DIR := $(BUILD_DIR)/.lint
 LINT_EXT := lint.txt
