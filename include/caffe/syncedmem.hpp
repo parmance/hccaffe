@@ -46,16 +46,16 @@ class SyncedMemory {
   explicit SyncedMemory(size_t size)
       : cpu_ptr_(NULL), gpu_ptr_(NULL), size_(size), head_(UNINITIALIZED),
 #ifndef USE_CPPAMP
-      own_cpu_data_(false){}
+      own_cpu_data_(false) {}
 #else
-      own_cpu_data_(false), element_size_(sizeof(float)), is_integer_(false){}
+      own_cpu_data_(false), element_size_(sizeof(float)), is_integer_(false) {}
 #endif
 
 #ifdef USE_CPPAMP
   explicit SyncedMemory(size_t size, size_t element_size, bool is_integer)
       : cpu_ptr_(NULL), gpu_ptr_(NULL), size_(size),
         head_(UNINITIALIZED), own_cpu_data_(false),
-        element_size_(element_size), is_integer_(is_integer){}
+        element_size_(element_size), is_integer_(is_integer) {}
 #endif  // USE_CPPAMP
   ~SyncedMemory();
   const void* cpu_data();
