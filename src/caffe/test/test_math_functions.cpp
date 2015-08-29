@@ -221,7 +221,12 @@ TYPED_TEST(MathFunctionsTest, TestCopyGPU) {
   const TypeParam* bottom_data = this->blob_bottom_->gpu_data();
   TypeParam* top_data = this->blob_top_->mutable_gpu_data();
   Caffe::set_mode(Caffe::GPU);
+#ifdef USE_CPPAMP
+  caffe_amp_D2D(static_cast<void*>(const_cast<TypeParam*>(bottom_data)),
+      static_cast<void*>(top_data), sizeof(TypeParam), false);
+#else
   caffe_copy(n, bottom_data, top_data);
+#endif
   bottom_data = this->blob_bottom_->cpu_data();
   top_data = this->blob_top_->mutable_cpu_data();
   for (int i = 0; i < n; ++i) {
