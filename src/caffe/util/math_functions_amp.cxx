@@ -9,6 +9,8 @@
 #include "caffe/util/math_functions.hpp"
 #include "cppamp/ampblaslib.h"
 
+using namespace Concurrency::fast_math;
+
 namespace caffe {
 
 #ifdef USE_CPPAMP
