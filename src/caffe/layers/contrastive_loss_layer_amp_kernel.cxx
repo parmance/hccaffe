@@ -1,13 +1,13 @@
 #include <algorithm>
 #include <vector>
 
+#include "amp.h"
+#include "amp_math.h"
+
 #include "caffe/layer.hpp"
 #include "caffe/util/io.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
-
-#include "amp.h"
-#include "amp_math.h"
 
 template <typename Dtype>
 void CLLForward(const int N,
@@ -41,8 +41,10 @@ void CLLForward<float>(const int N,
   Concurrency::array_view<float, 1> bottom_diffView =
     *((Concurrency::array_view<float, 1>*)(bottom_diff));
 
-  concurrency::extent<1> e(N);
-  parallel_for_each(e,
+  Concurrency::extent<1> e(N);
+
+  parallel_for_each(
+    e,
     [=](Concurrency::index<1> idx) restrict(amp){
       int n = idx[0] / channels;  // the num index, to access y and dist_sq
       if (static_cast<int>(yView[n])) {  // similar pairsS
@@ -78,8 +80,10 @@ void CLLForward<double>(const int N,
     *((Concurrency::array_view<double, 1>*)(bottom_diff));
 
   Concurrency::extent<1> e(N);
-  concurrency::parallel_for_each(e,
-      [=](Concurrency::index<1> idx) restrict(amp){
+
+  parallel_for_each(
+    e,
+    [=](Concurrency::index<1> idx) restrict(amp){
       int n = idx[0] / channels;  // the num index, to access y and dist_sq
       if (static_cast<int>(yView[n])) {  // similar pairsS
         bottom_diffView[idx] = alpha * diffView[idx];
