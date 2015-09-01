@@ -1055,46 +1055,29 @@ void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b,
 template <>
 void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma,
     float* r) {
-  array_view<float, 1> rView = *((Concurrency::array_view<float, 1>*)(r));
-  float coefficient =  (float)rand() / RAND_MAX;
+  float temp[N];
+  caffe_rng_gaussian(N, mu, sigma, temp);
+  array_view<float, 1> tempView(N, temp);
+  array_view<float, 1> rView =
+    *((Concurrency::array_view<float, 1>*)(r));
   Concurrency::extent<1> e(N);
   parallel_for_each(e, [=](index<1> idx) restrict(amp){
-    float seed = (float)idx[0] * coefficient;
-    float V1 = 0.0, V2 = 0.0, S=0.0;
-    do {
-      V1 = 2 * srnd_kernel(seed) - 1;
-      V2 = 2 * srnd_kernel(seed) - 1;
-      S = V1 * V1 + V2 * V2;
-    } while ((S >= 1.0) || (S == 0.0)||(V1 == 0.0) || (V2 == 0.0));
-    float temp = Concurrency::fast_math::sqrt(-2.0 * log(S) / S) * sigma ;
-    if (2 * idx[0] < N)
-      rView[2 * idx] = V1 * temp + mu;
-    if (2*idx[0] + 1 < N)
-      rView[2 * idx + 1] = V2 * temp + mu;
+    rView[idx] = tempView(idx);
   } );
 }
 
 
 template <>
-void caffe_gpu_rng_gaussian(const int N, const double mu, const double sigma,
-    double* r) {
-  array_view<double, 1> rView = *((Concurrency::array_view<double, 1>*)(r));
-  double coefficient = (double)rand() / RAND_MAX;
+void caffe_gpu_rng_gaussian(const int N, const double mu, 
+  const double sigma, double* r) {
+  double temp[N];
+  caffe_rng_gaussian(N, mu, sigma, temp);
+  array_view<double, 1> tempView(N, temp);
+  array_view<double, 1> rView =
+    *((Concurrency::array_view<double, 1>*)(r));
   Concurrency::extent<1> e(N);
   parallel_for_each(e, [=](index<1> idx) restrict(amp){
-    double seed = (double)idx[0] * coefficient;
-    double V1 = 0.0, V2 = 0.0, S=0.0;
-    do {
-      V1 = 2 * drnd_kernel(seed) - 1;
-      V2 = 2 * drnd_kernel(seed) - 1;
-      S = V1 * V1 + V2 * V2;
-    } while ((S >= 1.0) || (S == 0.0));
-    double temp = Concurrency::fast_math::sqrt(-2.0 *
-        Concurrency::fast_math::log(S) / S) * sigma;
-    if (2 * idx[0] < N)
-      rView[2 * idx] = V1 * temp + mu;
-    if (2*idx[0] + 1 < N)
-      rView[2 * idx + 1] = V2 * temp + mu;
+    rView[idx] = tempView(idx);
   } );
 }
 
