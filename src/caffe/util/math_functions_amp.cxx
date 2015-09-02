@@ -1023,32 +1023,28 @@ void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
 template <>
 void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,
     float* r) {
-  array_view<float, 1> rView = *((Concurrency::array_view<float, 1>*)(r));
-  float coefficient =  (float)rand() / RAND_MAX;
+  float temp[N];
+  caffe_rng_uniform(N, a, b, temp);
+  array_view<float, 1> tempView(N, temp);
+  array_view<float, 1> rView =
+    *((Concurrency::array_view<float, 1>*)(r));
   Concurrency::extent<1> e(N);
   parallel_for_each(e, [=](index<1> idx) restrict(amp){
-    float seed = (float)idx[0] * coefficient;
-    float V = 0.0;
-    do{
-      V = srnd_kernel(seed);
-    }while(V * (b - a) + a == (float)((a+b)/2));
-    rView[idx] = V * (b - a) + a;
+    rView[idx] = tempView(idx);
   } );
 };
 
 template <>
 void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b,
     double* r) {
-  array_view<double, 1> rView = *((Concurrency::array_view<double, 1>*)(r));
-  double coefficient =  (double)rand() / RAND_MAX;
+  double temp[N];
+  caffe_rng_uniform(N, a, b, temp);
+  array_view<double, 1> tempView(N, temp);
+  array_view<double, 1> rView =
+    *((Concurrency::array_view<double, 1>*)(r));
   Concurrency::extent<1> e(N);
   parallel_for_each(e, [=](index<1> idx) restrict(amp){
-    double seed = (double)idx[0] * coefficient;
-    double V = 0.0;
-    do{
-      V = drnd_kernel(seed);
-    }while(V * (b - a) + a == (double)((a+b)/2));
-    rView[idx] = V * (b - a) + a;
+    rView[idx] = tempView(idx);
   } );
 };
 
