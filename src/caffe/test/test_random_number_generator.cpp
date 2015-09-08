@@ -27,12 +27,12 @@ class RandomNumberGeneratorTest : public ::testing::Test {
        int_data_(new SyncedMemory(sample_size_ * sizeof(int), sizeof(Dtype),
           boost::is_same<Dtype, int>::value)),
        int_data_2_(new SyncedMemory(sample_size_ * sizeof(int), sizeof(Dtype),
-          boost::is_same<Dtype, int>::value)) 
+          boost::is_same<Dtype, int>::value))
 #else
        data_(new SyncedMemory(sample_size_ * sizeof(Dtype))),
        data_2_(new SyncedMemory(sample_size_ * sizeof(Dtype))),
        int_data_(new SyncedMemory(sample_size_ * sizeof(int))),
-       int_data_2_(new SyncedMemory(sample_size_ * sizeof(int))) 
+       int_data_2_(new SyncedMemory(sample_size_ * sizeof(int)))
 #endif
        {}
 
