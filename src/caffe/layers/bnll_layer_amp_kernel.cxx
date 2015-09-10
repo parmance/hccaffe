@@ -72,7 +72,7 @@ void BNLLBackward(const int n, double* in_diff,
   Concurrency::array_view<double, 1> inDiffView =
     *((Concurrency::array_view<double, 1>*)(in_diff));
   Concurrency::array_view<double, 1> inDataView =
-    *((Concurrency::array_view<double, 1>*)(in_data)); 
+    *((Concurrency::array_view<double, 1>*)(in_data));
   Concurrency::array_view<double, 1> outDiffView =
     *((Concurrency::array_view<double, 1>*)(out_diff));
   Concurrency::extent<1> e(n);
@@ -80,7 +80,7 @@ void BNLLBackward(const int n, double* in_diff,
   e,
   [=](Concurrency::index<1> idx) restrict(amp){
   double expval = Concurrency::fast_math::exp
-    (Concurrency::fast_math::fmin(inDataView[idx],kBNLL_THRESHOLD));
+    (Concurrency::fast_math::fmin(inDataView[idx], kBNLL_THRESHOLD));
   outDiffView[idx] = inDiffView[idx] * expval / (expval + 1.);
   });
 }
