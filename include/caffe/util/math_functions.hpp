@@ -199,8 +199,8 @@ inline void caffe_gpu_memset(const size_t N, const int alpha, void* X) {
   LOG(FATAL) << "Invalid invoke of caffe_gpu_memset.";
 }
 
-void caffe_amp_malloc(void** ptr, size_t size,
-                        size_t element_size, bool is_int);
+void caffe_amp_malloc(void** ptr, void* src, size_t size,
+    size_t element_size, bool is_int);
 
 void caffe_amp_free(void* ptr, size_t element_size, bool is_int);
 
