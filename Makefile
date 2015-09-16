@@ -63,7 +63,7 @@ NONGEN_CXX_SRCS := $(shell find \
 	matlab/$(PROJECT) \
 	examples \
 	tools \
-	-name "*.cpp" -or -name "*.hpp" -or -name "*.cu" -or -name "*.cuh" -or -name "*.cxx" )
+	-name "*.cpp" -or -name "*.hpp" -or -name "*.cu" -or -name "*.cuh" -or -name "*.cxx")
 LINT_SCRIPT := scripts/cpp_lint.py
 LINT_OUTPUT_DIR := $(BUILD_DIR)/.lint
 LINT_EXT := lint.txt
@@ -101,7 +101,7 @@ CXX_OBJS := $(addprefix $(BUILD_DIR)/, ${CXX_SRCS:.cpp=.o})
 CU_OBJS := $(addprefix $(BUILD_DIR)/cuda/, ${CU_SRCS:.cu=.o})
 PROTO_OBJS := ${PROTO_GEN_CC:.cc=.o}
 CXXAMP_OBJS := $(addprefix $(BUILD_DIR)/, ${CXXAMP_SRCS:.cxx=.o})
-OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CU_OBJS)
+OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CU_OBJS) $(CXXAMP_OBJS)
 # tool, example, and test objects
 TOOL_OBJS := $(addprefix $(BUILD_DIR)/, ${TOOL_SRCS:.cpp=.o})
 TOOL_BUILD_DIR := $(BUILD_DIR)/tools
@@ -136,7 +136,7 @@ TEST_ALL_BIN := $(TEST_BIN_DIR)/test_all.testbin
 WARNS_EXT := warnings.txt
 CXX_WARNS := $(addprefix $(BUILD_DIR)/, ${CXX_SRCS:.cpp=.o.$(WARNS_EXT)})
 CU_WARNS := $(addprefix $(BUILD_DIR)/cuda/, ${CU_SRCS:.cu=.o.$(WARNS_EXT)})
-CXXAMP_WARNS := $(addprefix $(BUILD_DIR)/, ${CXXAMP_SRCS:.cpp=.o.$(WARNS_EXT)})
+CXXAMP_WARNS := $(addprefix $(BUILD_DIR)/, ${CXXAMP_SRCS:.cxx=.o.$(WARNS_EXT)})
 TOOL_WARNS := $(addprefix $(BUILD_DIR)/, ${TOOL_SRCS:.cpp=.o.$(WARNS_EXT)})
 EXAMPLE_WARNS := $(addprefix $(BUILD_DIR)/, ${EXAMPLE_SRCS:.cpp=.o.$(WARNS_EXT)})
 TEST_WARNS := $(addprefix $(BUILD_DIR)/, ${TEST_SRCS:.cpp=.o.$(WARNS_EXT)})
@@ -265,7 +265,7 @@ endif
 #CPPAMP Build Option
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(USE_CPPAMP), 1)
-    AMP_COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --cxxflags --ldflags)
+    AMP_COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --cxxflags)
   endif
 endif
 # Custom compiler
@@ -538,7 +538,6 @@ $(BUILD_DIR)/%.o: %.cpp | $(ALL_BUILD_DIRS)
 		|| (cat $@.$(WARNS_EXT); exit 1)
 	@ cat $@.$(WARNS_EXT)
 
-ifneq ($(CPU_ONLY), 1)
 ifeq ($(USE_CPPAMP), 1)
 $(BUILD_DIR)/%.o: %.cxx | $(ALL_BUILD_DIRS)
 	@ echo CXXAMP $<
@@ -546,7 +545,7 @@ $(BUILD_DIR)/%.o: %.cxx | $(ALL_BUILD_DIRS)
 		|| (cat $@.$(WARNS_EXT); exit 1)
 	@ cat $@.$(WARNS_EXT)
 endif
-endif
+
 $(PROTO_BUILD_DIR)/%.pb.o: $(PROTO_BUILD_DIR)/%.pb.cc $(PROTO_GEN_HEADER) \
 		| $(PROTO_BUILD_DIR)
 	@ echo CXX $<

@@ -9,7 +9,6 @@ template <typename Dtype>
 void BNLLBackward(const int n, Dtype* in_diff,
                   Dtype* in_data, Dtype* out_diff);
 namespace caffe {
-const float kBNLL_THRESHOLD = 50.;
 template <typename Dtype>
 void BNLLLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
                                    const vector<Blob<Dtype>*>& top) {
