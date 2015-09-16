@@ -973,40 +973,6 @@ void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
   *y = *std::max_element(host_buffer.begin(), host_buffer.end());
 }
 
-#define MAX 65536
-#define FACTOR 2053
-#define CONSTANT 13849
-unsigned int uirnd_kernel(unsigned int &ri) restrict(amp) {
-  int temp;
-  temp = static_cast<int>(ri / (unsigned int)MAX);
-  ri = ri - temp * static_cast<unsigned int>(MAX);
-  ri = static_cast<unsigned int>(FACTOR) * ri +
-    static_cast<unsigned int>(CONSTANT);
-  temp = static_cast<int>(ri / static_cast<unsigned int>(MAX));
-  ri = ri - temp * static_cast<unsigned int>(MAX);
-  return ri / static_cast<unsigned int>(MAX);
-}
-
-float srnd_kernel(float &ri) restrict(amp){
-  int temp;
-  temp = (int)(ri / MAX);
-  ri = ri - temp*MAX;
-  ri = FACTOR * ri + CONSTANT;
-  temp = (int)(ri / MAX);
-  ri = ri - temp * MAX;
-  return (float)(ri / (float)MAX);
-}
-
-double drnd_kernel(double &ri) restrict(amp){
-  int temp;
-  temp = (int)(ri / MAX);
-  ri = ri - temp*MAX;
-  ri = FACTOR * ri + CONSTANT;
-  temp = (int)(ri / MAX);
-  ri = ri - temp * MAX;
-  return (double)(ri / (double)MAX);
-}
-
 void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
  unsigned int temp[n];
   caffe_rng_uniform(n,temp);
@@ -1018,7 +984,6 @@ void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
     rView[idx] = tempView(idx);
   } );
 }
-
 
 template <>
 void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,
