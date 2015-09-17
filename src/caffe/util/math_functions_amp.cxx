@@ -14,18 +14,15 @@ namespace caffe {
 
 #ifdef USE_CPPAMP
 // The size is the total memory size
-void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
+void caffe_amp_malloc(void** ptr, void* src, size_t size, size_t element_size,
     bool is_int) {
   // Use default device
-  concurrency::accelerator currentAcc(accelerator::default_accelerator);
   if (is_int) {
     if (element_size == sizeof(int)) {
       Concurrency::extent<1> eA(size/sizeof(int));
       // Allocating device array of given size
-      Concurrency::array<int, 1> arr =
-        Concurrency::array<int, 1>(eA, currentAcc.get_default_view());
       Concurrency::array_view<int>* avData =
-        new Concurrency::array_view<int>(arr);
+        new Concurrency::array_view<int>(eA, static_cast<int*>(src));
       avData->discard_data();
       *ptr = static_cast<void*>(avData);
     } else {
@@ -34,19 +31,15 @@ void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
   } else {
     if (element_size == sizeof(float)) {
       Concurrency::extent<1> eA(size/sizeof(float));
-      Concurrency::array<float, 1> arr =
-        Concurrency::array<float, 1>(eA, currentAcc.get_default_view());
       Concurrency::array_view<float>* avData =
-        new Concurrency::array_view<float>(arr);
+        new Concurrency::array_view<float>(eA, static_cast<float*>(src));
       avData->discard_data();
       *ptr = static_cast<void*>(avData);
     } else if (element_size == sizeof(double)) {
       Concurrency::extent<1> eA(size/sizeof(double));
-      Concurrency::array<double, 1> arr =
-        Concurrency::array<double, 1>(eA, currentAcc.get_default_view());
       Concurrency::array_view<double>* avData =
-        new Concurrency::array_view<double>(arr);
-     avData->discard_data();
+        new Concurrency::array_view<double>(eA, static_cast<double*>(src));
+      avData->discard_data();
      *ptr = static_cast<void*>(avData);
     } else {
       LOG(FATAL) << "Wrong element size for caffe_amp_malloc.";
