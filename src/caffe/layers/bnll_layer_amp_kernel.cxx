@@ -19,8 +19,7 @@ void BNLLForward(const int n, float* in, float* out) {
   Concurrency::array_view<float, 1> outView =
     *((Concurrency::array_view<float, 1>*)(out));
   Concurrency::extent<1> e(n);
-    parallel_for_each(
-      e,
+    parallel_for_each(e,
       [=](Concurrency::index<1> idx) restrict(amp){
       outView[idx] = inView[idx] > 0 ?
         inView[idx] +
@@ -37,8 +36,7 @@ void BNLLForward(const int n, double* in, double* out) {
   Concurrency::array_view<double, 1> outView =
     *((Concurrency::array_view<double, 1>*)(out));
   Concurrency::extent<1> e(n);
-  parallel_for_each(
-    e,
+  parallel_for_each(e,
     [=](Concurrency::index<1> idx) restrict(amp){
     outView[idx] = inView[idx] > 0 ?
     inView[idx] +
@@ -58,8 +56,7 @@ void BNLLBackward(const int n,  float* in_diff,
   Concurrency::array_view<float, 1> outDiffView =
     *((Concurrency::array_view<float, 1>*)(out_diff));
   Concurrency::extent<1> e(n);
-  parallel_for_each(
-    e,
+  parallel_for_each(e,
     [=](Concurrency::index<1> idx) restrict(amp){
     float expval = Concurrency::fast_math::
       exp(Concurrency::fast_math::fmin(inDataView[idx], kBNLL_THRESHOLD));
@@ -76,8 +73,7 @@ void BNLLBackward(const int n, double* in_diff,
   Concurrency::array_view<double, 1> outDiffView =
     *((Concurrency::array_view<double, 1>*)(out_diff));
   Concurrency::extent<1> e(n);
-  parallel_for_each(
-  e,
+  parallel_for_each(e,
   [=](Concurrency::index<1> idx) restrict(amp){
   double expval = Concurrency::fast_math::exp
     (Concurrency::fast_math::fmin(inDataView[idx], kBNLL_THRESHOLD));
