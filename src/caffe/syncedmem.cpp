@@ -148,7 +148,7 @@ inline void SyncedMemory::to_gpu() {
   case UNINITIALIZED:
     caffe_amp_malloc(&gpu_ptr_, size_, element_size_, is_integer_);
     temp = new int[size_/sizeof(int)];
-    memset(temp, 0, size_);
+    memset(temp, 0, size_);  // NOLINT(caffe/alt_fn)
     caffe_amp_H2D(static_cast<void*>(temp), gpu_ptr_,
         element_size_, is_integer_);
     delete[] temp;
