@@ -3,13 +3,12 @@
 #include <boost/type_traits/is_same.hpp>
 #include <glog/logging.h>
 #include <limits>
+#include <vector>
 #include "amp.h"
 #include "amp_math.h"
 #include "caffe/common.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "cppamp/ampblaslib.h"
-
-using namespace Concurrency::fast_math;
 
 namespace caffe {
 
@@ -974,15 +973,15 @@ void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
 }
 
 void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
- unsigned int temp[n];
-  caffe_rng_uniform(n,temp);
+  unsigned int temp[n];
+  caffe_rng_uniform(n, temp);
   array_view<unsigned int, 1> tempView(n, temp);
   array_view<unsigned int, 1> rView =
     *((Concurrency::array_view<unsigned int, 1>*)(r));
   Concurrency::extent<1> e(n);
   parallel_for_each(e, [=](index<1> idx) restrict(amp){
     rView[idx] = tempView(idx);
-  } );
+  });
 }
 
 template <>
@@ -996,8 +995,8 @@ void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,
   Concurrency::extent<1> e(N);
   parallel_for_each(e, [=](index<1> idx) restrict(amp){
     rView[idx] = tempView(idx);
-  } );
-};
+  });
+}
 
 template <>
 void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b,
@@ -1010,8 +1009,8 @@ void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b,
   Concurrency::extent<1> e(N);
   parallel_for_each(e, [=](index<1> idx) restrict(amp){
     rView[idx] = tempView(idx);
-  } );
-};
+  });
+}
 
 template <>
 void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma,
@@ -1024,13 +1023,13 @@ void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma,
   Concurrency::extent<1> e(N);
   parallel_for_each(e, [=](index<1> idx) restrict(amp){
     rView[idx] = tempView(idx);
-  } );
+  });
 }
 
 
 template <>
-void caffe_gpu_rng_gaussian(const int N, const double mu, 
-  const double sigma, double* r) {
+void caffe_gpu_rng_gaussian(const int N, const double mu,
+    const double sigma, double* r) {
   double temp[N];
   caffe_rng_gaussian(N, mu, sigma, temp);
   array_view<double, 1> tempView(N, temp);
@@ -1039,28 +1038,32 @@ void caffe_gpu_rng_gaussian(const int N, const double mu,
   Concurrency::extent<1> e(N);
   parallel_for_each(e, [=](index<1> idx) restrict(amp){
     rView[idx] = tempView(idx);
-  } );
+  });
 }
-
-
 
 template <>
 uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
                                   const float* y) {
-  array_view<float, 1> axView = *((Concurrency::array_view<float, 1>*)(x));
-  array_view<float, 1> ayView = *((Concurrency::array_view<float, 1>*)(y));
+  array_view<float, 1> axView =
+    *(static_cast<Concurrency::array_view<float, 1>*>(
+          (static_cast<void*>(const_cast<float*>(x)))));
+  array_view<float, 1> ayView =
+    *(static_cast<Concurrency::array_view<float, 1>*>(
+          (static_cast<void*>(const_cast<float*>(y)))));
 
-  float * xTemp = (float*) malloc(sizeof(float) * (axView.get_extent().size()));  
-  float * yTemp = (float*) malloc(sizeof(float) * (ayView.get_extent().size()));  
+  float * xTemp =
+    static_cast<float*>(malloc(sizeof(float) * (axView.get_extent().size())));
+  float * yTemp =
+    static_cast<float*>(malloc(sizeof(float) * (ayView.get_extent().size())));
 
   Concurrency::copy(axView, xTemp);
   Concurrency::copy(ayView, yTemp);
 
-  uint32_t result[n];
-  uint32_t ax[n];
-  uint32_t ay[n];
+  uint32_t* result = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
+  uint32_t* ax = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
+  uint32_t* ay = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
 
-  for(int i = 0; i < n; ++i ) {
+  for (int i = 0; i < n; ++i) {
     ax[i] = static_cast<uint32_t>(xTemp[i]);
     ay[i] = static_cast<uint32_t>(yTemp[i]);
   }
@@ -1073,17 +1076,22 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
   parallel_for_each(e, [=](index<1> idx) restrict(amp) {
     uint32_t ret = 0;
     uint32_t u = xView[idx] ^ yView[idx];
-    while(u) {
+    while (u) {
       u = u & (u - 1);
-      ret ++;
+      ret++;
     }
     resultView[idx] = ret;
-  } );
+  });
   resultView.synchronize();
   uint32_t sum = 0;
-  for(int i = 0; i < n; ++i ) {
+  for (int i = 0; i < n; ++i) {
     sum+=result[i];
   }
+  free(xTemp);
+  free(yTemp);
+  free(result);
+  free(ax);
+  free(ay);
   return sum;
 }
 
@@ -1093,16 +1101,18 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
   array_view<double, 1> axView = *((Concurrency::array_view<double, 1>*)(x));
   array_view<double, 1> ayView = *((Concurrency::array_view<double, 1>*)(y));
 
-  double * xTemp = (double*) malloc(sizeof(double) * (axView.get_extent().size()));  
-  double * yTemp = (double*) malloc(sizeof(double) * (ayView.get_extent().size()));  
+  double * xTemp =
+    static_cast<double*>(malloc(sizeof(double) * (axView.get_extent().size())));
+  double * yTemp =
+    static_cast<double*>(malloc(sizeof(double) * (ayView.get_extent().size())));
 
   Concurrency::copy(axView, xTemp);
-  Concurrency::copy(ayView, yTemp);
+  Concurrency::copy(ayView, yTemp);  // NOLINT(build/include_what_you_use)
 
-  uint32_t result[n];
-  uint64_t ax[n];
-  uint64_t ay[n];
-  for(int i = 0; i < n; ++i ) {
+  uint32_t* result = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
+  uint64_t* ax = static_cast<uint64_t*>(malloc(sizeof(uint64_t) * n));
+  uint64_t* ay = static_cast<uint64_t*>(malloc(sizeof(uint64_t) * n));
+  for (int i = 0; i < n; ++i) {
     ax[i] = static_cast<uint64_t>(xTemp[i]);
     ay[i] = static_cast<uint64_t>(yTemp[i]);
   }
@@ -1113,24 +1123,29 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
   parallel_for_each(e, [=](index<1> idx) restrict(amp) {
     uint32_t ret = 0;
     uint64_t u = xView[idx] ^ yView[idx];
-    while(u) {
+    while (u) {
       u = u & (u - 1);
-      ret ++;
+      ret++;
     }
     resultView[idx] = ret;
-  } );
-resultView.synchronize();
+  });
+  resultView.synchronize();
   uint32_t sum = 0;
-  for(int i = 0; i < n; ++i ) {
+  for (int i = 0; i < n; ++i) {
     sum+=result[i];
   }
+  free(xTemp);
+  free(yTemp);
+  free(result);
+  free(ax);
+  free(ay);
   return sum;
 }
 
-void caffe_gpu_memcpy(const size_t N, const void *X, void *Y){
+void caffe_gpu_memcpy(const size_t N, const void *X, void *Y) {
   LOG(FATAL) << "Instead of caffe_gpu_memcpy with caffe_amp_X2X.";
 }
 
-#endif //USE_CPPAMP
+#endif  // USE_CPPAMP
 }  // namespace caffe
 
