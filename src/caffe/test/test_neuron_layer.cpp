@@ -497,8 +497,12 @@ TYPED_TEST(NeuronLayerTest, TestPReLUConsistencyReLU) {
   GaussianFiller<Dtype> filler(filler_param);
   filler.Fill(tmp_blob.get());
 #ifdef USE_CPPAMP
-  memcpy(this->blob_top_->mutable_cpu_diff(), tmp_blob->cpu_data(), sizeof(Dtype) * blob_top_2->count());
-  memcpy(blob_top_2->mutable_cpu_diff(), tmp_blob->cpu_data(), sizeof(Dtype) * blob_top_2->count());
+  // NOLINT_NEXT_LINE(caffe/alt_fn)
+  memcpy(this->blob_top_->mutable_cpu_diff(), tmp_blob->cpu_data(),
+      sizeof(Dtype) * blob_top_2->count());
+  // NOLINT_NEXT_LINE(caffe/alt_fn)
+  memcpy(blob_top_2->mutable_cpu_diff(), tmp_blob->cpu_data(),
+      sizeof(Dtype) * blob_top_2->count());
 #else
 
   caffe_copy(blob_top_2->count(), tmp_blob->cpu_data(),
@@ -545,9 +549,10 @@ TYPED_TEST(NeuronLayerTest, TestPReLUInPlace) {
   ip2.SetUp(blob_bottom_vec_2, blob_middle_vec_2);
   prelu2.SetUp(blob_middle_vec_2, blob_top_vec_2);
 #ifdef USE_CPPAMP
-  memcpy(ip2.blobs()[0]->mutable_cpu_data(), ip.blobs()[0]->cpu_data(), sizeof(Dtype) * ip2.blobs()[0]->count());
+  // NOLINT_NEXT_LINE(caffe/alt_fn)
+  memcpy(ip2.blobs()[0]->mutable_cpu_data(), ip.blobs()[0]->cpu_data(),
+      sizeof(Dtype) * ip2.blobs()[0]->count());
 #else
-
   caffe_copy(ip2.blobs()[0]->count(), ip.blobs()[0]->cpu_data(),
       ip2.blobs()[0]->mutable_cpu_data());
 #endif
@@ -572,8 +577,12 @@ TYPED_TEST(NeuronLayerTest, TestPReLUInPlace) {
   GaussianFiller<Dtype> filler(filler_param);
   filler.Fill(tmp_blob.get());
 #ifdef USE_CPPAMP
-  memcpy(this->blob_top_->mutable_cpu_diff(), tmp_blob->cpu_data(), sizeof(Dtype) * blob_top_2->count());
-  memcpy(blob_top_2->mutable_cpu_diff(), tmp_blob->cpu_data(), sizeof(Dtype) * blob_top_2->count());
+  // NOLINT_NEXT_LINE(caffe/alt_fn)
+  memcpy(this->blob_top_->mutable_cpu_diff(), tmp_blob->cpu_data(),
+      sizeof(Dtype) * blob_top_2->count());
+  // NOLINT_NEXT_LINE(caffe/alt_fn)
+  memcpy(blob_top_2->mutable_cpu_diff(), tmp_blob->cpu_data(),
+      sizeof(Dtype) * blob_top_2->count());
 #else
   caffe_copy(blob_top_2->count(), tmp_blob->cpu_data(),
       this->blob_top_->mutable_cpu_diff());

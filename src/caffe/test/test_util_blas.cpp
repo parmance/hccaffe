@@ -24,7 +24,9 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
   TypeParam B_reshape_data[12] = {1, 5, 9, 2, 6, 10, 3, 7, 11, 4, 8, 12};
   TypeParam result[8] = {38, 44, 50, 56, 83, 98, 113, 128};
 #ifdef USE_CPPAMP
+  // NOLINT_NEXT_LINE(caffe/alt_fn)
   memcpy(A.mutable_cpu_data(), data, 6 * sizeof(TypeParam));
+  // NOLINT_NEXT_LINE(caffe/alt_fn)
   memcpy(B.mutable_cpu_data(), data, 12 * sizeof(TypeParam));
 #else
   caffe_copy(6, data, A.mutable_cpu_data());
@@ -60,6 +62,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     // Test when we have a transposed A
     A.Reshape(1, 1, 3, 2);
 #ifdef USE_CPPAMP
+    // NOLINT_NEXT_LINE(caffe/alt_fn)
     memcpy(A.mutable_cpu_data(), A_reshape_data, 6 * sizeof(TypeParam));
 #else
     caffe_copy(6, A_reshape_data, A.mutable_cpu_data());
@@ -85,6 +88,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     // Test when we have a transposed A and a transposed B too
     B.Reshape(1, 1, 4, 3);
 #ifdef USE_CPPAMP
+    // NOLINT_NEXT_LINE(caffe/alt_fn)
     memcpy(B.mutable_cpu_data(), B_reshape_data, 12 * sizeof(TypeParam));
 #else
     caffe_copy(12, B_reshape_data, B.mutable_cpu_data());
@@ -110,6 +114,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     // Test when we have a transposed B
     A.Reshape(1, 1, 2, 3);
 #ifdef USE_CPPAMP
+    // NOLINT_NEXT_LINE(caffe/alt_fn)
     memcpy(A.mutable_cpu_data(), data, 6 * sizeof(TypeParam));
 #else
     caffe_copy(6, data, A.mutable_cpu_data());
@@ -145,7 +150,9 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
   TypeParam result_2[2] = {14, 32};
   TypeParam result_3[3] = {9, 12, 15};
 #ifdef USE_CPPAMP
+  // NOLINT_NEXT_LINE(caffe/alt_fn)
   memcpy(A.mutable_cpu_data(), data, 6 * sizeof(TypeParam));
+  // NOLINT_NEXT_LINE(caffe/alt_fn)
   memcpy(x.mutable_cpu_data(), data, 3 * sizeof(TypeParam));
 #else
   caffe_copy(6, data, A.mutable_cpu_data());
@@ -175,6 +182,7 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
 
     // Test transpose case
 #ifdef USE_CPPAMP
+    // NOLINT_NEXT_LINE(caffe/alt_fn)
     memcpy(y.mutable_cpu_data(), data, 2 * sizeof(TypeParam));
 #else
     caffe_copy(2, data, y.mutable_cpu_data());

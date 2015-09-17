@@ -115,9 +115,9 @@ void GradientChecker<Dtype>::CheckGradientSingle(Layer<Dtype>* layer,
     Dtype* computed_gradients =
         computed_gradient_blobs[blob_id]->mutable_cpu_data();
 #ifdef USE_CPPAMP
+    // NOLINT_NEXT_LINE(caffe/alt_fn)
     memcpy(computed_gradients, diff, sizeof(Dtype) * count);
 #else
-    // NOLINT(caffe/alt_fn)
     caffe_copy(count, diff, computed_gradients);
 #endif
   }
@@ -240,6 +240,7 @@ Dtype GradientChecker<Dtype>::GetObjAndGradient(const Layer<Dtype>& layer,
         loss += top_blob_data[j] * top_blob_data[j];
       }
 #ifdef USE_CPPAMP
+      // NOLINT_NEXT_LINE(caffe/alt_fn)
       memcpy(top_blob_diff,  top_blob_data, sizeof(Dtype) * top_blob->count());
 #else
       // set the diff: simply the data.
