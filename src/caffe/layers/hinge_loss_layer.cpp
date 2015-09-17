@@ -21,6 +21,7 @@ void HingeLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   int dim = count / num;
 
 #ifdef USE_CPPAMP
+  // NOLINT_NEXT_LINE(caffe/alt_fn)
   memcpy(bottom_diff, bottom_data, count * sizeof(Dtype));
 #else
   caffe_copy(count, bottom_data, bottom_diff);

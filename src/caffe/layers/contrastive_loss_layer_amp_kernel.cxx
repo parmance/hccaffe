@@ -8,8 +8,6 @@
 
 #include "amp.h"
 #include "amp_math.h"
-using namespace concurrency;
-
 
 template <typename Dtype>
 void CLLForward(const int N,
@@ -44,10 +42,8 @@ void CLLForward<float>(const int N,
     *((Concurrency::array_view<float, 1>*)(bottom_diff));
 
   concurrency::extent<1> e(N);
-
-  parallel_for_each(
-    e,
-    [=](index<1> idx) restrict(amp){
+  parallel_for_each(e,
+    [=](Concurrency::index<1> idx) restrict(amp){
       int n = idx[0] / channels;  // the num index, to access y and dist_sq
       if (static_cast<int>(yView[n])) {  // similar pairsS
         bottom_diffView[idx] = alpha * diffView[idx];
@@ -58,8 +54,7 @@ void CLLForward<float>(const int N,
           bottom_diffView[idx] = 0;
         }
       }
-    }
-  );
+    });
 }
 
 template <>
@@ -83,10 +78,8 @@ void CLLForward<double>(const int N,
     *((Concurrency::array_view<double, 1>*)(bottom_diff));
 
   Concurrency::extent<1> e(N);
-
-  parallel_for_each(
-    e,
-    [=](index<1> idx) restrict(amp){
+  concurrency::parallel_for_each(e,
+      [=](Concurrency::index<1> idx) restrict(amp){
       int n = idx[0] / channels;  // the num index, to access y and dist_sq
       if (static_cast<int>(yView[n])) {  // similar pairsS
         bottom_diffView[idx] = alpha * diffView[idx];
@@ -97,7 +90,6 @@ void CLLForward<double>(const int N,
           bottom_diffView[idx] = 0;
         }
       }
-    }
-  );
+    });
 }
 
