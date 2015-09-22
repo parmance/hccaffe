@@ -170,7 +170,9 @@ class Caffe {
 
   DISABLE_COPY_AND_ASSIGN(Caffe);
 };
-
+#ifdef USE_CPPAMP
+#define global_packing_N 16
+#endif
 }  // namespace caffe
 
 #endif  // CAFFE_COMMON_HPP_

@@ -150,10 +150,22 @@ void caffe_cpu_scale(const int n, const Dtype alpha, const Dtype *x, Dtype* y);
 // gpu code under the hood.
 #ifdef USE_CPPAMP
 template <typename Dtype>
+void transform_gpu(void* src, void* dst, int top_offset, int N_, int M_, int packing_num);
+template <typename Dtype>
+void opttrans(void* data_im, int im_offset, int channels,
+    int height, int width, void* data_opt, int opt_offset, int packing_num);
+
+template <typename Dtype>
 void caffe_gpu_gemv(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const Dtype alpha, const Dtype* A, const int offseta,
   const Dtype* x, const int offsetx,
   const Dtype beta, Dtype* y, const int offsety);
+template <typename Dtype>
+void caffe_gpu_gemv2(const CBLAS_TRANSPOSE TransA, const int M,
+    const int N, const Dtype alpha, const Dtype* A, size_t offA, int lda,
+    const Dtype * x, size_t offx, const Dtype beta, int incx,
+    Dtype* y, size_t offy, int incy);
+
 template <typename Dtype>
 void caffe_gpu_gemm(const CBLAS_TRANSPOSE TransA,
   const CBLAS_TRANSPOSE TransB,

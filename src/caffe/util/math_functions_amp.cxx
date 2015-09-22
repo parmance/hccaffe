@@ -11,8 +11,62 @@
 #include "cppamp/ampblaslib.h"
 
 namespace caffe {
+template <typename Dtype>
+void transform_gpu(void* src, void* dst, int top_offset, int N_,
+  int M_, int packing_num){
+   Concurrency::array_view<Dtype, 1> avSrc =
+    *(static_cast<Concurrency::array_view<Dtype, 1>*>(src));
+   Concurrency::array_view<Dtype, 1> avDst =
+      *(static_cast<Concurrency::array_view<Dtype, 1>*>(dst));
 
-#ifdef USE_CPPAMP
+   Concurrency::extent<1> e(M_*packing_num);
+   parallel_for_each(e, [=](Concurrency::index<1> idx) restrict(amp) {
+     int i = 0;
+     for(i = 0 ; i < N_; i++){
+       if(packing_num==1)
+         avDst[top_offset+(idx / packing_num)* N_ + i] = avSrc[idx * N_ + i];
+       else
+         avDst[top_offset+(idx % packing_num * M_ + idx / packing_num)* N_ + i]
+             = avSrc[idx * N_ + i];
+     }
+   }); 
+}
+template void transform_gpu<float>(void* src, void* dst, int top_offset,
+   int N_, int M_, int packing_num);
+template void transform_gpu<double>(void* src, void* dst, int top_offset,
+   int N_, int M_, int packing_num);
+
+template <typename Dtype>
+void opttrans(void* data_im, int im_offset, int channels,
+    int height, int width, void* data_opt, int opt_offset, int packing_num) {
+   Concurrency::array_view<Dtype, 1> avIm =
+    *(static_cast<Concurrency::array_view<Dtype, 1>*>(data_im));
+   Concurrency::array_view<Dtype, 1> avOpt =
+      *(static_cast<Concurrency::array_view<Dtype, 1>*>(data_opt));
+
+
+    int num_kernels = channels * height * width * packing_num;
+
+    Concurrency::extent<1> e(num_kernels);
+    parallel_for_each(e, [=](Concurrency::index<1> idx) restrict(amp) {
+      int w = idx[0] % width;
+      int h = (idx[0] / width) % height;
+      int c = idx[0] / (width * height) % channels;
+      int im = idx[0] / width / height / channels;
+
+        int opt_index = c * height * packing_num * width + h * packing_num * width + im * width + w;
+        avOpt[opt_offset+opt_index] = avIm[im_offset+idx];
+
+   }); 
+
+}
+template void opttrans<float>(void* data_im, int im_offset, int channels,
+    int height, int width, void* data_opt, int opt_offset, int optnum);
+template void opttrans<double>(void* data_im, int im_offset, int channels,
+    int height, int width, void* data_opt, int opt_offset, int optnum);
+
+
+
 // The size is the total memory size
 void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
     bool is_int) {
@@ -794,7 +848,59 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   amp.ampblas_dgemv2(ampTransA, N, M, &alpha, A_mat, offseta, N, X_mat,
       offsetx, 1, &beta, Y_mat, offsety, 1);
 }
+template <>
+void caffe_gpu_gemv2<float>(const CBLAS_TRANSPOSE TransA, const int M,
+    const int N, const float alpha, const float* A, size_t offA, int lda, 
+    const float* x, size_t offx, const float beta, int incx, 
+    float* y, size_t offy, int incy) {
+    AMPBLAS_TRANS ampTransA = trans;
+    Ampblaslibrary amp;
+    if (TransA == CblasTrans) {
+        ampTransA = noTrans;
+    }
+    if (TransA == CblasConjTrans) {
+        ampTransA = conjugate;
+    }
+    Concurrency::array_view<float, 1> A_mat =
+      *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(
+              const_cast<float*>(A))));
+    Concurrency::array_view<float, 1> X_mat =
+      *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(
+              const_cast<float*>(x))));
+    Concurrency::array_view<float, 1> Y_mat =
+      *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(y)));
 
+    amp.ampblas_sgemv2(ampTransA, N, M, &alpha, A_mat, offA, lda, X_mat,
+        offx, incx, &beta, Y_mat, offy, incy);
+
+
+}
+
+template <>
+void caffe_gpu_gemv2<double>(const CBLAS_TRANSPOSE TransA, const int M,
+    const int N, const double alpha, const double* A, size_t offA, int lda,
+    const double* x, size_t offx, const double beta, int incx,
+    double* y, size_t offy, int incy) {
+      AMPBLAS_TRANS ampTransA = trans;
+      Ampblaslibrary amp;
+      if (TransA == CblasTrans) {
+          ampTransA = noTrans;
+      }
+      if (TransA == CblasConjTrans) {
+          ampTransA = conjugate;
+      }
+      Concurrency::array_view<double, 1> A_mat =
+        *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(
+            const_cast<double*>(A))));
+      Concurrency::array_view<double, 1> X_mat =
+        *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(
+            const_cast<double*>(x))));
+      Concurrency::array_view<double, 1> Y_mat =
+        *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(y)));
+      amp.ampblas_dgemv2(ampTransA, N, M, &alpha, A_mat, offA, lda, X_mat,
+        offx, incx, &beta, Y_mat, offy, incy);
+
+}
 template <>
 void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
   const CBLAS_TRANSPOSE TransB,
@@ -870,7 +976,6 @@ void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
     amp.ampblas_dgemm2(colMajor, ampTransB, ampTransA, N, M, K, &alpha, B_mat,
                 ldb, A_mat, lda, &beta, C_mat, N, offset_B, offset_A, offset_C);
 }
-
 template <>
 void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
   Concurrency::array_view<float, 1> xView =
@@ -1179,6 +1284,5 @@ void caffe_gpu_memcpy(const size_t N, const void *X, void *Y) {
   LOG(FATAL) << "Instead of caffe_gpu_memcpy with caffe_amp_X2X.";
 }
 
-#endif  // USE_CPPAMP
 }  // namespace caffe
 

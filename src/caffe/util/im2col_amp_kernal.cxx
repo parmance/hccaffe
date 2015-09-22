@@ -7,7 +7,9 @@
 #include "amp_math.h"
 #include "caffe/common.hpp"
 #include "caffe/util/im2col.hpp"
+#include "caffe/vision_layers.hpp"
 
+using namespace Concurrency;
 template <typename Dtype>
 void im2col_amp_kernel(const int N,
     Dtype* data_im,
@@ -188,4 +190,180 @@ void col2im_amp_kernel(const int N, double* data_col,
     im_view[im_offset + idx] = val;
   });
 }
+template <typename Dtype>
+void im2col_amp_kernel_opt(const int n, Dtype* data_im,
+  const int channels, const int img_offset, const int height, const int width,
+  const int ksize, const int pad, const int stride, const int height_col,
+  const int width_col, Dtype* data_col, const int col_offset,
+  const int optnum);
+
+template <typename Dtype>
+void col2im_amp_kernel_opt(const int n, Dtype* data_col, const int col_offset,
+  const int height, const int width, const int channels, const int ksize,
+  const int pad, const int stride, const int height_col, const int width_col,
+  Dtype* data_im, const int img_offset, const int optnum);
+
+
+template <>
+void im2col_amp_kernel_opt(const int n, float* data_im,
+  const int channels, const int img_offset, const int height, const int width,
+  const int ksize, const int pad, const int stride, const int height_col,
+  const int width_col, float* data_col, const int col_offset,
+  const int optnum){
+    Concurrency::array_view<float, 1> im_view =
+      *((Concurrency::array_view<float, 1>*)(data_im));
+    Concurrency::array_view<float, 1> col_view =
+      *((Concurrency::array_view<float, 1>*)(data_col));
+    extent<1> e(n);
+    parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+
+    int x_out = idx[0] % width_col;
+    int y_out = (idx[0] / width_col) % height_col;
+    int channel_in = (idx[0] / width_col / height_col) % channels;
+    int channel_out = channel_in * ksize * ksize;
+    int im_id = idx[0] / width_col / height_col / channels;
+
+    int y_in = y_out * stride - pad;
+    int x_in = x_out * stride - pad;
+    int offset_col = channel_out * optnum * height_col *
+      width_col + im_id * height_col * width_col;
+    int offset_im = im_id * channels * height * width + channel_in
+      * height * width;
+
+    for(int k_h = 0; k_h < ksize; k_h++){
+        for(int k_w = 0; k_w < ksize; k_w++){
+            int x_im = x_in + k_w;
+            int y_im = y_in + k_h;
+            int index_im = y_im * width + x_im;
+            int index_col = (k_h * ksize + k_w) * optnum *
+              height_col * width_col + y_out * width_col + x_out;
+            if(y_im >= 0 && y_im < height && x_im >= 0 && x_im < width)
+                col_view[col_offset+offset_col + index_col] =
+                  im_view[img_offset+offset_im + index_im];
+            else
+                col_view[col_offset+offset_col + index_col] = 0;
+        }
+    }
+   });
+  }
+
+template <>
+void im2col_amp_kernel_opt(const int n, double* data_im,
+  const int channels, const int img_offset, const int height, const int width,
+  const int ksize, const int pad, const int stride, const int height_col,
+  const int width_col, double* data_col, const int col_offset,
+  const int optnum){
+    Concurrency::array_view<double, 1> im_view =
+      *((Concurrency::array_view<double, 1>*)(data_im));
+    Concurrency::array_view<double, 1> col_view =
+      *((Concurrency::array_view<double, 1>*)(data_col));
+    extent<1> e(n);
+    parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+
+    int x_out = idx[0] % width_col;
+    int y_out = (idx[0] / width_col) % height_col;
+    int channel_in = (idx[0] / width_col / height_col) % channels;
+    int channel_out = channel_in * ksize * ksize;
+    int im_id = idx[0] / width_col / height_col / channels;
+
+    int y_in = y_out * stride - pad;
+    int x_in = x_out * stride - pad;
+    int offset_col = channel_out * optnum * height_col *
+      width_col + im_id * height_col * width_col;
+    int offset_im = im_id * channels * height * width + channel_in
+      * height * width;
+
+    for(int k_h = 0; k_h < ksize; k_h++){
+        for(int k_w = 0; k_w < ksize; k_w++){
+            int x_im = x_in + k_w;
+            int y_im = y_in + k_h;
+            int index_im = y_im * width + x_im;
+            int index_col = (k_h * ksize + k_w) * optnum *
+              height_col * width_col + y_out * width_col + x_out;
+            if(y_im >= 0 && y_im < height && x_im >= 0 && x_im < width)
+                col_view[col_offset+offset_col + index_col] =
+                  im_view[img_offset+offset_im + index_im];
+            else
+                col_view[col_offset+offset_col + index_col] = 0;
+        }
+    }
+   });
+
+  }
+
+template <>
+void col2im_amp_kernel_opt(const int n, float* data_col, const int col_offset,
+  const int height, const int width, const int channels, const int ksize,
+  const int pad, const int stride, const int height_col, const int width_col,
+  float* data_im, const int img_offset, const int optnum){
+    Concurrency::array_view<float, 1> im_view =
+      *((Concurrency::array_view<float, 1>*)(data_im));
+    Concurrency::array_view<float, 1> col_view =
+      *((Concurrency::array_view<float, 1>*)(data_col));
+    extent<1> e(n);
+    parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+      float val = 0;
+      int w = idx[0] % width + pad;
+      int h = (idx[0] / width) % height + pad;
+      int c = idx[0] / (width * height) % channels;
+      int im = idx[0] / width / height / channels;
+      // compute the start and end of the output
+      int w_col_start = (w < ksize) ? 0 : (w - ksize) / stride + 1;
+      int w_col_end = Concurrency::fast_math::fmin(w / stride + 1, width_col);
+      int h_col_start = (h < ksize) ? 0 : (h - ksize) / stride + 1;
+      int h_col_end = Concurrency::fast_math::fmin(h / stride + 1, height_col);
+      // equivalent implementation
+      int offset = (c * ksize * ksize + h * ksize + w) * height_col *
+        width_col * optnum + im * height_col * width_col;
+      int coeff_h_col = (1 - stride * ksize * height_col * optnum) * width_col;
+      int coeff_w_col = (1 - stride * height_col * width_col * optnum);
+      for (int h_col = h_col_start; h_col < h_col_end; ++h_col) {
+        for (int w_col = w_col_start; w_col < w_col_end; ++w_col) {
+          val += col_view[col_offset+offset + h_col * coeff_h_col
+                 + w_col * coeff_w_col];
+        }
+      }
+      im_view[img_offset+idx] = val;
+    });
+  }
+
+
+template <>
+void col2im_amp_kernel_opt(const int n, double* data_col, const int col_offset,
+  const int height, const int width, const int channels, const int ksize,
+  const int pad, const int stride, const int height_col, const int width_col,
+  double* data_im, const int img_offset, const int optnum){
+    Concurrency::array_view<double, 1> im_view =
+      *((Concurrency::array_view<double, 1>*)(data_im));
+    Concurrency::array_view<double, 1> col_view =
+      *((Concurrency::array_view<double, 1>*)(data_col));
+    extent<1> e(n);
+    parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+      double val = 0;
+      int w = idx[0] % width + pad;
+      int h = (idx[0] / width) % height + pad;
+      int c = idx[0] / (width * height) % channels;
+      int im = idx[0] / width / height / channels;
+      // compute the start and end of the output
+      int w_col_start = (w < ksize) ? 0 : (w - ksize) / stride + 1;
+      int w_col_end = Concurrency::fast_math::fmin(w / stride + 1, width_col);
+      int h_col_start = (h < ksize) ? 0 : (h - ksize) / stride + 1;
+      int h_col_end = Concurrency::fast_math::fmin(h / stride + 1, height_col);
+      // equivalent implementation
+      int offset = (c * ksize * ksize + h * ksize + w) * height_col *
+        width_col * optnum + im * height_col * width_col;
+      int coeff_h_col = (1 - stride * ksize * height_col * optnum) * width_col;
+      int coeff_w_col = (1 - stride * height_col * width_col * optnum);
+      for (int h_col = h_col_start; h_col < h_col_end; ++h_col) {
+        for (int w_col = w_col_start; w_col < w_col_end; ++w_col) {
+          val += col_view[col_offset+offset + h_col * coeff_h_col
+                 + w_col * coeff_w_col];
+        }
+      }
+      im_view[img_offset+idx] = val;
+    });
+
+ 
+  }
+
 

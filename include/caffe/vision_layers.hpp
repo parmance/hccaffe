@@ -49,6 +49,7 @@ class BaseConvolutionLayer : public Layer<Dtype> {
 
 #ifndef CPU_ONLY
 #ifdef USE_CPPAMP
+  void amp_setup();
   void backward_gpu_bias(Dtype* bias, const Dtype* input, const int offset);
   void forward_gpu_gemm(int N1, int N2, const Dtype* col_input,
       const int offsetin, const Dtype* weights, Dtype* output,
@@ -61,6 +62,15 @@ class BaseConvolutionLayer : public Layer<Dtype> {
       Dtype* weights);
   void forward_gpu_bias(Dtype* output,
       const int offset, const Dtype* bias);
+  void forward_gpu_gemm_opt(const Dtype* col_input, const Dtype* weights,
+      Dtype* output, bool skip_im2col = false);
+  void forward_gpu_bias_opt(Dtype* output, const Dtype* bias);
+  void backward_gpu_gemm_opt(const Dtype* input, const Dtype* weights,
+      Dtype* col_output);
+  void weight_gpu_gemm_opt(const Dtype* col_input, const Dtype* output, Dtype*
+      weights);
+  void backward_gpu_bias_opt(Dtype* bias,
+    const Dtype* input);
 
 #else
   void forward_gpu_gemm(const Dtype* col_input, const Dtype* weights,
@@ -121,7 +131,17 @@ class BaseConvolutionLayer : public Layer<Dtype> {
         conv_in_width_, kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_,
         stride_w_, data, col_offset, data_offset);
   }
+protected:
+  inline void conv_im2col_gpu_opt(const Dtype* data) {
+     im2col_gpu_opt(data, bottom_offset_, conv_in_channels_, conv_in_height_, conv_in_width_,
+           kernel_w_, pad_w_, stride_h_,(Dtype*)transMem, 0, opt_num2);
+  }
+  inline void conv_col2im_gpu_opt( Dtype* data) {
+    col2im_gpu_opt((Dtype*)transMem, 0,  conv_in_channels_, conv_in_height_, conv_in_width_,
+        kernel_h_, pad_h_, stride_w_, data, bottom_offset_, opt_num2);
+  }
 #else
+private:
   inline void conv_im2col_gpu(const Dtype* data, Dtype* col_buff) {
     im2col_gpu(data, conv_in_channels_, conv_in_height_, conv_in_width_,
         kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, col_buff);
@@ -133,19 +153,28 @@ class BaseConvolutionLayer : public Layer<Dtype> {
 
 #endif  // USE_CPPAMP
 #endif  // CPU_ONLY
-
+private:
   int conv_out_channels_;
   int conv_in_channels_;
   int conv_out_spatial_dim_;
   int conv_in_height_;
   int conv_in_width_;
   int kernel_dim_;
+  Blob<Dtype> col_buffer_;
+  Blob<Dtype> bias_multiplier_;
+#ifdef USE_CPPAMP
+protected:
+  int opt_num2;
+  int M_, N_, K_;
   int weight_offset_;
   int col_offset_;
   int output_offset_;
-
-  Blob<Dtype> col_buffer_;
-  Blob<Dtype> bias_multiplier_;
+  int top_offset_, top_offset_opt, bottom_offset_;
+public:
+  static void* subTopMem;
+  static void* transMem;
+  static size_t subtop_mem_size, trans_mem_size;
+#endif
 };
 
 /**
