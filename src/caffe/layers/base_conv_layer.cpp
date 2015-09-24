@@ -300,7 +300,6 @@ void BaseConvolutionLayer<Dtype>::forward_gpu_gemm_opt (const Dtype* input,
     const Dtype* weight, Dtype* output, bool skip_im2col) {
   if (!is_1x1_) {
     if (!skip_im2col) {
-      printf("1111111111111111111111111111111111111\n");
       conv_im2col_gpu_opt(input);
     }   
   }
@@ -326,9 +325,8 @@ void BaseConvolutionLayer<Dtype>::weight_gpu_gemm_opt(const Dtype* input,
   if (!is_1x1_) {
     conv_im2col_gpu_opt(input);
   }
-    int height_top = M_ * group_, width_top = N_;
-    opttrans<Dtype>(const_cast<Dtype*>(output), top_offset_, 1, height_top,
-      width_top, (Dtype*)subTopMem, 0, opt_num2);
+    opttrans<Dtype>(const_cast<Dtype*>(output), top_offset_, 1, M_ * group_,
+      N_, (Dtype*)subTopMem, 0, opt_num2);
 
 
   for (int g = 0; g < group_; ++g) {

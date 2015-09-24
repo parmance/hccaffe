@@ -31,16 +31,16 @@ void col2im_amp_kernel(const int N, Dtype* data_col,
 template <typename Dtype>
 void im2col_amp_kernel_opt(const int n, Dtype* data_im,
   const int channels, const int img_offset, const int height, const int width,
-  const int ksize, const int pad, const int stride, const int height_col,
+  const int kernel_h, const int kernel_w, const int pad_h, const int pad_w, 
+  const int stride_h, const int stride_w, const int height_col,
   const int width_col, Dtype* data_col, const int col_offset,
   const int optnum);
-
 template <typename Dtype>
 void col2im_amp_kernel_opt(const int n, Dtype* data_col, const int col_offset,
-  const int height, const int width, const int channels, const int ksize,
-  const int pad, const int stride, const int height_col, const int width_col,
-  Dtype* data_im, const int img_offset, const int optnum);
-
+  const int height, const int width, const int channels, const int kernel_h,
+  const int kernel_w, const int pad_h, const int pad_w,
+  const int stride_h, const int stride_w, const int height_col,
+  const int width_col, Dtype* data_im, const int img_offset, const int optnum);
 
 namespace caffe {
 template <typename Dtype>
@@ -125,50 +125,53 @@ template void col2im_gpu<double>(const double* data_col, const int channels,
     const int col_offset, const int im_offset);
 
 template <typename Dtype>
-void col2im_gpu_opt(const Dtype* data_col, const int col_offset, const int channels,
-    const int height, const int width, const int ksize, const int pad,
-    const int stride, Dtype* data_im, const int img_offset, int optnum){
-    int height_col = (height + 2 * pad - ksize) / stride + 1;
-    int width_col = (width + 2 * pad - ksize) / stride + 1;
-    int num_kernels = channels * height * width;
-    Dtype * data_col_amp = const_cast<Dtype*>(data_col);
+void col2im_gpu_opt(const Dtype* data_col, const int col_offset,
+    const int channels, const int height, const int width, const int kernel_h, const int kernel_w,
+    const int pad_h, const int pad_w, const int stride_h, const int stride_w, Dtype* data_im, const int img_offset,
+    int optnum){
+      int height_col = (height + 2 * pad_h - kernel_h) / stride_h + 1;
+      int width_col = (width + 2 * pad_w - kernel_w) / stride_w + 1;
+      int num_kernels = channels * height * width;
+      Dtype * data_col_amp = const_cast<Dtype*>(data_col);
 
-    col2im_amp_kernel_opt(num_kernels, data_col_amp, col_offset,
-      height, width, channels, ksize,
-      pad, stride, height_col, width_col,
-      data_im, img_offset, optnum);
+      col2im_amp_kernel_opt(num_kernels, data_col_amp, col_offset,
+        height, width, channels, kernel_h, kernel_w, pad_h,
+        pad_w, stride_h, stride_w, height_col, width_col,
+        data_im, img_offset, optnum);
 }
 
 template void col2im_gpu_opt<float>(const float* data_col,
     const int col_offset, const int channels,
-    const int height, const int width, const int ksize, const int pad,
-    const int stride, float* data_im, const int img_offset, int optnum);
+    const int height, const int width, const int kernel_h, const int kernel_w,
+    const int pad_h, const int pad_w, const int stride_h, const int stride_w,
+    float* data_im, const int img_offset, int optnum);
 template void col2im_gpu_opt<double>(const double* data_col,
     const int col_offset, const int channels,
-    const int height, const int width, const int ksize, const int pad,
-    const int stride, double* data_im, const int img_offset, int optnum);
+    const int height, const int width, const int kernel_h, const int kernel_w,
+    const int pad_h, const int pad_w, const int stride_h, const int stride_w,
+    double* data_im, const int img_offset, int optnum);
 
 template <typename Dtype>
 void im2col_gpu_opt(const Dtype* data_im, const int img_offset,
-    const int channels, const int height, const int width, const int ksize,
-    const int pad, const int stride, Dtype* data_col, const int col_offset,
-    int optnum) {
-
-    int height_col = (height + 2 * pad - ksize) / stride + 1;
-    int width_col = (width + 2 * pad - ksize) / stride + 1;
-    int num_kernels = optnum * channels * height_col * width_col;
-    Dtype* data_im_amp = const_cast<Dtype*>(data_im);
-    im2col_amp_kernel_opt(num_kernels, data_im_amp, channels, img_offset,
-      height, width, ksize, pad, stride, height_col,
-      width_col, data_col, col_offset,optnum);
+    const int channels, const int height, const int width, const int kernel_h, const int kernel_w,
+    const int pad_h, const int pad_w, const int stride_h, const int stride_w, Dtype* data_col, const int col_offset,
+    int optnum){
+      int height_col = (height + 2 * pad_h - kernel_h) / stride_h + 1;
+      int width_col = (width + 2 * pad_w - kernel_w) / stride_w + 1;
+      int num_kernels = optnum * channels * height_col * width_col;
+      Dtype* data_im_amp = const_cast<Dtype*>(data_im);
+      im2col_amp_kernel_opt(num_kernels, data_im_amp, channels, img_offset,
+        height, width, kernel_h, kernel_w, pad_h, pad_w, stride_h,
+        stride_w, height_col, width_col, data_col, col_offset,optnum);
 }
-
-template void im2col_gpu_opt<float>(const float* data_im, const int img_offset, const int channels,
-    const int height, const int width, const int ksize, const int pad,
-    const int stride, float* data_col, const int col_offset, int optnum);
-template void im2col_gpu_opt<double>(const double* data_im, const int img_offset, const int channels,
-    const int height, const int width, const int ksize, const int pad,
-    const int stride, double* data_col, const int col_offset,  int optnum);
+template void im2col_gpu_opt<float>(const float* data_im, const int img_offset,
+    const int channels, const int height, const int width, const int kernel_h, const int kernel_w,
+    const int pad_h, const int pad_w, const int stride_h, const int stride_w, float* data_col, const int col_offset,
+    int optnum);
+template void im2col_gpu_opt<double>(const double* data_im, const int img_offset,
+    const int channels, const int height, const int width, const int kernel_h, const int kernel_w,
+    const int pad_h, const int pad_w, const int stride_h, const int stride_w, double* data_col, const int col_offset,
+    int optnum);
 
 }  // namespace caffe
 #endif  // USE_CPPAMP
