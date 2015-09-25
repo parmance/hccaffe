@@ -238,8 +238,10 @@ template <typename Dtype>
 void Alloc_public_tmp_mem(size_t subtop_size, size_t trans_size)
 {
   ConvolutionLayer<Dtype>::subtop_mem_size = subtop_size;
+  caffe_amp_free(ConvolutionLayer<Dtype>::subTopMem, sizeof(Dtype), false);
   ConvolutionLayer<Dtype>::subTopMem = CreateAmpBuffer(subtop_size, sizeof(Dtype));
   ConvolutionLayer<Dtype>::trans_mem_size =  trans_size;
+  caffe_amp_free(ConvolutionLayer<Dtype>::transMem, sizeof(Dtype), false);
   ConvolutionLayer<Dtype>::transMem = CreateAmpBuffer(trans_size, sizeof(Dtype));
 }
 
