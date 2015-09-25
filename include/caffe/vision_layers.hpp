@@ -168,11 +168,15 @@ private:
   Blob<Dtype> bias_multiplier_;
 #ifdef USE_CPPAMP
 protected:
-  int opt_num2;
-  int M_, N_, K_;
+#endif
   int weight_offset_;
   int col_offset_;
   int output_offset_;
+
+#ifdef USE_CPPAMP
+protected:
+  int opt_num2;
+  int M_, N_, K_;
   int top_offset_, top_offset_opt, bottom_offset_;
 public:
   static void* subTopMem;
