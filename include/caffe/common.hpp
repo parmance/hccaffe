@@ -171,6 +171,7 @@ class Caffe {
   DISABLE_COPY_AND_ASSIGN(Caffe);
 };
 #ifdef USE_CPPAMP
+#define multi_process 1
 #define global_packing_N 16
 #endif
 }  // namespace caffe

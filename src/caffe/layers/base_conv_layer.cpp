@@ -154,7 +154,9 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
         bias_multiplier_.mutable_cpu_data());
   }
 #ifdef USE_CPPAMP
+#if multi_process
   amp_setup();
+#endif
 #endif
 }
 
