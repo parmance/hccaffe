@@ -148,7 +148,6 @@ inline void SyncedMemory::to_gpu() {
     // Malloc CPU memory first
     CaffeMallocHost(&cpu_ptr_, size_);
     caffe_memset(size_, 0, cpu_ptr_);
-    caffe_amp_malloc(&gpu_ptr_, size_, element_size_, is_integer_);
     caffe_amp_malloc(&gpu_ptr_, cpu_ptr_, size_, element_size_,
         is_integer_);
     caffe_amp_H2D(cpu_ptr_, gpu_ptr_, element_size_, is_integer_);
