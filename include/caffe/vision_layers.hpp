@@ -131,33 +131,36 @@ class BaseConvolutionLayer : public Layer<Dtype> {
         conv_in_width_, kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_,
         stride_w_, data, col_offset, data_offset);
   }
-protected:
+
+ protected:
   inline void conv_im2col_gpu_opt(const Dtype* data) {
      im2col_gpu_opt(data, bottom_offset_, conv_in_channels_,
        conv_in_height_, conv_in_width_,
         kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_,
-           (Dtype*)transMem, 0, opt_num2);
+           static_cast<Dtype*>(transMem), 0, opt_num2);
   }
-  inline void conv_col2im_gpu_opt( Dtype* data) {
-    col2im_gpu_opt((Dtype*)transMem, 0,  conv_in_channels_,
+  inline void conv_col2im_gpu_opt(Dtype* data) {
+    col2im_gpu_opt(static_cast<Dtype*>(transMem), 0,  conv_in_channels_,
       conv_in_height_, conv_in_width_,
         kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_,
           data, bottom_offset_, opt_num2);
   }
 #else
-private:
+
+ private:
   inline void conv_im2col_gpu(const Dtype* data, Dtype* col_buff) {
-    im2col_gpu(data, conv_in_channels_, conv_in_height_, conv_in_width_,
+     im2col_gpu(data, conv_in_channels_, conv_in_height_, conv_in_width_,
         kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, col_buff);
   }
   inline void conv_col2im_gpu(const Dtype* col_buff, Dtype* data) {
-    col2im_gpu(col_buff, conv_in_channels_, conv_in_height_, conv_in_width_,
+     col2im_gpu(col_buff, conv_in_channels_, conv_in_height_, conv_in_width_,
         kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, data);
-  }
+}
 
 #endif  // USE_CPPAMP
 #endif  // CPU_ONLY
-private:
+
+ private:
   int conv_out_channels_;
   int conv_in_channels_;
   int conv_out_spatial_dim_;
@@ -167,18 +170,21 @@ private:
   Blob<Dtype> col_buffer_;
   Blob<Dtype> bias_multiplier_;
 #ifdef USE_CPPAMP
-protected:
+
+ protected:
 #endif
   int weight_offset_;
   int col_offset_;
   int output_offset_;
 
 #ifdef USE_CPPAMP
-protected:
+
+ protected:
   int opt_num2;
   int M_, N_, K_;
   int top_offset_, top_offset_opt, bottom_offset_;
-public:
+
+ public:
   static void* subTopMem;
   static void* transMem;
   static size_t subtop_mem_size, trans_mem_size;

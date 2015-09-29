@@ -11,7 +11,6 @@ namespace caffe {
 template <typename Dtype>
 void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
-
 #if !multi_process
   const Dtype* weight = this->blobs_[0]->gpu_data();
   for (int i = 0; i < bottom.size(); ++i) {
@@ -29,7 +28,7 @@ void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     }
   }
 #else
-  if (this->is_1x1_){
+  if (this->is_1x1_) {
     const Dtype* weight = this->blobs_[0]->gpu_data();
     for (int i = 0; i < bottom.size(); ++i) {
     const Dtype* bottom_data = bottom[i]->gpu_data();
@@ -45,7 +44,7 @@ void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
         }
       }
     }
-  } else{
+  } else {
     const Dtype* weight = this->blobs_[0]->gpu_data();
     for (int i = 0; i < bottom.size(); ++i) {
       const Dtype* bottom_data = bottom[i]->gpu_data();
@@ -53,8 +52,8 @@ void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
       this->opt_num2 = global_packing_N;
       this->weight_offset_ = this->M_ * this->K_;
       for (int n = 0; n < this->num_; n += this->opt_num2) {
-        this->opt_num2 = this->opt_num2 > (this->num_ - n)? (this->num_ - n) : this->opt_num2;
-         //intermediate variables to pass offset
+        this->opt_num2 = this->opt_num2 > (this->num_ - n) ?
+          (this->num_ - n) : this->opt_num2;
         this->top_offset_opt = this->M_ * this->N_ * this->opt_num2;
         this->top_offset_ = top[i]->offset(n);
         this->col_offset_ = this->K_ * this->N_ * this->opt_num2;
@@ -65,11 +64,10 @@ void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
             const Dtype* bias = this->blobs_[1]->gpu_data();
               this->forward_gpu_bias_opt(top_data, bias);
           }
-        }  
+        }
       }
     }
 #endif
-
 }
 
 template <typename Dtype>
@@ -117,7 +115,7 @@ void ConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     }
   }
 #else
-  if (this->is_1x1_){
+  if (this->is_1x1_) {
     const Dtype* weight = this->blobs_[0]->gpu_data();
     Dtype* weight_diff = this->blobs_[0]->mutable_gpu_diff();
     if (this->param_propagate_down_[0]) {
@@ -158,8 +156,7 @@ void ConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
         }
       }
     }
-  }else{
-
+  } else {
   const Dtype* weight = this->blobs_[0]->gpu_data();
   Dtype* weight_diff = this->blobs_[0]->mutable_gpu_diff();
   if (this->param_propagate_down_[0]) {
@@ -172,11 +169,9 @@ void ConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
 
   for (int i = 0; i < top.size(); ++i) {
     const Dtype* top_diff = top[i]->gpu_diff();
-    
     // Bias gradient, if necessary.
     if (this->bias_term_ && this->param_propagate_down_[1]) {
       Dtype* bias_diff = this->blobs_[1]->mutable_gpu_diff();
-      //caffe_gpu_set(this->blobs_[1]->count(), (Dtype)(0.), bias_diff);
       for (int n = 0; n < this->num_; ++n) {
         this->top_offset_ = top[i]->offset(n);
         this->backward_gpu_bias_opt(bias_diff, top_diff);
@@ -188,7 +183,8 @@ void ConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
       this->weight_offset_ = this->M_ * this->K_;
       this->opt_num2 = global_packing_N;
       for (int n = 0; n < this->num_; n += this->opt_num2) {
-        this->opt_num2 = this->opt_num2 > (this->num_ - n)? (this->num_ - n) : this->opt_num2;
+        this->opt_num2 = this->opt_num2 > (this->num_ - n) ?
+          (this->num_ - n) : this->opt_num2;
         this->top_offset_ = top[i]->offset(n);
         this->bottom_offset_ = bottom[i]->offset(n);
         this->col_offset_ = this->K_ * (this->N_ * this->opt_num2);

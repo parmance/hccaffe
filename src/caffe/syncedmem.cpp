@@ -198,8 +198,7 @@ void* SyncedMemory::mutable_gpu_data() {
   head_ = HEAD_AT_GPU;
   return gpu_ptr_;
 }
-void* CreateAmpBuffer(size_t size, size_t element_size)
-{
+void* CreateAmpBuffer(size_t size, size_t element_size) {
     void *gpu_ptr;
     caffe_amp_malloc(&gpu_ptr, size, element_size, false);
     return gpu_ptr;
@@ -208,4 +207,3 @@ void* CreateAmpBuffer(size_t size, size_t element_size)
 #endif  // !USE_CPPAMP
 
 }  // namespace caffe
-
