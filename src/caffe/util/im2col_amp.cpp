@@ -131,7 +131,7 @@ void col2im_gpu_opt(const Dtype* data_col, const int col_offset,
     int optnum){
       int height_col = (height + 2 * pad_h - kernel_h) / stride_h + 1;
       int width_col = (width + 2 * pad_w - kernel_w) / stride_w + 1;
-      int num_kernels = channels * height * width;
+      int num_kernels = channels * height * width  * optnum;
       Dtype * data_col_amp = const_cast<Dtype*>(data_col);
 
       col2im_amp_kernel_opt(num_kernels, data_col_amp, col_offset,

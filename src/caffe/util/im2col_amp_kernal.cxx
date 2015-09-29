@@ -313,9 +313,11 @@ void col2im_amp_kernel_opt(const int n, float* data_col, const int col_offset,
       int im = idx[0] / width / height / channels;
       // compute the start and end of the output
       int w_col_start = (w < kernel_w) ? 0 : (w - kernel_w) / stride_w + 1;
-      int w_col_end = Concurrency::fast_math::fmin(w / stride_w + 1, width_col);
+      int w_col_end = ((w / stride_w + 1) < width_col)? 
+                       w / stride_w + 1 : width_col;
       int h_col_start = (h < kernel_h) ? 0 : (h - kernel_h) / stride_h + 1;
-      int h_col_end = Concurrency::fast_math::fmin(h / stride_h + 1, height_col);
+      int h_col_end = ((h / stride_h + 1) < height_col) ? h / stride_h + 1
+                      : height_col; 
       // equivalent implementation
       int offset = (c * kernel_h * kernel_w + h * kernel_w + w) * height_col *
         width_col * optnum + im * height_col * width_col;

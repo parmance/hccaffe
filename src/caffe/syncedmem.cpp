@@ -148,6 +148,7 @@ inline void SyncedMemory::to_gpu() {
     // Malloc CPU memory first
     CaffeMallocHost(&cpu_ptr_, size_);
     caffe_memset(size_, 0, cpu_ptr_);
+    caffe_amp_malloc(&gpu_ptr_, size_, element_size_, is_integer_);
     caffe_amp_malloc(&gpu_ptr_, cpu_ptr_, size_, element_size_,
         is_integer_);
     caffe_amp_H2D(cpu_ptr_, gpu_ptr_, element_size_, is_integer_);
@@ -198,16 +199,10 @@ void* SyncedMemory::mutable_gpu_data() {
   head_ = HEAD_AT_GPU;
   return gpu_ptr_;
 }
-void * CreateAmpBuffer(size_t size, size_t element_size)
+void* CreateAmpBuffer(size_t size, size_t element_size)
 {
     void *gpu_ptr;
-    int *temp = NULL;
     caffe_amp_malloc(&gpu_ptr, size, element_size, false);
-    temp = new int[size/sizeof(int)];
-    memset(temp, 0, size);
-    caffe_amp_H2D(static_cast<void*>(temp), gpu_ptr,
-        element_size, false);
-    delete []temp;
     return gpu_ptr;
 }
 
