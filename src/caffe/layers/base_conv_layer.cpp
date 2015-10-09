@@ -253,6 +253,7 @@ void Alloc_public_tmp_mem(size_t subtop_size, size_t trans_size) {
     ConvolutionLayer<Dtype>::transMem = CreateAmpBuffer(trans_size,
       sizeof(Dtype));
   }
+  /*
   int *temp = NULL;
   temp = new int[ConvolutionLayer<Dtype>::subtop_mem_size/sizeof(int)];
   caffe_memset(ConvolutionLayer<Dtype>::subtop_mem_size, 0, temp);
@@ -263,7 +264,7 @@ void Alloc_public_tmp_mem(size_t subtop_size, size_t trans_size) {
   caffe_memset(ConvolutionLayer<Dtype>::trans_mem_size, 0, temp);
   caffe_amp_H2D(static_cast<void*>(temp), ConvolutionLayer<Dtype>::transMem,
         sizeof(Dtype), false);
-  delete []temp;
+  delete []temp;*/
 }
 
 template <typename Dtype>
