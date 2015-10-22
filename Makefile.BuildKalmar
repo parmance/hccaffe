@@ -17,7 +17,7 @@ else
 endif
 
 #CLAMP_PREFIX=/opt/kalmar
-CLAMP_PREFIX=/home/yang/build/build
+CLAMP_PREFIX=/home/mcw/build/build/Release
 # All of the directories containing code.
 SRC_DIRS := $(shell find * -type d -exec bash -c "find {} -maxdepth 1 \
 	\( -name '*.cpp' -o -name '*.proto' \) | grep -q ." \; -print)
@@ -225,7 +225,7 @@ endif
 # Linux
 ifeq ($(LINUX), 1)
   ifeq ($(USE_CPPAMP), 1)
-    CXX := $(CLAMP_PREFIX)/../compiler/bin/clang++
+    CXX := $(CLAMP_PREFIX)/../../compiler/bin/clang++
   else
     CXX ?= /usr/bin/g++
     GCCVERSION := $(shell $(CXX) -dumpversion | cut -f1,2 -d.)
@@ -267,7 +267,7 @@ endif
 #CPPAMP Build Option
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(USE_CPPAMP), 1)
-    AMP_COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/Release/bin/clamp-config --build --cxxflags)
+    AMP_COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --build --cxxflags)
   endif
 endif
 # Custom compiler
@@ -380,7 +380,7 @@ LINKFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
 
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(USE_CPPAMP), 1)
-     LINKFLAGS += $(shell $(CLAMP_PREFIX)/Release/bin/clamp-config --build --ldflags)
+     LINKFLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --build --ldflags)
   endif
 endif
 USE_PKG_CONFIG ?= 0
