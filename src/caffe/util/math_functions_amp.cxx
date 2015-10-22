@@ -239,7 +239,7 @@ void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int) {
         static_cast<Concurrency::array_view<double, 1>*>(src);
       Concurrency::array_view<double, 1>* avDst =
         static_cast<Concurrency::array_view<double, 1>*>(dst);
-      Concurrency::copy(*avSrc, *avDst);
+      Concurrency::copy(*avSrc, *avDst);  // NOLINT(build/include_what_you_use)
     } else {
       LOG(FATAL) << "Wrong element size for caffe_amp_D2D.";
     }
@@ -1184,26 +1184,20 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
     *(static_cast<Concurrency::array_view<float, 1>*>(
           (static_cast<void*>(const_cast<float*>(y)))));
 
-  float * xTemp =
-    static_cast<float*>(malloc(sizeof(float) * (axView.get_extent().size())));
-  float * yTemp =
-    static_cast<float*>(malloc(sizeof(float) * (ayView.get_extent().size())));
-
-  Concurrency::copy(axView, xTemp);
-  Concurrency::copy(ayView, yTemp);
-
   uint32_t* result = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
-  uint32_t* ax = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
-  uint32_t* ay = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
+  uint32_t* ax = static_cast<uint32_t*>(
+      malloc(sizeof(uint32_t) * axView.get_extent().size()));
+  uint32_t* ay = static_cast<uint32_t*>(
+      malloc(sizeof(uint32_t) * ayView.get_extent().size()));
 
   for (int i = 0; i < n; ++i) {
-    ax[i] = static_cast<uint32_t>(xTemp[i]);
-    ay[i] = static_cast<uint32_t>(yTemp[i]);
+    ax[i] = static_cast<uint32_t>(axView[i]);
+    ay[i] = static_cast<uint32_t>(ayView[i]);
   }
 
   array_view<uint32_t, 1> resultView(n, result);
-  array_view<uint32_t, 1> xView(n, ax);
-  array_view<uint32_t, 1> yView(n, ay);
+  array_view<uint32_t, 1> xView(axView.get_extent().size(), ax);
+  array_view<uint32_t, 1> yView(ayView.get_extent().size(), ay);
 
   Concurrency::extent<1> e(n);
   parallel_for_each(e, [=](index<1> idx) restrict(amp) {
@@ -1220,8 +1214,6 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
   for (int i = 0; i < n; ++i) {
     sum+=result[i];
   }
-  free(xTemp);
-  free(yTemp);
   free(result);
   free(ax);
   free(ay);
@@ -1231,27 +1223,23 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
 template <>
 uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
                                    const double* y) {
-  array_view<double, 1> axView = *((Concurrency::array_view<double, 1>*)(x));
-  array_view<double, 1> ayView = *((Concurrency::array_view<double, 1>*)(y));
+  array_view<double, 1> axView =
+    *(static_cast<Concurrency::array_view<double, 1>*>(
+          (static_cast<void*>(const_cast<double*>(x)))));
+  array_view<double, 1> ayView =
+    *(static_cast<Concurrency::array_view<double, 1>*>(
+          (static_cast<void*>(const_cast<double*>(y)))));
 
-  double * xTemp =
-    static_cast<double*>(malloc(sizeof(double) * (axView.get_extent().size())));
-  double * yTemp =
-    static_cast<double*>(malloc(sizeof(double) * (ayView.get_extent().size())));
-
-  Concurrency::copy(axView, xTemp);
-  Concurrency::copy(ayView, yTemp);  // NOLINT(build/include_what_you_use)
-
-  uint32_t* result = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
-  uint64_t* ax = static_cast<uint64_t*>(malloc(sizeof(uint64_t) * n));
-  uint64_t* ay = static_cast<uint64_t*>(malloc(sizeof(uint64_t) * n));
+  uint32_t result[n];                       // NOLINT(runtime/arrays)
+  uint64_t ax[axView.get_extent().size()];  // NOLINT(runtime/arrays)
+  uint64_t ay[ayView.get_extent().size()];  // NOLINT(runtime/arrays)
   for (int i = 0; i < n; ++i) {
-    ax[i] = static_cast<uint64_t>(xTemp[i]);
-    ay[i] = static_cast<uint64_t>(yTemp[i]);
+    ax[i] = static_cast<uint64_t>(axView[i]);
+    ay[i] = static_cast<uint64_t>(ayView[i]);
   }
   array_view<uint32_t, 1> resultView(n, result);
-  array_view<uint64_t, 1> xView(n, ax);
-  array_view<uint64_t, 1> yView(n, ay);
+  array_view<uint64_t, 1> xView(axView.get_extent().size(), ax);
+  array_view<uint64_t, 1> yView(ayView.get_extent().size(), ay);
   Concurrency::extent<1> e(n);
   parallel_for_each(e, [=](index<1> idx) restrict(amp) {
     uint32_t ret = 0;
@@ -1267,11 +1255,6 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
   for (int i = 0; i < n; ++i) {
     sum+=result[i];
   }
-  free(xTemp);
-  free(yTemp);
-  free(result);
-  free(ax);
-  free(ay);
   return sum;
 }
 
