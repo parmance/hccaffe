@@ -34,7 +34,7 @@ CXX_SRCS := $(shell find src/$(PROJECT) ! -name "test_*.cpp" -name "*.cpp")
 # CU_SRCS are the cuda source files
 CU_SRCS := $(shell find src/$(PROJECT) ! -name "test_*.cu" -name "*.cu")
 # CXX AMP_SRCS are the source files excluding the test ones.
-CXXAMP_SRCS := $(shell find src/$(PROJECT) -name "*.cxx")
+CXXAMP_SRCS := $(shell find src -name "*.cxx")
 # TEST_SRCS are the test source files
 TEST_MAIN_SRC := src/$(PROJECT)/test/test_caffe_main.cpp
 TEST_SRCS := $(shell find src/$(PROJECT) -name "test_*.cpp")
@@ -187,7 +187,7 @@ endif
 ALL_BUILD_DIRS := $(sort $(BUILD_DIR) $(addprefix $(BUILD_DIR)/, $(SRC_DIRS)) \
 	$(addprefix $(BUILD_DIR)/cuda/, $(SRC_DIRS)) \
 	$(LIB_BUILD_DIR) $(TEST_BIN_DIR) $(PY_PROTO_BUILD_DIR) $(LINT_OUTPUT_DIR) \
-	$(DISTRIBUTE_SUBDIRS) $(PROTO_BUILD_INCLUDE_DIR))
+	$(DISTRIBUTE_SUBDIRS) $(PROTO_BUILD_INCLUDE_DIR) $(BUILD_DIR)/src/cppamp/)
 
 ##############################
 # Set directory for Doxygen-generated documentation
