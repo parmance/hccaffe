@@ -1210,6 +1210,8 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
     resultView[idx] = ret;
   });
   resultView.synchronize();
+  xView.synchronize();
+  yView.synchronize();
   uint32_t sum = 0;
   for (int i = 0; i < n; ++i) {
     sum+=result[i];
@@ -1230,9 +1232,11 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
     *(static_cast<Concurrency::array_view<double, 1>*>(
           (static_cast<void*>(const_cast<double*>(y)))));
 
-  uint32_t result[n];                       // NOLINT(runtime/arrays)
-  uint64_t ax[axView.get_extent().size()];  // NOLINT(runtime/arrays)
-  uint64_t ay[ayView.get_extent().size()];  // NOLINT(runtime/arrays)
+  uint32_t* result = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
+  uint64_t* ax = static_cast<uint64_t*>(
+      malloc(sizeof(uint64_t) * axView.get_extent().size()));
+  uint64_t* ay = static_cast<uint64_t*>(
+      malloc(sizeof(uint64_t) * ayView.get_extent().size()));
   for (int i = 0; i < n; ++i) {
     ax[i] = static_cast<uint64_t>(axView[i]);
     ay[i] = static_cast<uint64_t>(ayView[i]);
@@ -1251,10 +1255,15 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
     resultView[idx] = ret;
   });
   resultView.synchronize();
+  xView.synchronize();
+  yView.synchronize();
   uint32_t sum = 0;
   for (int i = 0; i < n; ++i) {
     sum+=result[i];
   }
+  free(result);
+  free(ax);
+  free(ay);
   return sum;
 }
 
