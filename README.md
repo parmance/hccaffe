@@ -1,4 +1,3 @@
-
 # Caffe
 
 Caffe is a deep learning framework made with expression, speed, and modularity in mind.
@@ -51,7 +50,7 @@ reference to http://caffe.berkeleyvision.org/installation.html
 
 ## Install HCC
 * Download HCC
-hcc binary packages : Ubuntu x86-64 debian package, or x86-64 .tar.gz tarballs are available.
+[hcc binary packages](https://bitbucket.org/multicoreware/hcc/downloads) : Ubuntu x86-64 debian package, or x86-64 .tar.gz tarballs are available.
       
 
 * Install Ubuntu binary packages for x86-64
@@ -180,4 +179,3 @@ make all
 make test
 make runtest
 ```
-
