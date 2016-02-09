@@ -2,9 +2,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
-
-#include "amp.h"
-#include "amp_math.h"
+#include "hc.hpp"
 #include "caffe/common.hpp"
 #include "caffe/util/im2col.hpp"
 #include "caffe/vision_layers.hpp"
@@ -38,13 +36,13 @@ void im2col_amp_kernel(const int N,
     const int stride_h, const int stride_w,
     const int height_col, const int width_col,
     float* data_col, const int im_offset, const int col_offset) {
-  Concurrency::array_view<float, 1> im_view =
-    *((Concurrency::array_view<float, 1>*)(data_im));
-  Concurrency::array_view<float, 1> col_view =
-    *((Concurrency::array_view<float, 1>*)(data_col));
-  concurrency::extent<1> e(N);
-  concurrency::parallel_for_each(e,
-      [=](Concurrency::index<1> idx) restrict(amp) {
+  hc::array_view<float, 1> im_view =
+    *((hc::array_view<float, 1>*)(data_im));
+  hc::array_view<float, 1> col_view =
+    *((hc::array_view<float, 1>*)(data_col));
+  hc::extent<1> e(N);
+  hc::parallel_for_each(e,
+      [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int w_out = idx[0] % width_col;
     int h_index = idx[0] / width_col;
     int h_out = h_index % height_col;
@@ -79,13 +77,13 @@ void im2col_amp_kernel(const int N,
     const int height_col, const int width_col,
     double* data_col, const int im_offset, const int col_offset) {
 
-  Concurrency::array_view<double, 1> im_view =
-    *((Concurrency::array_view<double, 1>*)(data_im));
-  Concurrency::array_view<double, 1> col_view =
-    *((Concurrency::array_view<double, 1>*)(data_col));
-  concurrency::extent<1> e(N);
-  concurrency::parallel_for_each(e,
-      [=](Concurrency::index<1> idx) restrict(amp) {
+  hc::array_view<double, 1> im_view =
+    *((hc::array_view<double, 1>*)(data_im));
+  hc::array_view<double, 1> col_view =
+    *((hc::array_view<double, 1>*)(data_col));
+  hc::extent<1> e(N);
+  hc::parallel_for_each(e,
+      [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int w_out = idx[0] % width_col;
     int h_index = idx[0] / width_col;
     int h_out = h_index % height_col;
@@ -118,22 +116,22 @@ void col2im_amp_kernel(const int N, float* data_col,
     const int stride_h, const int stride_w,
     const int height_col, const int width_col,
     float* data_im, const int col_offset, const int im_offset) {
-  Concurrency::array_view<float, 1> im_view =
-    *((Concurrency::array_view<float, 1>*)(data_im));
-  Concurrency::array_view<float, 1> col_view =
-    *((Concurrency::array_view<float, 1>*)(data_col));
-  concurrency::extent<1> e(N);
-  concurrency::parallel_for_each(e,
-      [=](Concurrency::index<1> idx) restrict(amp) {
+  hc::array_view<float, 1> im_view =
+    *((hc::array_view<float, 1>*)(data_im));
+  hc::array_view<float, 1> col_view =
+    *((hc::array_view<float, 1>*)(data_col));
+  hc::extent<1> e(N);
+  hc::parallel_for_each(e,
+      [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     float val = 0;
     int w = idx[0] % width + pad_w;
     int h = (idx[0] / width) % height + pad_h;
     int c = idx[0] / (width * height);
     // compute the start and end of the output
     int w_col_start = (w < patch_w) ? 0 : (w - patch_w) / stride_w + 1;
-    int w_col_end = Concurrency::fast_math::fmin(w / stride_w + 1, width_col);
+    int w_col_end = hc::fast_math::fmin(w / stride_w + 1, width_col);
     int h_col_start = (h < patch_h) ? 0 : (h - patch_h) / stride_h + 1;
-    int h_col_end = Concurrency::fast_math::fmin(h / stride_h + 1, height_col);
+    int h_col_end = hc::fast_math::fmin(h / stride_h + 1, height_col);
     // equivalent implementation
     int offset =
       (c * patch_h * patch_w + h * patch_w + w) * height_col * width_col;
@@ -158,22 +156,22 @@ void col2im_amp_kernel(const int N, double* data_col,
     const int stride_h, const int stride_w,
     const int height_col, const int width_col,
     double* data_im, const int col_offset, const int im_offset) {
-  Concurrency::array_view<double, 1> im_view =
-    *((Concurrency::array_view<double, 1>*)(data_im));
-  Concurrency::array_view<double, 1> col_view =
-    *((Concurrency::array_view<double, 1>*)(data_col));
-  concurrency::extent<1> e(N);
-  concurrency::parallel_for_each(e,
-      [=](Concurrency::index<1> idx) restrict(amp) {
+  hc::array_view<double, 1> im_view =
+    *((hc::array_view<double, 1>*)(data_im));
+  hc::array_view<double, 1> col_view =
+    *((hc::array_view<double, 1>*)(data_col));
+  hc::extent<1> e(N);
+  hc::parallel_for_each(e,
+      [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     double val = 0;
     int w = idx[0] % width + pad_w;
     int h = (idx[0] / width) % height + pad_h;
     int c = idx[0] / (width * height);
     // compute the start and end of the output
     int w_col_start = (w < patch_w) ? 0 : (w - patch_w) / stride_w + 1;
-    int w_col_end = Concurrency::fast_math::fmin(w / stride_w + 1, width_col);
+    int w_col_end = hc::fast_math::fmin(w / stride_w + 1, width_col);
     int h_col_start = (h < patch_h) ? 0 : (h - patch_h) / stride_h + 1;
-    int h_col_end = Concurrency::fast_math::fmin(h / stride_h + 1, height_col);
+    int h_col_end = hc::fast_math::fmin(h / stride_h + 1, height_col);
     // equivalent implementation
     int offset =
       (c * patch_h * patch_w + h * patch_w + w) * height_col * width_col;
@@ -210,12 +208,12 @@ void im2col_amp_kernel_opt(const int n, float* data_im,
   const int stride_h, const int stride_w, const int height_col,
   const int width_col, float* data_col, const int col_offset,
   const int optnum) {
-    Concurrency::array_view<float, 1> im_view =
-      *((Concurrency::array_view<float, 1>*)(data_im));
-    Concurrency::array_view<float, 1> col_view =
-      *((Concurrency::array_view<float, 1>*)(data_col));
-    Concurrency::extent<1> e(n);
-    parallel_for_each(e, [=](Concurrency::index<1> idx) restrict(amp) {
+    hc::array_view<float, 1> im_view =
+      *((hc::array_view<float, 1>*)(data_im));
+    hc::array_view<float, 1> col_view =
+      *((hc::array_view<float, 1>*)(data_col));
+    hc::extent<1> e(n);
+    parallel_for_each(e, [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int x_out = idx[0] % width_col;
     int y_out = (idx[0] / width_col) % height_col;
     int channel_in = (idx[0] / width_col / height_col) % channels;
@@ -253,12 +251,12 @@ void im2col_amp_kernel_opt(const int n, double* data_im,
   const int stride_h, const int stride_w, const int height_col,
   const int width_col, double* data_col, const int col_offset,
   const int optnum) {
-    Concurrency::array_view<double, 1> im_view =
-      *((Concurrency::array_view<double, 1>*)(data_im));
-    Concurrency::array_view<double, 1> col_view =
-      *((Concurrency::array_view<double, 1>*)(data_col));
-    Concurrency::extent<1> e(n);
-    parallel_for_each(e, [=](Concurrency::index<1> idx) restrict(amp) {
+    hc::array_view<double, 1> im_view =
+      *((hc::array_view<double, 1>*)(data_im));
+    hc::array_view<double, 1> col_view =
+      *((hc::array_view<double, 1>*)(data_col));
+    hc::extent<1> e(n);
+    parallel_for_each(e, [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int x_out = idx[0] % width_col;
     int y_out = (idx[0] / width_col) % height_col;
     int channel_in = (idx[0] / width_col / height_col) % channels;
@@ -297,12 +295,12 @@ void col2im_amp_kernel_opt(const int n, float* data_col,
   const int stride_h, const int stride_w,
   const int height_col, const int width_col,
   float* data_im, const int img_offset, const int optnum) {
-    Concurrency::array_view<float, 1> im_view =
-      *((Concurrency::array_view<float, 1>*)(data_im));
-    Concurrency::array_view<float, 1> col_view =
-      *((Concurrency::array_view<float, 1>*)(data_col));
-    Concurrency::extent<1> e(n);
-    parallel_for_each(e, [=](Concurrency::index<1> idx) restrict(amp) {
+    hc::array_view<float, 1> im_view =
+      *((hc::array_view<float, 1>*)(data_im));
+    hc::array_view<float, 1> col_view =
+      *((hc::array_view<float, 1>*)(data_col));
+    hc::extent<1> e(n);
+    parallel_for_each(e, [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       float val = 0;
       int w = idx[0] % width + pad_w;
       int h = (idx[0] / width) % height + pad_h;
@@ -338,12 +336,12 @@ void col2im_amp_kernel_opt(const int n, double* data_col, const int col_offset,
   const int stride_h, const int stride_w,
   const int height_col, const int width_col,
   double* data_im, const int img_offset, const int optnum) {
-    Concurrency::array_view<double, 1> im_view =
-      *((Concurrency::array_view<double, 1>*)(data_im));
-    Concurrency::array_view<double, 1> col_view =
-      *((Concurrency::array_view<double, 1>*)(data_col));
-    Concurrency::extent<1> e(n);
-    parallel_for_each(e, [=](Concurrency::index<1> idx) restrict(amp) {
+    hc::array_view<double, 1> im_view =
+      *((hc::array_view<double, 1>*)(data_im));
+    hc::array_view<double, 1> col_view =
+      *((hc::array_view<double, 1>*)(data_col));
+    hc::extent<1> e(n);
+    parallel_for_each(e, [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       double val = 0;
       int w = idx[0] % width + pad_w;
       int h = (idx[0] / width) % height + pad_h;

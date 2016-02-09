@@ -3,13 +3,9 @@
 
 #include <algorithm>
 #include <vector>
-
-#include "amp.h"
-#include "amp_math.h"
+#include "hc.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
-
-
 
 template <typename Dtype>
 void TanHForward(const int N, Dtype* in, Dtype* out);
@@ -21,31 +17,31 @@ void TanHBackward(const int N, Dtype* in_diff,
 
 template <>
 void TanHForward(const int N, float* in, float* out) {
-  Concurrency::array_view<float, 1> inView =
-    *((Concurrency::array_view<float, 1>*)(in));
-  Concurrency::array_view<float, 1> outView =
-    *((Concurrency::array_view<float, 1>*)(out));
-  Concurrency::extent<1> e(N);
+  hc::array_view<float, 1> inView =
+    *((hc::array_view<float, 1>*)(in));
+  hc::array_view<float, 1> outView =
+    *((hc::array_view<float, 1>*)(out));
+  hc::extent<1> e(N);
   parallel_for_each(
     e,
-    [=](Concurrency::index<1> idx) restrict(amp){
-    outView[idx] = Concurrency::fast_math::tanh(inView[idx]);
+    [=](hc::index<1> idx) __attribute__((hc, cpu)){
+    outView[idx] = hc::fast_math::tanh(inView[idx]);
   });
 }
 
 template <>
 void TanHBackward(const int N, float* in_diff,
   float* out_data, float* out_diff) {
-  Concurrency::array_view<float, 1> in_diffView =
-    *((Concurrency::array_view<float, 1>*)(in_diff));
-  Concurrency::array_view<float, 1> out_diffView =
-    *((Concurrency::array_view<float, 1>*)(out_diff));
-  Concurrency::array_view<float, 1> out_dataView =
-    *((Concurrency::array_view<float, 1>*)(out_data));
-  Concurrency::extent<1> e(N);
+  hc::array_view<float, 1> in_diffView =
+    *((hc::array_view<float, 1>*)(in_diff));
+  hc::array_view<float, 1> out_diffView =
+    *((hc::array_view<float, 1>*)(out_diff));
+  hc::array_view<float, 1> out_dataView =
+    *((hc::array_view<float, 1>*)(out_data));
+  hc::extent<1> e(N);
   parallel_for_each(
     e,
-    [=](Concurrency::index<1> idx) restrict(amp){
+    [=](hc::index<1> idx) __attribute__((hc, cpu)){
     float tanhx = out_dataView[idx];
     out_diffView[idx] = in_diffView[idx] * (1 - tanhx * tanhx);
   });
@@ -53,31 +49,31 @@ void TanHBackward(const int N, float* in_diff,
 
 template <>
 void TanHForward(const int N, double* in, double* out) {
-  Concurrency::array_view<double, 1> inView =
-    *((Concurrency::array_view<double, 1>*)(in));
-  Concurrency::array_view<double, 1> outView =
-    *((Concurrency::array_view<double, 1>*)(out));
-  Concurrency::extent<1> e(N);
+  hc::array_view<double, 1> inView =
+    *((hc::array_view<double, 1>*)(in));
+  hc::array_view<double, 1> outView =
+    *((hc::array_view<double, 1>*)(out));
+  hc::extent<1> e(N);
   parallel_for_each(
     e,
-    [=](Concurrency::index<1> idx) restrict(amp){
-    outView[idx] = Concurrency::fast_math::tanh(inView[idx]);
+    [=](hc::index<1> idx) __attribute__((hc, cpu)){
+    outView[idx] = hc::fast_math::tanh(inView[idx]);
   });
 }
 
 template <>
 void TanHBackward(const int N, double* in_diff,
   double* out_data, double* out_diff) {
-  Concurrency::array_view<double, 1> in_diffView =
-    *((Concurrency::array_view<double, 1>*)(in_diff));
-  Concurrency::array_view<double, 1> out_diffView =
-    *((Concurrency::array_view<double, 1>*)(out_diff));
-  Concurrency::array_view<double, 1> out_dataView =
-    *((Concurrency::array_view<double, 1>*)(out_data));
-  Concurrency::extent<1> e(N);
+  hc::array_view<double, 1> in_diffView =
+    *((hc::array_view<double, 1>*)(in_diff));
+  hc::array_view<double, 1> out_diffView =
+    *((hc::array_view<double, 1>*)(out_diff));
+  hc::array_view<double, 1> out_dataView =
+    *((hc::array_view<double, 1>*)(out_data));
+  hc::extent<1> e(N);
   parallel_for_each(
     e,
-    [=](Concurrency::index<1> idx) restrict(amp){
+    [=](hc::index<1> idx) __attribute__((hc, cpu)){
     double tanhx = out_dataView[idx];
     out_diffView[idx] = in_diffView[idx] * (1 - tanhx * tanhx);
   });

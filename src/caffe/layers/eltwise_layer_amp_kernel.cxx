@@ -1,8 +1,6 @@
 #include <cfloat>
 #include <vector>
-
-#include "amp.h"
-#include "amp_math.h"
+#include "hc.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
@@ -18,20 +16,20 @@ void MaxBackward(const int N, Dtype* top_diff,
 template <>
 void MaxForward<float>(const int N, float* a, float* b,
   const int blob_idx, float* y, int* mask) {
-  Concurrency::array_view<float, 1> aView =
-    *((Concurrency::array_view<float, 1>*)(a));
-  Concurrency::array_view<float, 1> bView =
-    *((Concurrency::array_view<float, 1>*)(b));
-  Concurrency::array_view<float, 1> yView =
-    *((Concurrency::array_view<float, 1>*)(y));
-  Concurrency::array_view<int, 1> maskView =
-    *((Concurrency::array_view<int, 1>*)(mask));
+  hc::array_view<float, 1> aView =
+    *((hc::array_view<float, 1>*)(a));
+  hc::array_view<float, 1> bView =
+    *((hc::array_view<float, 1>*)(b));
+  hc::array_view<float, 1> yView =
+    *((hc::array_view<float, 1>*)(y));
+  hc::array_view<int, 1> maskView =
+    *((hc::array_view<int, 1>*)(mask));
 
-  Concurrency::extent<1> e(N);
+  hc::extent<1> e(N);
 
   parallel_for_each(
     e,
-    [=] (Concurrency::index<1> idx) restrict(amp){
+    [=] (hc::index<1> idx) __attribute__((hc, cpu)){
       float maxval = -FLT_MAX;
       int maxidx = -1;
       if (aView[idx] > bView[idx]) {
@@ -53,20 +51,20 @@ void MaxForward<float>(const int N, float* a, float* b,
 template <>
 void MaxForward<double>(const int N, double* a, double* b,
   const int blob_idx, double* y, int* mask) {
-  Concurrency::array_view<double, 1> aView =
-    *((Concurrency::array_view<double, 1>*)(a));
-  Concurrency::array_view<double, 1> bView =
-    *((Concurrency::array_view<double, 1>*)(b));
-  Concurrency::array_view<double, 1> yView =
-    *((Concurrency::array_view<double, 1>*)(y));
-  Concurrency::array_view<int, 1> maskView =
-    *((Concurrency::array_view<int, 1>*)(mask));
+  hc::array_view<double, 1> aView =
+    *((hc::array_view<double, 1>*)(a));
+  hc::array_view<double, 1> bView =
+    *((hc::array_view<double, 1>*)(b));
+  hc::array_view<double, 1> yView =
+    *((hc::array_view<double, 1>*)(y));
+  hc::array_view<int, 1> maskView =
+    *((hc::array_view<int, 1>*)(mask));
 
-  Concurrency::extent<1> e(N);
+  hc::extent<1> e(N);
 
   parallel_for_each(
     e,
-    [=] (Concurrency::index<1> idx) restrict(amp){
+    [=] (hc::index<1> idx) __attribute__((hc, cpu)){
       double maxval = -FLT_MAX;
       int maxidx = -1;
       if (aView[idx] > bView[idx]) {
@@ -88,18 +86,18 @@ void MaxForward<double>(const int N, double* a, double* b,
 template <>
 void MaxBackward<float>(const int N, float* top_diff,
   int blob_idx, int* mask, float* bottom_diff) {
-  Concurrency::array_view<float, 1> top_diffView =
-    *((Concurrency::array_view<float, 1>*)(top_diff));
-  Concurrency::array_view<float, 1> bottom_diffView =
-    *((Concurrency::array_view<float, 1>*)(bottom_diff));
-  Concurrency::array_view<int, 1> maskView =
-    *((Concurrency::array_view<int, 1>*)(mask));
+  hc::array_view<float, 1> top_diffView =
+    *((hc::array_view<float, 1>*)(top_diff));
+  hc::array_view<float, 1> bottom_diffView =
+    *((hc::array_view<float, 1>*)(bottom_diff));
+  hc::array_view<int, 1> maskView =
+    *((hc::array_view<int, 1>*)(mask));
 
-  Concurrency::extent<1> e(N);
+  hc::extent<1> e(N);
 
   parallel_for_each(
     e,
-    [=] (Concurrency::index<1> idx) restrict(amp){
+    [=] (hc::index<1> idx) __attribute__((hc, cpu)){
       float gradient = 0;
       if (maskView[idx] == blob_idx) {
         gradient += top_diffView[idx];
@@ -111,18 +109,18 @@ void MaxBackward<float>(const int N, float* top_diff,
 template <>
 void MaxBackward<double>(const int N, double* top_diff,
   int blob_idx, int* mask, double* bottom_diff) {
-  Concurrency::array_view<double, 1> top_diffView =
-    *((Concurrency::array_view<double, 1>*)(top_diff));
-  Concurrency::array_view<double, 1> bottom_diffView =
-    *((Concurrency::array_view<double, 1>*)(bottom_diff));
-  Concurrency::array_view<int, 1> maskView =
-    *((Concurrency::array_view<int, 1>*)(mask));
+  hc::array_view<double, 1> top_diffView =
+    *((hc::array_view<double, 1>*)(top_diff));
+  hc::array_view<double, 1> bottom_diffView =
+    *((hc::array_view<double, 1>*)(bottom_diff));
+  hc::array_view<int, 1> maskView =
+    *((hc::array_view<int, 1>*)(mask));
 
-  Concurrency::extent<1> e(N);
+  hc::extent<1> e(N);
 
   parallel_for_each(
     e,
-    [=] (Concurrency::index<1> idx) restrict(amp){
+    [=] (hc::index<1> idx) __attribute__((hc, cpu)){
       double gradient = 0;
       if (maskView[idx] == blob_idx) {
         gradient += top_diffView[idx];

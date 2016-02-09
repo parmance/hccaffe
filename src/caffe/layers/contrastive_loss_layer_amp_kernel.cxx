@@ -1,9 +1,6 @@
 #include <algorithm>
 #include <vector>
-
-#include "amp.h"
-#include "amp_math.h"
-
+#include "hc.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/util/io.hpp"
 #include "caffe/util/math_functions.hpp"
@@ -32,20 +29,20 @@ void CLLForward<float>(const int N,
     float* dist_sq,
     float* bottom_diff) {
 
-  Concurrency::array_view<float, 1> yView =
-    *((Concurrency::array_view<float, 1>*)(y));
-  Concurrency::array_view<float, 1> diffView =
-    *((Concurrency::array_view<float, 1>*)(diff));
-  Concurrency::array_view<float, 1> dist_sqView =
-    *((Concurrency::array_view<float, 1>*)(dist_sq));
-  Concurrency::array_view<float, 1> bottom_diffView =
-    *((Concurrency::array_view<float, 1>*)(bottom_diff));
+  hc::array_view<float, 1> yView =
+    *((hc::array_view<float, 1>*)(y));
+  hc::array_view<float, 1> diffView =
+    *((hc::array_view<float, 1>*)(diff));
+  hc::array_view<float, 1> dist_sqView =
+    *((hc::array_view<float, 1>*)(dist_sq));
+  hc::array_view<float, 1> bottom_diffView =
+    *((hc::array_view<float, 1>*)(bottom_diff));
 
-  Concurrency::extent<1> e(N);
+  hc::extent<1> e(N);
 
   parallel_for_each(
     e,
-    [=](Concurrency::index<1> idx) restrict(amp){
+    [=](hc::index<1> idx) __attribute__((hc, cpu)){
       int n = idx[0] / channels;  // the num index, to access y and dist_sq
       if (static_cast<int>(yView[n])) {  // similar pairsS
         bottom_diffView[idx] = alpha * diffView[idx];
@@ -70,20 +67,20 @@ void CLLForward<double>(const int N,
     double* dist_sq,
     double* bottom_diff) {
 
-  Concurrency::array_view<double, 1> yView =
-    *((Concurrency::array_view<double, 1>*)(y));
-  Concurrency::array_view<double, 1> diffView =
-    *((Concurrency::array_view<double, 1>*)(diff));
-  Concurrency::array_view<double, 1> dist_sqView =
-    *((Concurrency::array_view<double, 1>*)(dist_sq));
-  Concurrency::array_view<double, 1> bottom_diffView =
-    *((Concurrency::array_view<double, 1>*)(bottom_diff));
+  hc::array_view<double, 1> yView =
+    *((hc::array_view<double, 1>*)(y));
+  hc::array_view<double, 1> diffView =
+    *((hc::array_view<double, 1>*)(diff));
+  hc::array_view<double, 1> dist_sqView =
+    *((hc::array_view<double, 1>*)(dist_sq));
+  hc::array_view<double, 1> bottom_diffView =
+    *((hc::array_view<double, 1>*)(bottom_diff));
 
-  Concurrency::extent<1> e(N);
+  hc::extent<1> e(N);
 
   parallel_for_each(
     e,
-    [=](Concurrency::index<1> idx) restrict(amp){
+    [=](hc::index<1> idx) __attribute__((hc, cpu)){
       int n = idx[0] / channels;  // the num index, to access y and dist_sq
       if (static_cast<int>(yView[n])) {  // similar pairsS
         bottom_diffView[idx] = alpha * diffView[idx];

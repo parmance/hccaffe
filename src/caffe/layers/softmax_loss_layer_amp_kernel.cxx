@@ -1,9 +1,7 @@
-#include <amp.h>
-#include <amp_math.h>
+#include <hc.hpp>
 #include <algorithm>
 #include <cfloat>
 #include <vector>
-
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
@@ -27,20 +25,20 @@ void SoftmaxLossForwardGPU(int N, const int nthreads,
                            const bool has_ignore_label_,
                            const int ignore_label_,
                            float* counts) {
-    Concurrency::array_view<float, 1> probDataView =
-      *((Concurrency::array_view<float, 1>*)(prob_data));
-    Concurrency::array_view<float, 1> labelView =
-      *((Concurrency::array_view<float, 1>*)(label));
-    Concurrency::array_view<float, 1> countsView =
-      *((Concurrency::array_view<float, 1>*)(counts));
-    Concurrency::array_view<float, 1> lossView =
-      *((Concurrency::array_view<float, 1>*)(loss));
+    hc::array_view<float, 1> probDataView =
+      *((hc::array_view<float, 1>*)(prob_data));
+    hc::array_view<float, 1> labelView =
+      *((hc::array_view<float, 1>*)(label));
+    hc::array_view<float, 1> countsView =
+      *((hc::array_view<float, 1>*)(counts));
+    hc::array_view<float, 1> lossView =
+      *((hc::array_view<float, 1>*)(loss));
 
-     Concurrency::extent<1> e(nthreads);
+     hc::extent<1> e(nthreads);
 
     parallel_for_each(
         e,
-    [=](Concurrency::index<1> idx) restrict(amp) {
+    [=](hc::index<1> idx) __attribute__((hc, cpu)) {
         const int n = idx[0] / spatial_dim;
         const int s = idx[0] % spatial_dim;
         float data_temp;
@@ -49,10 +47,10 @@ void SoftmaxLossForwardGPU(int N, const int nthreads,
             lossView[idx] = 0;
             countsView[idx] = 0;
         } else {
-            data_temp = Concurrency::fast_math::fmax(
+            data_temp = hc::fast_math::fmax(
             probDataView[n * dim + label_value * spatial_dim + s],
             static_cast<float>(FLT_MIN));
-            lossView[idx] = -Concurrency::fast_math::log(data_temp);
+            lossView[idx] = -hc::fast_math::log(data_temp);
             countsView[idx] = 1;
         }
     });
@@ -64,20 +62,20 @@ void SoftmaxLossForwardGPU(int N, const int nthreads,
                            const bool has_ignore_label_,
                            const int ignore_label_,
                            double* counts) {
-    Concurrency::array_view<double, 1> probDataView =
-      *((Concurrency::array_view<double, 1>*)(prob_data));
-    Concurrency::array_view<double, 1> labelView =
-      *((Concurrency::array_view<double, 1>*)(label));
-    Concurrency::array_view<double, 1> countsView =
-      *((Concurrency::array_view<double, 1>*)(counts));
-    Concurrency::array_view<double, 1> lossView =
-      *((Concurrency::array_view<double, 1>*)(loss));
+    hc::array_view<double, 1> probDataView =
+      *((hc::array_view<double, 1>*)(prob_data));
+    hc::array_view<double, 1> labelView =
+      *((hc::array_view<double, 1>*)(label));
+    hc::array_view<double, 1> countsView =
+      *((hc::array_view<double, 1>*)(counts));
+    hc::array_view<double, 1> lossView =
+      *((hc::array_view<double, 1>*)(loss));
 
-     Concurrency::extent<1> e(nthreads);
+     hc::extent<1> e(nthreads);
 
     parallel_for_each(
         e,
-    [=](Concurrency::index<1> idx) restrict(amp) {
+    [=](hc::index<1> idx) __attribute__((hc, cpu)) {
         const int n = idx[0] / spatial_dim;
         const int s = idx[0] % spatial_dim;
         double data_temp;
@@ -86,11 +84,11 @@ void SoftmaxLossForwardGPU(int N, const int nthreads,
             lossView[idx] = 0;
             countsView[idx] = 0;
         } else {
-            data_temp = Concurrency::fast_math::fmax(
+            data_temp = hc::fast_math::fmax(
               probDataView[n * dim + label_value * spatial_dim + s],
               static_cast<double>(FLT_MIN));
-            lossView[idx] = -Concurrency::fast_math::log(data_temp);
-            lossView[idx] = -Concurrency::fast_math::log(data_temp);
+            lossView[idx] = -hc::fast_math::log(data_temp);
+            lossView[idx] = -hc::fast_math::log(data_temp);
             countsView[idx] = 1;
         }
     });
@@ -103,17 +101,17 @@ void SoftmaxLossBackwardGPU(int N, const int nthreads,  float* top,
                             const int ignore_label_, float* counts) {
     const int channels = dim / spatial_dim;
 
-    Concurrency::array_view<float, 1> bottomDiffView =
-      *((Concurrency::array_view<float, 1>*)(bottom_diff));
-    Concurrency::array_view<float, 1> labelView =
-      *((Concurrency::array_view<float, 1>*)(label));
-    Concurrency::array_view<float, 1> countsView =
-      *((Concurrency::array_view<float, 1>*)(counts));
+    hc::array_view<float, 1> bottomDiffView =
+      *((hc::array_view<float, 1>*)(bottom_diff));
+    hc::array_view<float, 1> labelView =
+      *((hc::array_view<float, 1>*)(label));
+    hc::array_view<float, 1> countsView =
+      *((hc::array_view<float, 1>*)(counts));
 
-     Concurrency::extent<1> e(nthreads);
+     hc::extent<1> e(nthreads);
 
     parallel_for_each(e,
-                      [=](Concurrency::index<1> idx) restrict(amp){
+                      [=](hc::index<1> idx) __attribute__((hc, cpu)){
         const int n = idx[0] / spatial_dim;
         const int s = idx[0] % spatial_dim;
         const int label_value =
@@ -137,17 +135,17 @@ void SoftmaxLossBackwardGPU(int N, const int nthreads, double* top,
                             const int ignore_label_, double* counts) {
     const int channels = dim / spatial_dim;
 
-    Concurrency::array_view<double, 1> bottomDiffView =
-      *((Concurrency::array_view<double, 1>*)(bottom_diff));
-    Concurrency::array_view<double, 1> labelView =
-      *((Concurrency::array_view<double, 1>*)(label));
-    Concurrency::array_view<double, 1> countsView =
-      *((Concurrency::array_view<double, 1>*)(counts));
+    hc::array_view<double, 1> bottomDiffView =
+      *((hc::array_view<double, 1>*)(bottom_diff));
+    hc::array_view<double, 1> labelView =
+      *((hc::array_view<double, 1>*)(label));
+    hc::array_view<double, 1> countsView =
+      *((hc::array_view<double, 1>*)(counts));
 
-     Concurrency::extent<1> e(nthreads);
+     hc::extent<1> e(nthreads);
 
     parallel_for_each(e,
-                      [=](Concurrency::index<1> idx) restrict(amp){
+                      [=](hc::index<1> idx) __attribute__((hc, cpu)){
         const int n = idx[0] / spatial_dim;
         const int s = idx[0] % spatial_dim;
         const int label_value =

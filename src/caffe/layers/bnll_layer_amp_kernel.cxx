@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <vector>
-#include "amp.h"
-#include "amp_math.h"
+#include "hc.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
 
@@ -14,69 +13,69 @@ void BNLLBackward(const int n, Dtype* in_diff,
 
 template <>
 void BNLLForward(const int n, float* in, float* out) {
-  Concurrency::array_view<float, 1> inView =
-    *((Concurrency::array_view<float, 1>*)(in));
-  Concurrency::array_view<float, 1> outView =
-    *((Concurrency::array_view<float, 1>*)(out));
-  Concurrency::extent<1> e(n);
+  hc::array_view<float, 1> inView =
+    *((hc::array_view<float, 1>*)(in));
+  hc::array_view<float, 1> outView =
+    *((hc::array_view<float, 1>*)(out));
+  hc::extent<1> e(n);
     parallel_for_each(e,
-      [=](Concurrency::index<1> idx) restrict(amp){
+      [=](hc::index<1> idx) __attribute__((hc, cpu)){
       outView[idx] = inView[idx] > 0 ?
         inView[idx] +
-        Concurrency::fast_math::log(1. +
-          Concurrency::fast_math::exp(-inView[idx])) :
-        Concurrency::fast_math::log(1. +
-          Concurrency::fast_math::exp(inView[idx]));
+        hc::fast_math::log(1. +
+          hc::fast_math::exp(-inView[idx])) :
+        hc::fast_math::log(1. +
+          hc::fast_math::exp(inView[idx]));
     });
 }
 template <>
 void BNLLForward(const int n, double* in, double* out) {
-  Concurrency::array_view<double, 1> inView =
-    *((Concurrency::array_view<double, 1>*)(in));
-  Concurrency::array_view<double, 1> outView =
-    *((Concurrency::array_view<double, 1>*)(out));
-  Concurrency::extent<1> e(n);
+  hc::array_view<double, 1> inView =
+    *((hc::array_view<double, 1>*)(in));
+  hc::array_view<double, 1> outView =
+    *((hc::array_view<double, 1>*)(out));
+  hc::extent<1> e(n);
   parallel_for_each(e,
-    [=](Concurrency::index<1> idx) restrict(amp){
+    [=](hc::index<1> idx) __attribute__((hc, cpu)){
     outView[idx] = inView[idx] > 0 ?
     inView[idx] +
-    Concurrency::fast_math::log(1. +
-      Concurrency::fast_math::exp(-inView[idx])) :
-      Concurrency::fast_math::log(1. +
-      Concurrency::fast_math::exp(inView[idx]));
+    hc::fast_math::log(1. +
+      hc::fast_math::exp(-inView[idx])) :
+      hc::fast_math::log(1. +
+      hc::fast_math::exp(inView[idx]));
   });
 }
 template <>
 void BNLLBackward(const int n,  float* in_diff,
   float* in_data, float* out_diff) {
-  Concurrency::array_view<float, 1> inDiffView =
-    *((Concurrency::array_view<float, 1>*)(in_diff));
-  Concurrency::array_view<float, 1> inDataView =
-    *((Concurrency::array_view<float, 1>*)(in_data));
-  Concurrency::array_view<float, 1> outDiffView =
-    *((Concurrency::array_view<float, 1>*)(out_diff));
-  Concurrency::extent<1> e(n);
+  hc::array_view<float, 1> inDiffView =
+    *((hc::array_view<float, 1>*)(in_diff));
+  hc::array_view<float, 1> inDataView =
+    *((hc::array_view<float, 1>*)(in_data));
+  hc::array_view<float, 1> outDiffView =
+    *((hc::array_view<float, 1>*)(out_diff));
+  hc::extent<1> e(n);
   parallel_for_each(e,
-    [=](Concurrency::index<1> idx) restrict(amp){
-    float expval = Concurrency::fast_math::
-      exp(Concurrency::fast_math::fmin(inDataView[idx], kBNLL_THRESHOLD));
+    [=](hc::index<1> idx) __attribute__((hc, cpu)){
+    float expval = hc::fast_math::
+      exp(hc::fast_math::fmin(inDataView[idx], kBNLL_THRESHOLD));
     outDiffView[idx] = inDiffView[idx] * expval / (expval + 1.);
     });
 }
 template <>
 void BNLLBackward(const int n, double* in_diff,
   double* in_data, double* out_diff) {
-  Concurrency::array_view<double, 1> inDiffView =
-    *((Concurrency::array_view<double, 1>*)(in_diff));
-  Concurrency::array_view<double, 1> inDataView =
-    *((Concurrency::array_view<double, 1>*)(in_data));
-  Concurrency::array_view<double, 1> outDiffView =
-    *((Concurrency::array_view<double, 1>*)(out_diff));
-  Concurrency::extent<1> e(n);
+  hc::array_view<double, 1> inDiffView =
+    *((hc::array_view<double, 1>*)(in_diff));
+  hc::array_view<double, 1> inDataView =
+    *((hc::array_view<double, 1>*)(in_data));
+  hc::array_view<double, 1> outDiffView =
+    *((hc::array_view<double, 1>*)(out_diff));
+  hc::extent<1> e(n);
   parallel_for_each(e,
-  [=](Concurrency::index<1> idx) restrict(amp){
-  double expval = Concurrency::fast_math::exp
-    (Concurrency::fast_math::fmin(inDataView[idx], kBNLL_THRESHOLD));
+  [=](hc::index<1> idx) __attribute__((hc, cpu)){
+  double expval = hc::fast_math::exp
+    (hc::fast_math::fmin(inDataView[idx], kBNLL_THRESHOLD));
   outDiffView[idx] = inDiffView[idx] * expval / (expval + 1.);
   });
 }

@@ -1,11 +1,8 @@
 #include <vector>
-
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
-
-#include "amp.h"
-#include "amp_math.h"
+#include "hc.hpp"
 template <typename Dtype>
 void LRNFillScale(const int N, Dtype *in,
                   const int num, const int channels, const int height,
@@ -33,14 +30,14 @@ void LRNFillScale<float>(const int N, float *in,
                          const int width, const int size,
                          const float alpha_over_size,
                          const float k, float *scale, int count) {
-  concurrency::array_view<float, 1> inView =
-    *((Concurrency::array_view<float, 1> *)(in));
-  concurrency::array_view<float, 1> scaleView =
-    *((Concurrency::array_view<float, 1> *)(scale));
-  concurrency::extent<1> e(N);
+  hc::array_view<float, 1> inView =
+    *((hc::array_view<float, 1> *)(in));
+  hc::array_view<float, 1> scaleView =
+    *((hc::array_view<float, 1> *)(scale));
+  hc::extent<1> e(N);
   parallel_for_each(
     e,
-  [ = ](concurrency::index<1> idx) restrict(amp) {
+  [ = ](hc::index<1> idx) __attribute__((hc, cpu)) {
     int w = idx[0] % width;
     int h = (idx[0] / width) % height;
     int n = idx[0] / width / height;
@@ -90,14 +87,14 @@ void LRNFillScale<double>(const int N, double *in,
                           const int width, const int size,
                           const double alpha_over_size,
                           const double k, double *scale, int count) {
-  concurrency::array_view<double, 1> inView =
-    *((Concurrency::array_view<double, 1> *)(in));
-  concurrency::array_view<double, 1> scaleView =
-    *((Concurrency::array_view<double, 1> *)(scale));
-  concurrency::extent<1> e(N);
+  hc::array_view<double, 1> inView =
+    *((hc::array_view<double, 1> *)(in));
+  hc::array_view<double, 1> scaleView =
+    *((hc::array_view<double, 1> *)(scale));
+  hc::extent<1> e(N);
   parallel_for_each(
     e,
-  [ = ](concurrency::index<1> idx) restrict(amp) {
+  [ = ](hc::index<1> idx) __attribute__((hc, cpu)) {
     int w = idx[0] % width;
     int h = (idx[0] / width) % height;
     int n = idx[0] / width / height;
@@ -147,19 +144,19 @@ template <>
 void LRNComputeOutput<float>(const int N, float *in,
                              float *scale, const float negative_beta,
                              float *out, int count) {
-  concurrency::array_view<float, 1> inView =
-    *((Concurrency::array_view<float, 1> *)(in));
-  concurrency::array_view<float, 1> scaleView =
-    *((Concurrency::array_view<float, 1> *)(scale));
-  concurrency::array_view<float, 1> outView =
-    *((Concurrency::array_view<float, 1> *)(out));
-  concurrency::extent<1> e(N);
+  hc::array_view<float, 1> inView =
+    *((hc::array_view<float, 1> *)(in));
+  hc::array_view<float, 1> scaleView =
+    *((hc::array_view<float, 1> *)(scale));
+  hc::array_view<float, 1> outView =
+    *((hc::array_view<float, 1> *)(out));
+  hc::extent<1> e(N);
   parallel_for_each(
     e,
-  [ = ](concurrency::index<1> idx) restrict(amp) {
+  [ = ](hc::index<1> idx) __attribute__((hc, cpu)) {
     outView[idx] =
       inView[idx] *
-      Concurrency::fast_math::pow(scaleView[idx], negative_beta);
+      hc::fast_math::pow(scaleView[idx], negative_beta);
   });
 }
 
@@ -168,19 +165,19 @@ template <>
 void LRNComputeOutput<double>(const int N, double *in,
                               double *scale, const double negative_beta,
                               double *out, int count) {
-  concurrency::array_view<double, 1> inView =
-    *((Concurrency::array_view<double, 1> *)(in));
-  concurrency::array_view<double, 1> scaleView =
-    *((Concurrency::array_view<double, 1> *)(scale));
-  concurrency::array_view<double, 1> outView =
-    *((Concurrency::array_view<double, 1> *)(out));
-  concurrency::extent<1> e(N);
+  hc::array_view<double, 1> inView =
+    *((hc::array_view<double, 1> *)(in));
+  hc::array_view<double, 1> scaleView =
+    *((hc::array_view<double, 1> *)(scale));
+  hc::array_view<double, 1> outView =
+    *((hc::array_view<double, 1> *)(out));
+  hc::extent<1> e(N);
   parallel_for_each(
     e,
-  [ = ](concurrency::index<1> idx) restrict(amp) {
+  [ = ](hc::index<1> idx) __attribute__((hc, cpu)) {
     outView[idx] =
       inView[idx] *
-      Concurrency::fast_math::pow(
+      hc::fast_math::pow(
       scaleView[idx], negative_beta);
   });
 }
@@ -193,20 +190,20 @@ void LRNComputeDiff<float>(const int N, float *bottom_data,
                            const float negative_beta,
                            const float cache_ratio,
                            float *bottom_diff, int count) {
-  concurrency::array_view<float, 1> bottom_dataView =
-    *((Concurrency::array_view<float, 1> *)(bottom_data));
-  concurrency::array_view<float, 1> top_dataView =
-    *((Concurrency::array_view<float, 1> *)(top_data));
-  concurrency::array_view<float, 1> scaleView =
-    *((Concurrency::array_view<float, 1> *)(scale));
-  concurrency::array_view<float, 1> top_diffView  =
-    *((Concurrency::array_view<float, 1> *)(top_diff));
-  concurrency::array_view<float, 1> bottom_diffView =
-    *((Concurrency::array_view<float, 1> *)(bottom_diff));
-  concurrency::extent<1> e(N);
+  hc::array_view<float, 1> bottom_dataView =
+    *((hc::array_view<float, 1> *)(bottom_data));
+  hc::array_view<float, 1> top_dataView =
+    *((hc::array_view<float, 1> *)(top_data));
+  hc::array_view<float, 1> scaleView =
+    *((hc::array_view<float, 1> *)(scale));
+  hc::array_view<float, 1> top_diffView  =
+    *((hc::array_view<float, 1> *)(top_diff));
+  hc::array_view<float, 1> bottom_diffView =
+    *((hc::array_view<float, 1> *)(bottom_diff));
+  hc::extent<1> e(N);
   parallel_for_each(
     e,
-  [ = ](concurrency::index<1> idx) restrict(amp) {
+  [ = ](hc::index<1> idx) __attribute__((hc, cpu)) {
     int w = idx[0] % width;
     int h = (idx[0] / width) % height;
     int n = idx[0] / width / height;
@@ -237,7 +234,7 @@ void LRNComputeDiff<float>(const int N, float *bottom_data,
       }
       bottom_diffView[offset + (head - post_pad) * step] =
         top_diffView[offset+ (head - post_pad) * step] *
-        Concurrency::fast_math::pow(scaleView[offset +
+        hc::fast_math::pow(scaleView[offset +
         (head - post_pad) * step], negative_beta) -
         cache_ratio * bottom_dataView[offset +
         (head - post_pad) * step] *
@@ -254,7 +251,7 @@ void LRNComputeDiff<float>(const int N, float *bottom_data,
       }
       bottom_diffView[offset + (head - post_pad) * step] =
         top_diffView[offset + (head - post_pad) * step] *
-        Concurrency::fast_math::pow(scaleView[offset +
+        hc::fast_math::pow(scaleView[offset +
         (head - post_pad) * step], negative_beta) - cache_ratio *
         bottom_dataView[offset + (head - post_pad) *
         step] * accum_ratio;
@@ -271,20 +268,20 @@ void LRNComputeDiff<double>(const int N, double *bottom_data,
                             const double negative_beta,
                             const double cache_ratio,
                             double *bottom_diff, int count) {
-  concurrency::array_view<double, 1> bottom_dataView =
-    *((Concurrency::array_view<double, 1> *)(bottom_data));
-  concurrency::array_view<double, 1> top_dataView =
-    *((Concurrency::array_view<double, 1> *)(top_data));
-  concurrency::array_view<double, 1> scaleView =
-    *((Concurrency::array_view<double, 1> *)(scale));
-  concurrency::array_view<double, 1> top_diffView =
-    *((Concurrency::array_view<double, 1> *)(top_diff));
-  concurrency::array_view<double, 1> bottom_diffView =
-    *((Concurrency::array_view<double, 1> *)(bottom_diff));
-  concurrency::extent<1> e(N);
+  hc::array_view<double, 1> bottom_dataView =
+    *((hc::array_view<double, 1> *)(bottom_data));
+  hc::array_view<double, 1> top_dataView =
+    *((hc::array_view<double, 1> *)(top_data));
+  hc::array_view<double, 1> scaleView =
+    *((hc::array_view<double, 1> *)(scale));
+  hc::array_view<double, 1> top_diffView =
+    *((hc::array_view<double, 1> *)(top_diff));
+  hc::array_view<double, 1> bottom_diffView =
+    *((hc::array_view<double, 1> *)(bottom_diff));
+  hc::extent<1> e(N);
   parallel_for_each(
     e,
-  [ = ](concurrency::index<1> idx) restrict(amp) {
+  [ = ](hc::index<1> idx) __attribute__((hc, cpu)) {
     int w = idx[0] % width;
     int h = (idx[0] / width) % height;
     int n = idx[0] / width / height;
@@ -316,7 +313,7 @@ void LRNComputeDiff<double>(const int N, double *bottom_data,
       }
       bottom_diffView[offset + (head- post_pad)* step] =
         top_diffView[offset +(head - post_pad) * step] *
-        Concurrency::fast_math::pow(scaleView[offset +
+        hc::fast_math::pow(scaleView[offset +
         (head - post_pad) * step], negative_beta) -
         cache_ratio * bottom_dataView[offset +
         (head - post_pad) * step] * accum_ratio;
@@ -332,7 +329,7 @@ void LRNComputeDiff<double>(const int N, double *bottom_data,
       }
       bottom_diffView[offset + (head - post_pad) * step] =
         top_diffView[offset +(head - post_pad) * step] *
-        Concurrency::fast_math::pow(scaleView[offset +
+        hc::fast_math::pow(scaleView[offset +
         (head - post_pad) * step],
         negative_beta) - cache_ratio *
         bottom_dataView[offset + (head - post_pad) *

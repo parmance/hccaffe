@@ -1,5 +1,4 @@
-#include <amp.h>
-#include <amp_math.h>
+#include <hc.hpp>
 #include <algorithm>
 #include <cfloat>
 #include <vector>
@@ -73,19 +72,19 @@ void MaxPoolForward(int top_count, int boottom_count, float *bottom_data,
                     const int stride_w, const int pad_h,
                     const int pad_w, float *top_data,
                     int *mask, float *top_mask) {
-  Concurrency::array_view<float, 1> bottomDataView =
-    *((Concurrency::array_view<float, 1> *)(bottom_data));
-  Concurrency::array_view<float, 1> topDataView =
-    *((Concurrency::array_view<float, 1> *)(top_data));
+  hc::array_view<float, 1> bottomDataView =
+    *((hc::array_view<float, 1> *)(bottom_data));
+  hc::array_view<float, 1> topDataView =
+    *((hc::array_view<float, 1> *)(top_data));
   bool maskTag = (mask == NULL ? false : true);
 
   if (maskTag) {
     //     delte maskView;
-    Concurrency::array_view<int, 1>  maskView =
-      *((Concurrency::array_view<int, 1> *)(mask));
+    hc::array_view<int, 1>  maskView =
+      *((hc::array_view<int, 1> *)(mask));
     parallel_for_each(
       topDataView.get_extent(),
-      [=](Concurrency::index<1> idx) restrict(amp) {
+      [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int pw = index % pooled_width;
       int ph = (index / pooled_width) % pooled_height;
@@ -93,10 +92,10 @@ void MaxPoolForward(int top_count, int boottom_count, float *bottom_data,
       int n = index / pooled_width / pooled_height / channels;
       int hstart = ph * stride_h - pad_h;
       int wstart = pw * stride_w - pad_w;
-      int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
-      int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
-      hstart = Concurrency::fast_math::fmax(hstart, 0);
-      wstart = Concurrency::fast_math::fmax(wstart, 0);
+      int hend = hc::fast_math::fmin(hstart + kernel_h, height);
+      int wend = hc::fast_math::fmin(wstart + kernel_w, width);
+      hstart = hc::fast_math::fmax(hstart, 0);
+      wstart = hc::fast_math::fmax(wstart, 0);
       float maxval = -FLT_MAX;
       double maxidx = -1;
       int locan = (n * channels + c) * height * width;
@@ -112,11 +111,11 @@ void MaxPoolForward(int top_count, int boottom_count, float *bottom_data,
       maskView[index] = maxidx;
     });
   } else {
-    Concurrency::array_view<float, 1> topMaskView =
-      *((Concurrency::array_view<float, 1> *)(top_mask));
+    hc::array_view<float, 1> topMaskView =
+      *((hc::array_view<float, 1> *)(top_mask));
     parallel_for_each(
       topDataView.get_extent(),
-      [=](Concurrency::index<1> idx) restrict(amp) {
+      [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int pw = index % pooled_width;
       int ph = (index / pooled_width) % pooled_height;
@@ -124,10 +123,10 @@ void MaxPoolForward(int top_count, int boottom_count, float *bottom_data,
       int n = index / pooled_width / pooled_height / channels;
       int hstart = ph * stride_h - pad_h;
       int wstart = pw * stride_w - pad_w;
-      int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
-      int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
-      hstart = Concurrency::fast_math::fmax(hstart, 0);
-      wstart = Concurrency::fast_math::fmax(wstart, 0);
+      int hend = hc::fast_math::fmin(hstart + kernel_h, height);
+      int wend = hc::fast_math::fmin(wstart + kernel_w, width);
+      hstart = hc::fast_math::fmax(hstart, 0);
+      wstart = hc::fast_math::fmax(wstart, 0);
       float maxval = -FLT_MAX;
       double maxidx = -1;
       int locan = (n * channels + c) * height * width;
@@ -154,17 +153,17 @@ void MaxPoolForward(int top_count,  int boottom_count, double *bottom_data,
                     const int stride_w, const int pad_h, const int pad_w,
                     double *top_data,
                     int *mask, double *top_mask) {
-  Concurrency::array_view<double, 1> bottomDataView =
-    *((Concurrency::array_view<double, 1> *)(bottom_data));
-  Concurrency::array_view<double, 1> topDataView =
-    *((Concurrency::array_view<double, 1> *)(top_data));
+  hc::array_view<double, 1> bottomDataView =
+    *((hc::array_view<double, 1> *)(bottom_data));
+  hc::array_view<double, 1> topDataView =
+    *((hc::array_view<double, 1> *)(top_data));
   bool maskTag = (mask == NULL ? false : true);
   if (maskTag) {
-    Concurrency::array_view<int, 1> maskView =
-      *((Concurrency::array_view<int, 1> *)(mask));
+    hc::array_view<int, 1> maskView =
+      *((hc::array_view<int, 1> *)(mask));
     parallel_for_each(
       topDataView.get_extent(),
-      [=](Concurrency::index<1> idx) restrict(amp) {
+      [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int pw = index % pooled_width;
       int ph = (index / pooled_width) % pooled_height;
@@ -172,10 +171,10 @@ void MaxPoolForward(int top_count,  int boottom_count, double *bottom_data,
       int n = index / pooled_width / pooled_height / channels;
       int hstart = ph * stride_h - pad_h;
       int wstart = pw * stride_w - pad_w;
-      int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
-      int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
-      hstart = Concurrency::fast_math::fmax(hstart, 0);
-      wstart = Concurrency::fast_math::fmax(wstart, 0);
+      int hend = hc::fast_math::fmin(hstart + kernel_h, height);
+      int wend = hc::fast_math::fmin(wstart + kernel_w, width);
+      hstart = hc::fast_math::fmax(hstart, 0);
+      wstart = hc::fast_math::fmax(wstart, 0);
       double maxval = -FLT_MAX;
       double maxidx = -1;
       int locan = (n * channels + c) * height * width;
@@ -191,11 +190,11 @@ void MaxPoolForward(int top_count,  int boottom_count, double *bottom_data,
       maskView[index] = maxidx;
     });
   } else {
-    Concurrency::array_view<double, 1>    topMaskView =
-      *((Concurrency::array_view<double, 1> *)(top_mask));
+    hc::array_view<double, 1>    topMaskView =
+      *((hc::array_view<double, 1> *)(top_mask));
     parallel_for_each(
       topDataView.get_extent(),
-      [=](Concurrency::index<1> idx) restrict(amp) {
+      [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int pw = index % pooled_width;
       int ph = (index / pooled_width) % pooled_height;
@@ -203,10 +202,10 @@ void MaxPoolForward(int top_count,  int boottom_count, double *bottom_data,
       int n = index / pooled_width / pooled_height / channels;
       int hstart = ph * stride_h - pad_h;
       int wstart = pw * stride_w - pad_w;
-      int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
-      int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
-      hstart = Concurrency::fast_math::fmax(hstart, 0);
-      wstart = Concurrency::fast_math::fmax(wstart, 0);
+      int hend = hc::fast_math::fmin(hstart + kernel_h, height);
+      int wend = hc::fast_math::fmin(wstart + kernel_w, width);
+      hstart = hc::fast_math::fmax(hstart, 0);
+      wstart = hc::fast_math::fmax(wstart, 0);
       double maxval = -FLT_MAX;
       double maxidx = -1;
       int locan = (n * channels + c) * height * width;
@@ -231,13 +230,13 @@ void AvePoolForward(int top_count, int boottom_count, float *bottom_data,
                     const int kernel_h, const int kernel_w, const int stride_h,
                     const int stride_w, const int pad_h, const int pad_w,
                     float *top_data) {
-  Concurrency::array_view<float, 1> bottomDataView =
-    *((Concurrency::array_view<float, 1> *)(bottom_data));
-  Concurrency::array_view<float, 1> topDataView =
-    *((Concurrency::array_view<float, 1> *)(top_data));
+  hc::array_view<float, 1> bottomDataView =
+    *((hc::array_view<float, 1> *)(bottom_data));
+  hc::array_view<float, 1> topDataView =
+    *((hc::array_view<float, 1> *)(top_data));
   parallel_for_each(
     topDataView.get_extent(),
-    [=](Concurrency::index<1> idx) restrict(amp) {
+    [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int pw = index % pooled_width;
     int ph = (index / pooled_width) % pooled_height;
@@ -245,13 +244,13 @@ void AvePoolForward(int top_count, int boottom_count, float *bottom_data,
     int n = index / pooled_width / pooled_height / channels;
     int hstart = ph * stride_h - pad_h;
     int wstart = pw * stride_w - pad_w;
-    int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height + pad_h);
-    int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width + pad_w);
+    int hend = hc::fast_math::fmin(hstart + kernel_h, height + pad_h);
+    int wend = hc::fast_math::fmin(wstart + kernel_w, width + pad_w);
     int pool_size = (hend - hstart) * (wend - wstart);
-    hstart = Concurrency::fast_math::fmax(hstart, 0);
-    wstart = Concurrency::fast_math::fmax(wstart, 0);
-    hend =  Concurrency::fast_math::fmin(hend, height);
-    wend =  Concurrency::fast_math::fmin(wend, width);
+    hstart = hc::fast_math::fmax(hstart, 0);
+    wstart = hc::fast_math::fmax(wstart, 0);
+    hend =  hc::fast_math::fmin(hend, height);
+    wend =  hc::fast_math::fmin(wend, width);
     float aveval = 0;
     int bottom_count = (n * channels + c) * height * width;
     for (int h = hstart; h < hend; ++h) {
@@ -271,13 +270,13 @@ void AvePoolForward(int top_count, int boottom_count, double *bottom_data,
                     const int stride_h,
                     const int stride_w, const int pad_h,
                     const int pad_w, double *top_data) {
-  Concurrency::array_view<double, 1> bottomDataView =
-    *((Concurrency::array_view<double, 1> *)(bottom_data));
-  Concurrency::array_view<double, 1> topDataView =
-    *((Concurrency::array_view<double, 1> *)(top_data));
+  hc::array_view<double, 1> bottomDataView =
+    *((hc::array_view<double, 1> *)(bottom_data));
+  hc::array_view<double, 1> topDataView =
+    *((hc::array_view<double, 1> *)(top_data));
   parallel_for_each(
     topDataView.get_extent(),
-    [=](Concurrency::index<1> idx) restrict(amp) {
+    [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int pw = index % pooled_width;
     int ph = (index / pooled_width) % pooled_height;
@@ -285,13 +284,13 @@ void AvePoolForward(int top_count, int boottom_count, double *bottom_data,
     int n = index / pooled_width / pooled_height / channels;
     int hstart = ph * stride_h - pad_h;
     int wstart = pw * stride_w - pad_w;
-    int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height + pad_h);
-    int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width + pad_w);
+    int hend = hc::fast_math::fmin(hstart + kernel_h, height + pad_h);
+    int wend = hc::fast_math::fmin(wstart + kernel_w, width + pad_w);
     int pool_size = (hend - hstart) * (wend - wstart);
-    hstart = Concurrency::fast_math::fmax(hstart, 0);
-    wstart = Concurrency::fast_math::fmax(wstart, 0);
-    hend = Concurrency::fast_math::fmin(hend, height);
-    wend = Concurrency::fast_math::fmin(wend, width);
+    hstart = hc::fast_math::fmax(hstart, 0);
+    wstart = hc::fast_math::fmax(wstart, 0);
+    hend = hc::fast_math::fmin(hend, height);
+    wend = hc::fast_math::fmin(wend, width);
     double aveval = 0;
     int bottom_count = (n * channels + c) * height * width;
     for (int h = hstart; h < hend; ++h) {
@@ -313,24 +312,24 @@ void StoPoolForwardTrain(int top_count, int boottom_count,
                          const int stride_h,
                          const int stride_w, float *rand_idx,
                          float *top_data) {
-  Concurrency::array_view<float, 1> bottomDataView =
-    *((Concurrency::array_view<float, 1> *)(bottom_data));
-  Concurrency::array_view<float, 1> randIdxView =
-    *((Concurrency::array_view<float, 1> *)(rand_idx));
-  Concurrency::array_view<float, 1> topDataView =
-    *((Concurrency::array_view<float, 1> *)(top_data));
+  hc::array_view<float, 1> bottomDataView =
+    *((hc::array_view<float, 1> *)(bottom_data));
+  hc::array_view<float, 1> randIdxView =
+    *((hc::array_view<float, 1> *)(rand_idx));
+  hc::array_view<float, 1> topDataView =
+    *((hc::array_view<float, 1> *)(top_data));
   parallel_for_each(
     topDataView.get_extent(),
-  [ = ](Concurrency::index<1> idx) restrict(amp) {
+  [ = ](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int pw = index % pooled_width;
     int ph = (index / pooled_width) % pooled_height;
     int c = (index / pooled_width / pooled_height) % channels;
     int n = index / pooled_width / pooled_height / channels;
     int hstart = ph * stride_h;
-    int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
+    int hend = hc::fast_math::fmin(hstart + kernel_h, height);
     int wstart = pw * stride_w;
-    int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
+    int wend = hc::fast_math::fmin(wstart + kernel_w, width);
     float cumsum = 0;
     int bottom_count = (n * channels + c) * height * width;
     // First pass: get sum
@@ -366,24 +365,24 @@ void StoPoolForwardTrain(int top_count, int boottom_count,
                          const int stride_w,
                          double *rand_idx,
                          double *top_data) {
-  Concurrency::array_view<double, 1> bottomDataView =
-    *((Concurrency::array_view<double, 1> *)(bottom_data));
-  Concurrency::array_view<double, 1> randIdxView =
-    *((Concurrency::array_view<double, 1> *)(rand_idx));
-  Concurrency::array_view<double, 1> topDataView =
-    *((Concurrency::array_view<double, 1> *)(top_data));
+  hc::array_view<double, 1> bottomDataView =
+    *((hc::array_view<double, 1> *)(bottom_data));
+  hc::array_view<double, 1> randIdxView =
+    *((hc::array_view<double, 1> *)(rand_idx));
+  hc::array_view<double, 1> topDataView =
+    *((hc::array_view<double, 1> *)(top_data));
   parallel_for_each(
     topDataView.get_extent(),
-    [=](Concurrency::index<1> idx) restrict(amp) {
+    [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int pw = index % pooled_width;
     int ph = (index / pooled_width) % pooled_height;
     int c = (index / pooled_width / pooled_height) % channels;
     int n = index / pooled_width / pooled_height / channels;
     int hstart = ph * stride_h;
-    int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
+    int hend = hc::fast_math::fmin(hstart + kernel_h, height);
     int wstart = pw * stride_w;
-    int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
+    int wend = hc::fast_math::fmin(wstart + kernel_w, width);
     double cumsum = 0;
     int bottom_count = (n * channels + c) * height * width;
     // First pass: get sum
@@ -419,22 +418,22 @@ void StoPoolForwardTest(int top_count, int boottom_count,
                         const int kernel_h, const int kernel_w,
                         const int stride_h,
                         const int stride_w, float *top_data) {
-  Concurrency::array_view<float, 1> bottomDataView =
-    *((Concurrency::array_view<float, 1> *)(bottom_data));
-  Concurrency::array_view<float, 1> topDataView =
-    *((Concurrency::array_view<float, 1> *)(top_data));
+  hc::array_view<float, 1> bottomDataView =
+    *((hc::array_view<float, 1> *)(bottom_data));
+  hc::array_view<float, 1> topDataView =
+    *((hc::array_view<float, 1> *)(top_data));
   parallel_for_each(
     topDataView.get_extent(),
-    [=](Concurrency::index<1> idx) restrict(amp) {
+    [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int pw = index % pooled_width;
     int ph = (index / pooled_width) % pooled_height;
     int c = (index / pooled_width / pooled_height) % channels;
     int n = index / pooled_width / pooled_height / channels;
     int hstart = ph * stride_h;
-    int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
+    int hend = hc::fast_math::fmin(hstart + kernel_h, height);
     int wstart = pw * stride_w;
-    int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
+    int wend = hc::fast_math::fmin(wstart + kernel_w, width);
     // We set cumsum to be 0 to avoid divide-by-zero problems
     float cumsum = FLT_MIN;
     float cumvalues = 0.;
@@ -460,22 +459,22 @@ void StoPoolForwardTest(int top_count, int boottom_count,
                         const int kernel_h, const int kernel_w,
                         const int stride_h,
                         const int stride_w, double *top_data) {
-  Concurrency::array_view<double, 1> bottomDataView =
-    *((Concurrency::array_view<double, 1> *)(bottom_data));
-  Concurrency::array_view<double, 1> topDataView =
-    *((Concurrency::array_view<double, 1> *)(top_data));
+  hc::array_view<double, 1> bottomDataView =
+    *((hc::array_view<double, 1> *)(bottom_data));
+  hc::array_view<double, 1> topDataView =
+    *((hc::array_view<double, 1> *)(top_data));
   parallel_for_each(
     topDataView.get_extent(),
-    [=](Concurrency::index<1> idx) restrict(amp) {
+    [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int pw = index % pooled_width;
     int ph = (index / pooled_width) % pooled_height;
     int c = (index / pooled_width / pooled_height) % channels;
     int n = index / pooled_width / pooled_height / channels;
     int hstart = ph * stride_h;
-    int hend = Concurrency::fast_math::fmin(hstart + kernel_h, height);
+    int hend = hc::fast_math::fmin(hstart + kernel_h, height);
     int wstart = pw * stride_w;
-    int wend = Concurrency::fast_math::fmin(wstart + kernel_w, width);
+    int wend = hc::fast_math::fmin(wstart + kernel_w, width);
     // We set cumsum to be 0 to avoid divide-by-zero problems
     double cumsum = FLT_MIN;
     double cumvalues = 0.;
@@ -502,17 +501,17 @@ void MaxPoolBackward(int top_count, int boottom_count, float *top_diff,
                      const int stride_h, const int stride_w,
                      const int pad_h, const int pad_w,
                      float *bottom_diff) {
-  Concurrency::array_view<float, 1> bottomDiffView =
-    *((Concurrency::array_view<float, 1> *)(bottom_diff));
-  Concurrency::array_view<float, 1> topDiffView =
-    *((Concurrency::array_view<float, 1> *)(top_diff));
+  hc::array_view<float, 1> bottomDiffView =
+    *((hc::array_view<float, 1> *)(bottom_diff));
+  hc::array_view<float, 1> topDiffView =
+    *((hc::array_view<float, 1> *)(top_diff));
   bool maskTag = (mask == NULL ? false : true);
   if (maskTag) {
-    Concurrency::array_view<int, 1>  maskView =
-      *((Concurrency::array_view<int, 1> *)(mask));
+    hc::array_view<int, 1>  maskView =
+      *((hc::array_view<int, 1> *)(mask));
     parallel_for_each(
       bottomDiffView.get_extent(),
-      [=](Concurrency::index<1> idx) restrict(amp) {
+      [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int w = index % width;
       int h = (index / width) % height;
@@ -521,12 +520,12 @@ void MaxPoolBackward(int top_count, int boottom_count, float *top_diff,
       int phstart =
         (h + pad_h < kernel_h) ? 0 : (h + pad_h - kernel_h) / stride_h + 1;
       int phend =
-        Concurrency::fast_math::fmin((h + pad_h) /
+        hc::fast_math::fmin((h + pad_h) /
         stride_h + 1, pooled_height);
       int pwstart =
         (w + pad_w < kernel_w) ? 0 : (w + pad_w - kernel_w) / stride_w + 1;
       int pwend =
-        Concurrency::fast_math::fmin((w + pad_w) /
+        hc::fast_math::fmin((w + pad_w) /
         stride_w + 1, pooled_width);
       float gradient = 0;
       int offset = (n * channels + c) * pooled_height * pooled_width;
@@ -544,11 +543,11 @@ void MaxPoolBackward(int top_count, int boottom_count, float *top_diff,
     });
 
   } else {
-    Concurrency::array_view<float, 1>  topMaskView =
-      *((Concurrency::array_view<float, 1> *)(top_mask));
+    hc::array_view<float, 1>  topMaskView =
+      *((hc::array_view<float, 1> *)(top_mask));
     parallel_for_each(
       bottomDiffView.get_extent(),
-      [=](Concurrency::index<1> idx) restrict(amp) {
+      [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int w = index % width;
       int h = (index / width) % height;
@@ -557,12 +556,12 @@ void MaxPoolBackward(int top_count, int boottom_count, float *top_diff,
       int phstart =
         (h + pad_h < kernel_h) ? 0 : (h + pad_h - kernel_h) / stride_h + 1;
       int phend =
-        Concurrency::fast_math::fmin((h + pad_h) /
+        hc::fast_math::fmin((h + pad_h) /
         stride_h + 1, pooled_height);
       int pwstart =
         (w + pad_w < kernel_w) ? 0 : (w + pad_w - kernel_w) / stride_w + 1;
       int pwend =
-        Concurrency::fast_math::fmin((w + pad_w) /
+        hc::fast_math::fmin((w + pad_w) /
         stride_w + 1, pooled_width);
       float gradient = 0;
       int offset =
@@ -593,17 +592,17 @@ void MaxPoolBackward(int top_count, int boottom_count, double *top_diff,
                      const int stride_h, const int stride_w,
                      const int pad_h, const int pad_w,
                      double *bottom_diff) {
-  Concurrency::array_view<double, 1> bottomDiffView =
-    *((Concurrency::array_view<double, 1> *)(bottom_diff));
-  Concurrency::array_view<double, 1> topDiffView =
-    *((Concurrency::array_view<double, 1> *)(top_diff));
+  hc::array_view<double, 1> bottomDiffView =
+    *((hc::array_view<double, 1> *)(bottom_diff));
+  hc::array_view<double, 1> topDiffView =
+    *((hc::array_view<double, 1> *)(top_diff));
   bool maskTag = (mask == NULL ? false : true);
   if (maskTag) {
-    Concurrency::array_view<int, 1> maskView =
-      *((Concurrency::array_view<int, 1> *)(mask));
+    hc::array_view<int, 1> maskView =
+      *((hc::array_view<int, 1> *)(mask));
     parallel_for_each(
       bottomDiffView.get_extent(),
-      [=](Concurrency::index<1> idx) restrict(amp) {
+      [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int w = index % width;
       int h = (index / width) % height;
@@ -612,11 +611,11 @@ void MaxPoolBackward(int top_count, int boottom_count, double *top_diff,
       int phstart =
         (h + pad_h < kernel_h) ? 0 : (h + pad_h - kernel_h) / stride_h + 1;
       int phend =
-        Concurrency::fast_math::fmin((h + pad_h) /
+        hc::fast_math::fmin((h + pad_h) /
         stride_h + 1, pooled_height);
       int pwstart =
         (w + pad_w < kernel_w) ? 0 : (w + pad_w - kernel_w) / stride_w + 1;
-      int pwend = Concurrency::fast_math::fmin((w + pad_w) /
+      int pwend = hc::fast_math::fmin((w + pad_w) /
         stride_w + 1, pooled_width);
       double gradient = 0;
       int offset = (n * channels + c) * pooled_height * pooled_width;
@@ -633,11 +632,11 @@ void MaxPoolBackward(int top_count, int boottom_count, double *top_diff,
       bottomDiffView[index] = gradient;
     });
   } else {
-    Concurrency::array_view<double, 1>  topMaskView =
-      *((Concurrency::array_view<double, 1> *)(top_mask));
+    hc::array_view<double, 1>  topMaskView =
+      *((hc::array_view<double, 1> *)(top_mask));
     parallel_for_each(
       bottomDiffView.get_extent(),
-    [ = ](Concurrency::index<1> idx) restrict(amp) {
+    [ = ](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int w = index % width;
       int h = (index / width) % height;
@@ -646,12 +645,12 @@ void MaxPoolBackward(int top_count, int boottom_count, double *top_diff,
       int phstart =
         (h + pad_h < kernel_h) ? 0 : (h + pad_h - kernel_h) / stride_h + 1;
       int phend =
-        Concurrency::fast_math::fmin((h + pad_h) /
+        hc::fast_math::fmin((h + pad_h) /
         stride_h + 1, pooled_height);
       int pwstart =
         (w + pad_w < kernel_w) ? 0 : (w + pad_w - kernel_w) / stride_w + 1;
       int pwend =
-        Concurrency::fast_math::fmin((w + pad_w) /
+        hc::fast_math::fmin((w + pad_w) /
         stride_w + 1, pooled_width);
       double gradient = 0;
       int offset = (n * channels + c) * pooled_height * pooled_width;
@@ -680,13 +679,13 @@ void AvePoolBackward(int top_count, int boottom_count,
                      const int stride_h,
                      const int stride_w, const int pad_h, const int pad_w,
                      float *bottom_diff) {
-  Concurrency::array_view<float, 1> bottomDiffView =
-    *((Concurrency::array_view<float, 1> *)(bottom_diff));
-  Concurrency::array_view<float, 1> topDiffView =
-    *((Concurrency::array_view<float, 1> *)(top_diff));
+  hc::array_view<float, 1> bottomDiffView =
+    *((hc::array_view<float, 1> *)(bottom_diff));
+  hc::array_view<float, 1> topDiffView =
+    *((hc::array_view<float, 1> *)(top_diff));
   parallel_for_each(
     bottomDiffView.get_extent(),
-    [=](Concurrency::index<1> idx) restrict(amp) {
+    [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int w = index % width + pad_w;
     int h = (index / width) % height + pad_h;
@@ -694,10 +693,10 @@ void AvePoolBackward(int top_count, int boottom_count,
     int n = index / width / height / channels;
     int phstart = (h < kernel_h) ? 0 : (h - kernel_h) / stride_h + 1;
     int phend =
-      Concurrency::fast_math::fmin(h / stride_h + 1, pooled_height);
+      hc::fast_math::fmin(h / stride_h + 1, pooled_height);
     int pwstart = (w < kernel_w) ? 0 : (w - kernel_w) / stride_w + 1;
     int pwend =
-      Concurrency::fast_math::fmin(w / stride_w + 1, pooled_width);
+      hc::fast_math::fmin(w / stride_w + 1, pooled_width);
     float gradient = 0;
     int top_diff_count =
       (n * channels + c) * pooled_height * pooled_width;
@@ -706,9 +705,9 @@ void AvePoolBackward(int top_count, int boottom_count,
         int hstart = ph * stride_h - pad_h;
         int wstart = pw * stride_w - pad_w;
         int hend =
-          Concurrency::fast_math::fmin(hstart + kernel_h, height + pad_h);
+          hc::fast_math::fmin(hstart + kernel_h, height + pad_h);
         int wend =
-          Concurrency::fast_math::fmin(wstart + kernel_w, width + pad_w);
+          hc::fast_math::fmin(wstart + kernel_w, width + pad_w);
         int pool_size = (hend - hstart) * (wend - wstart);
         gradient +=
           topDiffView[top_diff_count + ph * pooled_width + pw] / pool_size;
@@ -726,22 +725,22 @@ void AvePoolBackward(int top_count, int boottom_count, double *top_diff,
                      const int stride_h,
                      const int stride_w, const int pad_h, const int pad_w,
                      double *bottom_diff) {
-  Concurrency::array_view<double, 1> bottomDiffView =
-    *((Concurrency::array_view<double, 1> *)(bottom_diff));
-  Concurrency::array_view<double, 1> topDiffView =
-    *((Concurrency::array_view<double, 1> *)(top_diff));
+  hc::array_view<double, 1> bottomDiffView =
+    *((hc::array_view<double, 1> *)(bottom_diff));
+  hc::array_view<double, 1> topDiffView =
+    *((hc::array_view<double, 1> *)(top_diff));
   parallel_for_each(
     bottomDiffView.get_extent(),
-    [=](Concurrency::index<1> idx) restrict(amp) {
+    [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int w = index % width + pad_w;
     int h = (index / width) % height + pad_h;
     int c = (index / width / height) % channels;
     int n = index / width / height / channels;
     int phstart = (h < kernel_h) ? 0 : (h - kernel_h) / stride_h + 1;
-    int phend = Concurrency::fast_math::fmin(h / stride_h + 1, pooled_height);
+    int phend = hc::fast_math::fmin(h / stride_h + 1, pooled_height);
     int pwstart = (w < kernel_w) ? 0 : (w - kernel_w) / stride_w + 1;
-    int pwend = Concurrency::fast_math::fmin(w / stride_w + 1, pooled_width);
+    int pwend = hc::fast_math::fmin(w / stride_w + 1, pooled_width);
     double gradient = 0;
     int top_diff_count = (n * channels + c) * pooled_height * pooled_width;
     for (int ph = phstart; ph < phend; ++ph) {
@@ -749,9 +748,9 @@ void AvePoolBackward(int top_count, int boottom_count, double *top_diff,
         int hstart = ph * stride_h - pad_h;
         int wstart = pw * stride_w - pad_w;
         int hend =
-          Concurrency::fast_math::fmin(hstart + kernel_h, height + pad_h);
+          hc::fast_math::fmin(hstart + kernel_h, height + pad_h);
         int wend =
-          Concurrency::fast_math::fmin(wstart + kernel_w, width + pad_w);
+          hc::fast_math::fmin(wstart + kernel_w, width + pad_w);
         int pool_size = (hend - hstart) * (wend - wstart);
         gradient +=
           topDiffView[top_diff_count + ph * pooled_width + pw] / pool_size;
@@ -770,24 +769,24 @@ void StoPoolBackward(int top_count, int boottom_count,
                      const int kernel_h, const int kernel_w,
                      const int stride_h,
                      const int stride_w, float *bottom_diff) {
-  Concurrency::array_view<float, 1> bottomDiffView =
-    *((Concurrency::array_view<float, 1> *)(bottom_diff));
-  Concurrency::array_view<float, 1> randIdxView =
-    *((Concurrency::array_view<float, 1> *)(rand_idx));
-  Concurrency::array_view<float, 1> topDiffView =
-    *((Concurrency::array_view<float, 1> *)(top_diff));
+  hc::array_view<float, 1> bottomDiffView =
+    *((hc::array_view<float, 1> *)(bottom_diff));
+  hc::array_view<float, 1> randIdxView =
+    *((hc::array_view<float, 1> *)(rand_idx));
+  hc::array_view<float, 1> topDiffView =
+    *((hc::array_view<float, 1> *)(top_diff));
   parallel_for_each(
     bottomDiffView.get_extent(),
-    [=](Concurrency::index<1> idx) restrict(amp) {
+    [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int w = index % width;
     int h = (index / width) % height;
     int c = (index / width / height) % channels;
     int n = index / width / height / channels;
     int phstart = (h < kernel_h) ? 0 : (h - kernel_h) / stride_h + 1;
-    int phend = Concurrency::fast_math::fmin(h / stride_h + 1, pooled_height);
+    int phend = hc::fast_math::fmin(h / stride_h + 1, pooled_height);
     int pwstart = (w < kernel_w) ? 0 : (w - kernel_w) / stride_w + 1;
-    int pwend = Concurrency::fast_math::fmin(w / stride_w + 1, pooled_width);
+    int pwend = hc::fast_math::fmin(w / stride_w + 1, pooled_width);
     float gradient = 0;
     int rand_idx_count = (n * channels + c) * pooled_height * pooled_width;
     int top_diff_count = (n * channels + c) * pooled_height * pooled_width;
@@ -810,15 +809,15 @@ void StoPoolBackward(int top_count, int boottom_count,
                      const int kernel_h, const int kernel_w,
                      const int stride_h,
                      const int stride_w, double *bottom_diff) {
-  Concurrency::array_view<double, 1> bottomDiffView =
-    *((Concurrency::array_view<double, 1> *)(bottom_diff));
-  Concurrency::array_view<double, 1> randIdxView =
-    *((Concurrency::array_view<double, 1> *)(rand_idx));
-  Concurrency::array_view<double, 1> topDiffView =
-    *((Concurrency::array_view<double, 1> *)(top_diff));
+  hc::array_view<double, 1> bottomDiffView =
+    *((hc::array_view<double, 1> *)(bottom_diff));
+  hc::array_view<double, 1> randIdxView =
+    *((hc::array_view<double, 1> *)(rand_idx));
+  hc::array_view<double, 1> topDiffView =
+    *((hc::array_view<double, 1> *)(top_diff));
   parallel_for_each(
     bottomDiffView.get_extent(),
-    [=](Concurrency::index<1> idx) restrict(amp) {
+    [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int w = index % width;
     int h = (index / width) % height;
@@ -826,10 +825,10 @@ void StoPoolBackward(int top_count, int boottom_count,
     int n = index / width / height / channels;
     int phstart = (h < kernel_h) ? 0 : (h - kernel_h) / stride_h + 1;
     int phend =
-      Concurrency::fast_math::fmin(h / stride_h + 1, pooled_height);
+      hc::fast_math::fmin(h / stride_h + 1, pooled_height);
     int pwstart = (w < kernel_w) ? 0 : (w - kernel_w) / stride_w + 1;
     int pwend =
-      Concurrency::fast_math::fmin(w / stride_w + 1, pooled_width);
+      hc::fast_math::fmin(w / stride_w + 1, pooled_width);
     double gradient = 0;
     int rand_idx_count =
       (n * channels + c) * pooled_height * pooled_width;
