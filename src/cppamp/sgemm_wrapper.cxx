@@ -1,384 +1,360 @@
 #include "cppamp/sgemm_kernels.h"
 
 // Sgemm Wrapper routine that invokes the appropriate kernel routines depending on the input dimension M N and K
-ampblasStatus gemm_AMP(Concurrency::accelerator_view &accl_view,
-                       const int order, char TransA, char TransB,
-                       const int M, const int N, const int K,
-                       const float alpha, Concurrency::array_view<float> &A_mat,
-                       long aOffset, long lda,
-                       Concurrency::array_view<float> &B_mat,
-                       long bOffset, long ldb, const float beta,
-                       Concurrency::array_view<float> &C_mat,
-                       long cOffset, long ldc,
-                       Concurrency::array_view<float> &temp_buf, long A_batchOffset = 0, long B_batchOffset = 0, long C_batchOffset=0, int batchSize =0)
-{
-    int i, j;
-    ampblasStatus status = AMPBLAS_SUCCESS;
-    // Quick return if possible
-    if (!M || !N || ((alpha == 0 || !K) && beta == 1))
-        return status;
-    // For alpha = 0
-    if (alpha == 0)
-    {
-        if (beta == 0)
-        {
-            for (j = 0; j < N; ++j)
-                for (i = 0; i < M; ++i)
-                    C_mat[i + j * ldc] = 0;
+hcblasStatus gemm_HC(hc::accelerator_view &accl_view,
+                     const int order, char TransA, char TransB,
+                     const int M, const int N, const int K,
+                     const float alpha, hc::array_view<float> &A_mat,
+                     long aOffset, long lda,
+                     hc::array_view<float> &B_mat,
+                     long bOffset, long ldb, const float beta,
+                     hc::array_view<float> &C_mat,
+                     long cOffset, long ldc,
+                     long A_batchOffset = 0, long B_batchOffset = 0, long C_batchOffset = 0, int batchSize = 0) {
+  int i, j, k;
+  hcblasStatus status = HCBLAS_SUCCESS;
+
+  // Quick return if possible
+  if (!M || !N || !K) {
+    return HCBLAS_INVALID;
+  }
+
+  // For alpha = 0
+  if (alpha == 0) {
+    if (beta == 0) {
+     for (k = 0; k <= batchSize; ++k) {
+      for (j = 0; j < N; ++j) {
+        for (i = 0; i < M; ++i) {
+          C_mat[cOffset + C_batchOffset * k + i + j * ldc] = 0;
         }
-        else
-        {
-            for (j = 0; j < N; ++j)
-                for (i = 0; i < M; ++i)
-                    C_mat[i + j * ldc] *= beta;
+      }
+     }
+    } else {
+     for(k = 0; k <= batchSize; ++k) {
+      for (j = 0; j < N; ++j) {
+        for (i = 0; i < M; ++i) {
+          C_mat[cOffset + C_batchOffset * k + i + j * ldc] *= beta;
         }
-        return status;
+      }
+     }
     }
+
+    return status;
+  }
+
     // Start the operations
 
-    if (order)
-    {
-        if(batchSize > 0)
-        {
-            if (TransB == 'n')
-            {
-                if (TransA == 'n')
-                    status = gemm_NoTransAB(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-                else
-                    status = gemm_NoTransB(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-            }
-            else if (TransA == 'n')
-                status = gemm_NoTransA(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-            else
-                status = gemm_TransAB(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-
+  if (order) {
+    if(batchSize > 0) {
+      if (TransB == 'n') {
+        if (TransA == 'n') {
+          status = gemm_NoTransAB(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
+        } else {
+          status = gemm_NoTransB(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
         }
-        else
-        {
-            if (TransB == 'n')
-            {
-                if (TransA == 'n')
-                    status = gemm_NoTransAB(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
-                else
-                    status = gemm_NoTransB(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
-            }
-            else if (TransA == 'n')
-                status = gemm_NoTransA(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
-            else
-                status = gemm_TransAB(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+      } else if (TransA == 'n') {
+        status = gemm_NoTransA(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
+      } else {
+        status = gemm_TransAB(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
+      }
+    } else {
+      if (TransB == 'n') {
+        if (TransA == 'n') {
+          status = gemm_NoTransAB(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+        } else {
+          status = gemm_NoTransB(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
         }
+      } else if (TransA == 'n') {
+        status = gemm_NoTransA(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+      } else {
+        status = gemm_TransAB(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+      }
     }
-    else
-    {
-        if(batchSize > 0)
-        {
-            if (TransB == 'n')
-            {
-                if (TransA == 'n')
-                    status = gemm_NoTransAB_rMajor(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-                else
-                    status = gemm_NoTransB_rMajor(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-            }
-            else if (TransA == 'n')
-                status = gemm_NoTransA_rMajor(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-            else
-                status = gemm_TransAB_rMajor(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-
+  } else {
+    if(batchSize > 0) {
+      if (TransB == 'n') {
+        if (TransA == 'n') {
+          status = gemm_NoTransAB_rMajor(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
+        } else {
+          status = gemm_NoTransB_rMajor(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
         }
-        else
-        {
-            if (TransB == 'n')
-            {
-                if (TransA == 'n')
-                    status = gemm_NoTransAB_rMajor(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
-                else
-                    status = gemm_NoTransB_rMajor(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
-            }
-            else if (TransA == 'n')
-                status = gemm_NoTransA_rMajor(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
-            else
-                status = gemm_TransAB_rMajor(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+      } else if (TransA == 'n') {
+        status = gemm_NoTransA_rMajor(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
+      } else {
+        status = gemm_TransAB_rMajor(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
+      }
+    } else {
+      if (TransB == 'n') {
+        if (TransA == 'n') {
+          status = gemm_NoTransAB_rMajor(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+        } else {
+          status = gemm_NoTransB_rMajor(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
         }
+      } else if (TransA == 'n') {
+        status = gemm_NoTransA_rMajor(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+      } else {
+        status = gemm_TransAB_rMajor(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+      }
     }
-    return status;
+  }
+
+  return status;
 }
-ampblasStatus gemm_AMP_d(Concurrency::accelerator_view &accl_view,
-                         const int order, char TransA, char TransB,
-                         const int M, const int N, const int K,
-                         const double alpha, Concurrency::array_view<double> &A_mat,
-                         long aOffset, long lda,
-                         Concurrency::array_view<double> &B_mat,
-                         long bOffset, long ldb, const double beta,
-                         Concurrency::array_view<double> &C_mat,
-                         long cOffset, long ldc,
-                         Concurrency::array_view<double> &temp_buf, long A_batchOffset = 0, long B_batchOffset = 0, long C_batchOffset = 0, int batchSize = 0)
-{
-    int i, j;
-    ampblasStatus status = AMPBLAS_SUCCESS;
-    // Quick return if possible
-    if (!M || !N || ((alpha == 0 || !K) && beta == 1))
-        return status;
-    // For alpha = 0
-    if (alpha == 0)
-    {
-        if (beta == 0)
-        {
-            for (j = 0; j < N; ++j)
-                for (i = 0; i < M; ++i)
-                    C_mat[i + j * ldc] = 0;
+
+hcblasStatus gemm_HC_d(hc::accelerator_view &accl_view,
+                     const int order, char TransA, char TransB,
+                     const int M, const int N, const int K,
+                     const double alpha, hc::array_view<double> &A_mat,
+                     long aOffset, long lda,
+                     hc::array_view<double> &B_mat,
+                     long bOffset, long ldb, const double beta,
+                     hc::array_view<double> &C_mat,
+                     long cOffset, long ldc,
+                     long A_batchOffset = 0, long B_batchOffset = 0, long C_batchOffset = 0, int batchSize = 0) {
+  int i, j, k;
+  hcblasStatus status = HCBLAS_SUCCESS;
+
+  // Quick return if possible
+  if (!M || !N || !K) {
+    return HCBLAS_INVALID;
+  }
+
+  // For alpha = 0
+  if (alpha == 0) {
+    if (beta == 0) {
+     for (k = 0; k <= batchSize; ++k) {
+      for (j = 0; j < N; ++j) {
+        for (i = 0; i < M; ++i) {
+          C_mat[cOffset + C_batchOffset * k + i + j * ldc] = 0;
         }
-        else
-        {
-            for (j = 0; j < N; ++j)
-                for (i = 0; i < M; ++i)
-                    C_mat[i + j * ldc] *= beta;
+      }
+     }
+    } else {
+     for(k = 0; k <= batchSize; ++k) {
+      for (j = 0; j < N; ++j) {
+        for (i = 0; i < M; ++i) {
+          C_mat[cOffset + C_batchOffset * k + i + j * ldc] *= beta;
         }
-        return status;
+      }
+     }
     }
+
+    return status;
+  }
+
     // Start the operations
 
-    if (order)
-    {
-        if (batchSize > 0)
-        {
-            if (TransB == 'n')
-            {
-                if (TransA == 'n')
-                    status = gemm_NoTransAB_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-                else
-                    status = gemm_NoTransB_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-            }
-            else if (TransA == 'n')
-                status = gemm_NoTransA_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-            else
-                status = gemm_TransAB_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-
+  if (order) {
+    if(batchSize > 0) {
+      if (TransB == 'n') {
+        if (TransA == 'n') {
+          status = gemm_NoTransAB_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
+        } else {
+          status = gemm_NoTransB_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
         }
-        else
-        {
-            if (TransB == 'n')
-            {
-                if (TransA == 'n')
-                    status = gemm_NoTransAB_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
-                else
-                    status = gemm_NoTransB_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
-            }
-            else if (TransA == 'n')
-                status = gemm_NoTransA_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
-            else
-                status = gemm_TransAB_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+      } else if (TransA == 'n') {
+        status = gemm_NoTransA_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
+      } else {
+        status = gemm_TransAB_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
+      }
+    } else {
+      if (TransB == 'n') {
+        if (TransA == 'n') {
+          status = gemm_NoTransAB_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+        } else {
+          status = gemm_NoTransB_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
         }
+      } else if (TransA == 'n') {
+        status = gemm_NoTransA_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+      } else {
+        status = gemm_TransAB_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+      }
     }
-    else
-    {
-        if (batchSize > 0)
-        {
-            if (TransB == 'n')
-            {
-                if (TransA == 'n')
-                    status = gemm_NoTransAB_rMajor_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-                else
-                    status = gemm_NoTransB_rMajor_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-            }
-            else if (TransA == 'n')
-                status = gemm_NoTransA_rMajor_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-            else
-                status = gemm_TransAB_rMajor_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
-
+  } else {
+    if(batchSize > 0) {
+      if (TransB == 'n') {
+        if (TransA == 'n') {
+          status = gemm_NoTransAB_rMajor_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
+        } else {
+          status = gemm_NoTransB_rMajor_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
         }
-        else
-        {
-            if (TransB == 'n')
-            {
-                if (TransA == 'n')
-                    status = gemm_NoTransAB_rMajor_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
-                else
-                    status = gemm_NoTransB_rMajor_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
-            }
-            else if (TransA == 'n')
-                status = gemm_NoTransA_rMajor_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
-            else
-                status = gemm_TransAB_rMajor_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+      } else if (TransA == 'n') {
+        status = gemm_NoTransA_rMajor_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
+      } else {
+        status = gemm_TransAB_rMajor_d(accl_view, A_mat, aOffset, A_batchOffset, B_mat, bOffset, B_batchOffset, C_mat, cOffset, C_batchOffset, M, N, K, lda, ldb, ldc, alpha, beta, batchSize);
+      }
+    } else {
+      if (TransB == 'n') {
+        if (TransA == 'n') {
+          status = gemm_NoTransAB_rMajor_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+        } else {
+          status = gemm_NoTransB_rMajor_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
         }
+      } else if (TransA == 'n') {
+        status = gemm_NoTransA_rMajor_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+      } else {
+        status = gemm_TransAB_rMajor_d(accl_view, A_mat, aOffset, B_mat, bOffset, C_mat, cOffset, M, N, K, lda, ldb, ldc, alpha, beta);
+      }
     }
-    return status;
+  }
+
+  return status;
 }
+
 
 // Sgemm Call Type 1: Inputs and Outputs are host float pointers
-ampblasStatus Ampblaslibrary :: ampblas_sgemm(const enum AMPBLAS_ORDER order,
-        const enum AMPBLAS_TRANS typeA,
-        const enum AMPBLAS_TRANS typeB,
-        const int M, const int N,
-        const int K, const float *alpha,
-        float *A, const long lda,
-        float *B, const long ldb,
-        const float *beta, float *C,
-        const long ldc, const long aOffset,
-        const long bOffset,
-        const long cOffset)
-{
-    Concurrency::array_view<float> A_mat(K * M, A);
-    Concurrency::array_view<float> B_mat(N * K, B);
-    Concurrency::array_view<float> C_mat(M * N, C);
-    Concurrency::array_view<float> *temp_buf = NULL;
-    std::vector<Concurrency::accelerator>acc = Concurrency::accelerator::get_all();
+hcblasStatus Hcblaslibrary :: hcblas_sgemm(hcblasOrder order,
+                                           hcblasTranspose typeA,
+                                           hcblasTranspose typeB,
+                                           const int M, const int N,
+                                           const int K, const float *alpha,
+                                           float *A, const long lda,
+                                           float *B, const long ldb,
+                                           const float *beta, float *C,
+                                           const long ldc, const long aOffset,
+                                           const long bOffset,
+                                           const long cOffset) {
+    hc::array_view<float> A_mat(K * M, A);
+    hc::array_view<float> B_mat(N * K, B);
+    hc::array_view<float> C_mat(M * N, C);
+    std::vector<hc::accelerator>acc = hc::accelerator::get_all();
     accelerator_view accl_view = (acc[1].create_view());
 
+    hcblasStatus status = gemm_HC(accl_view, order, typeA, typeB, M, N, K, *alpha,
+                                  A_mat, aOffset, lda, B_mat, bOffset, ldb,
+                                  *beta, C_mat, cOffset, ldc);
 
-    ampblasStatus status = gemm_AMP(accl_view, order, typeA, typeB, M, N, K, *alpha,
+    return status;
+}
+
+// Dgemm Call Type 1: Inputs and Outputs are host double pointers
+hcblasStatus Hcblaslibrary::hcblas_dgemm(hcblasOrder order,
+                                         hcblasTranspose typeA,
+                                         hcblasTranspose typeB,
+                                         const int M, const int N,
+                                         const int K, const double *alpha,
+                                         double *A, const long lda,
+                                         double *B, const long ldb,
+                                         const double *beta, double *C,
+                                         const long ldc, const long aOffset,
+                                         const long bOffset,
+                                         const long cOffset) {
+    hc::array_view<double> A_mat(K * M, A);
+    hc::array_view<double> B_mat(N * K, B);
+    hc::array_view<double> C_mat(M * N, C);
+    std::vector<hc::accelerator>acc = hc::accelerator::get_all();
+    accelerator_view accl_view = (acc[1].create_view());
+    hcblasStatus status = gemm_HC_d(accl_view, order, typeA, typeB, M, N, K, *alpha,
                                     A_mat, aOffset, lda, B_mat, bOffset, ldb,
-                                    *beta, C_mat, cOffset, ldc, *temp_buf);
-
-    return status;
-}
-ampblasStatus Ampblaslibrary::ampblas_dgemm(const enum AMPBLAS_ORDER order,
-        const enum AMPBLAS_TRANS typeA,
-        const enum AMPBLAS_TRANS typeB,
-        const int M, const int N,
-        const int K, const double *alpha,
-        double *A, const long lda,
-        double *B, const long ldb,
-        const double *beta, double *C,
-        const long ldc, const long aOffset,
-        const long bOffset,
-        const long cOffset)
-{
-    Concurrency::array_view<double> A_mat(K * M, A);
-    Concurrency::array_view<double> B_mat(N * K, B);
-    Concurrency::array_view<double> C_mat(M * N, C);
-    Concurrency::array_view<double> *temp_buf = NULL;
-    std::vector<Concurrency::accelerator>acc = Concurrency::accelerator::get_all();
-    accelerator_view accl_view = (acc[1].create_view());
-
-
-    ampblasStatus status = gemm_AMP_d(accl_view, order, typeA, typeB, M, N, K, *alpha,
-                                      A_mat, aOffset, lda, B_mat, bOffset, ldb,
-                                      *beta, C_mat, cOffset, ldc, *temp_buf);
-
+                                    *beta, C_mat, cOffset, ldc);
     return status;
 }
 
+// Sgemm Call Type II: Inputs and outputs are HCC C++ float array_View containers
+hcblasStatus  Hcblaslibrary :: hcblas_sgemm(hc::accelerator_view &accl_view,
+                                            hcblasOrder order,
+                                            hcblasTranspose typeA,
+                                            hcblasTranspose typeB, const int M,
+                                            const int N, const int K, const float &alpha,
+                                            hc::array_view<float> &A, const long lda,
+                                            hc::array_view<float> &B, const long ldb,
+                                            const float &beta,
+                                            hc::array_view<float> &C, const long ldc,
+                                            const long aOffset, const long bOffset, const long cOffset) {
+    hcblasStatus status = gemm_HC(accl_view, order, typeA, typeB, M, N, K, alpha, A,
+                                  aOffset, lda, B, bOffset, ldb, beta, C,
+                                  cOffset, ldc);
+    return status;
+}
 
-// Sgemm Call Type II: Inputs and outputs are C++ AMP float array_View containers
-ampblasStatus  Ampblaslibrary :: ampblas_sgemm(Concurrency::accelerator_view &accl_view,
-        const enum AMPBLAS_ORDER order,
-        const enum AMPBLAS_TRANS typeA,
-        const enum AMPBLAS_TRANS typeB, const int M,
-        const int N, const int K, const float &alpha,
-        Concurrency::array_view<float> &A, const long lda,
-        Concurrency::array_view<float> &B, const long ldb,
-        const float &beta,
-        Concurrency::array_view<float> &C, const long ldc,
-        const long aOffset, const long bOffset, const long cOffset)
-
-{
-    Concurrency::array_view<float> *temp_buf = NULL;
-    ampblasStatus status = gemm_AMP(accl_view, order, typeA, typeB, M, N, K, alpha, A,
+// Dgemm Call Type II: Inputs and outputs are HCC C++ double array_View containers
+hcblasStatus  Hcblaslibrary::hcblas_dgemm(hc::accelerator_view &accl_view,
+                                          hcblasOrder order,
+                                          hcblasTranspose typeA,
+                                          hcblasTranspose typeB, const int M,
+                                          const int N, const int K, const double &alpha,
+                                          hc::array_view<double> &A, const long lda,
+                                          hc::array_view<double> &B, const long ldb,
+                                          const double &beta,
+                                          hc::array_view<double> &C, const long ldc,
+                                          const long aOffset, const long bOffset, const long cOffset) {
+    hcblasStatus status = gemm_HC_d(accl_view, order, typeA, typeB, M, N, K, alpha, A,
                                     aOffset, lda, B, bOffset, ldb, beta, C,
-                                    cOffset, ldc, *temp_buf);
+                                    cOffset, ldc);
 
     return status;
 }
-ampblasStatus  Ampblaslibrary::ampblas_dgemm(Concurrency::accelerator_view &accl_view,
-        const enum AMPBLAS_ORDER order,
-        const enum AMPBLAS_TRANS typeA,
-        const enum AMPBLAS_TRANS typeB, const int M,
-        const int N, const int K, const double &alpha,
-        Concurrency::array_view<double> &A, const long lda,
-        Concurrency::array_view<double> &B, const long ldb,
-        const double &beta,
-        Concurrency::array_view<double> &C, const long ldc,
-        const long aOffset, const long bOffset, const long cOffset)
 
-{
-    Concurrency::array_view<double> *temp_buf = NULL;
-    ampblasStatus status = gemm_AMP_d(accl_view, order, typeA, typeB, M, N, K, alpha, A,
-                                      aOffset, lda, B, bOffset, ldb, beta, C,
-                                      cOffset, ldc, *temp_buf);
-
-    return status;
-}
 /* SGEMM- Overloaded function with arguments related to batch processing */
-ampblasStatus Ampblaslibrary :: ampblas_sgemm(Concurrency::accelerator_view &accl_view,
-        const enum AMPBLAS_ORDER order,
-        const enum AMPBLAS_TRANS typeA,
-        const enum AMPBLAS_TRANS typeB, const int M,
-        const int N, const int K, const float &alpha,
-        Concurrency::array_view<float> &A, const long lda, const long A_batchOffset,
-        Concurrency::array_view<float> &B, const long ldb, const long B_batchOffset,
-        const float &beta,
-        Concurrency::array_view<float> &C, const long ldc, const long C_batchOffset,
-        const long aOffset, const long bOffset, const long cOffset, const int batchSize)
-
-{
-    Concurrency::array_view<float> *temp_buf = NULL;
-    gemm_AMP(accl_view, order, typeA, typeB, M, N, K, alpha, A, aOffset, lda, B,
-             bOffset, ldb, beta, C, cOffset, ldc, *temp_buf, A_batchOffset, B_batchOffset, C_batchOffset, batchSize);
-
-    return AMPBLAS_SUCCESS;
-}
-// Sgemm Call Type 1: Inputs and Outputs are host float pointers
-ampblasStatus Ampblaslibrary :: ampblas_sgemm2(const enum AMPBLAS_ORDER order,
-        const enum AMPBLAS_TRANS typeA,
-        const enum AMPBLAS_TRANS typeB,
-        const int M, const int N,
-        const int K, const float *alpha,
-        Concurrency::array_view<float> &A_mat, const long lda,
-        Concurrency::array_view<float> &B_mat, const long ldb,
-        const float *beta, Concurrency::array_view<float> &C_mat,
-        const long ldc, const long aOffset,
-        const long bOffset,
-        const long cOffset)
-{
-    Concurrency::array_view<float> *temp_buf = NULL;
-    std::vector<Concurrency::accelerator>acc = Concurrency::accelerator::get_all();
-    accelerator_view accl_view = (acc[1].create_view());
-
-
-    ampblasStatus status = gemm_AMP(accl_view, order, typeA, typeB, M, N, K, *alpha,
-                                    A_mat, aOffset, lda, B_mat, bOffset, ldb,
-                                    *beta, C_mat, cOffset, ldc, *temp_buf);
+hcblasStatus Hcblaslibrary :: hcblas_sgemm(hc::accelerator_view &accl_view,
+                                           hcblasOrder order,
+                                           hcblasTranspose typeA,
+                                           hcblasTranspose typeB, const int M,
+                                           const int N, const int K, const float &alpha,
+                                           hc::array_view<float> &A, const long lda, const long A_batchOffset,
+                                           hc::array_view<float> &B, const long ldb, const long B_batchOffset,
+                                           const float &beta,
+                                           hc::array_view<float> &C, const long ldc, const long C_batchOffset,
+                                           const long aOffset, const long bOffset, const long cOffset, const int batchSize) {    
+    hcblasStatus status = gemm_HC(accl_view, order, typeA, typeB, M, N, K, alpha, A, aOffset, lda, B,
+                                  bOffset, ldb, beta, C, cOffset, ldc, A_batchOffset, B_batchOffset, C_batchOffset, batchSize);
 
     return status;
 }
-ampblasStatus Ampblaslibrary::ampblas_dgemm(Concurrency::accelerator_view &accl_view,
-        const enum AMPBLAS_ORDER order,
-        const enum AMPBLAS_TRANS typeA,
-        const enum AMPBLAS_TRANS typeB, const int M,
-        const int N, const int K, const double &alpha,
-        Concurrency::array_view<double> &A, const long lda, const long A_batchOffset,
-        Concurrency::array_view<double> &B, const long ldb, const long B_batchOffset,
-        const double &beta,
-        Concurrency::array_view<double> &C, const long ldc, const long C_batchOffset,
-        const long aOffset, const long bOffset, const long cOffset, const int batchSize)
 
-{
-    Concurrency::array_view<double> *temp_buf = NULL;
-    gemm_AMP_d(accl_view, order, typeA, typeB, M, N, K, alpha, A, aOffset, lda, B,
-               bOffset, ldb, beta, C, cOffset, ldc, *temp_buf, A_batchOffset, B_batchOffset, C_batchOffset, batchSize);
+/* DGEMM- Overloaded function with arguments related to batch processing */
+hcblasStatus Hcblaslibrary :: hcblas_dgemm(hc::accelerator_view &accl_view,
+                                           hcblasOrder order,
+                                           hcblasTranspose typeA,
+                                           hcblasTranspose typeB, const int M,
+                                           const int N, const int K, const double &alpha,
+                                           hc::array_view<double> &A, const long lda, const long A_batchOffset,
+                                           hc::array_view<double> &B, const long ldb, const long B_batchOffset,
+                                           const double &beta,
+                                           hc::array_view<double> &C, const long ldc, const long C_batchOffset,
+                                           const long aOffset, const long bOffset, const long cOffset, const int batchSize) {    
+    hcblasStatus status = gemm_HC_d(accl_view, order, typeA, typeB, M, N, K, alpha, A, aOffset, lda, B,
+                                    bOffset, ldb, beta, C, cOffset, ldc, A_batchOffset, B_batchOffset, C_batchOffset, batchSize);
 
-    return AMPBLAS_SUCCESS;
+    return status;
 }
-ampblasStatus Ampblaslibrary :: ampblas_dgemm2(const enum AMPBLAS_ORDER order,
-        const enum AMPBLAS_TRANS typeA,
-        const enum AMPBLAS_TRANS typeB,
-        const int M, const int N,
-        const int K, const double *alpha,
-        Concurrency::array_view<double> &A_mat, const long lda,
-        Concurrency::array_view<double> &B_mat, const long ldb,
-        const double *beta, Concurrency::array_view<double> &C_mat,
-        const long ldc, const long aOffset,
-        const long bOffset,
-        const long cOffset)
-{
-    Concurrency::array_view<double> *temp_buf = NULL;
-    std::vector<Concurrency::accelerator>acc = Concurrency::accelerator::get_all();
+
+// Sgemm Call Type 1: Alpha and beta are host float pointers
+hcblasStatus Hcblaslibrary :: hcblas_sgemm2(hcblasOrder order,
+                                            hcblasTranspose typeA,
+                                            hcblasTranspose typeB,
+                                            const int M, const int N,
+                                            const int K, const float *alpha,
+                                            hc::array_view<float> &A_mat, const long lda,
+                                            hc::array_view<float> &B_mat, const long ldb,
+                                            const float *beta, hc::array_view<float> &C_mat,
+                                            const long ldc, const long aOffset,
+                                            const long bOffset,
+                                            const long cOffset) {
+    std::vector<hc::accelerator>acc = hc::accelerator::get_all();
     accelerator_view accl_view = (acc[1].create_view());
+    hcblasStatus status = gemm_HC(accl_view, order, typeA, typeB, M, N, K, *alpha,
+                                  A_mat, aOffset, lda, B_mat, bOffset, ldb,
+                                  *beta, C_mat, cOffset, ldc);
+    return status;
+}
 
-
-    ampblasStatus status = gemm_AMP_d(accl_view, order, typeA, typeB, M, N, K,
+// Dgemm Call Type 1: Alpha and beta are host double pointers
+hcblasStatus Hcblaslibrary :: hcblas_dgemm2(hcblasOrder order,
+                                            hcblasTranspose typeA,
+                                            hcblasTranspose typeB,
+                                            const int M, const int N,
+                                            const int K, const double *alpha,
+                                            hc::array_view<double> &A_mat, const long lda,
+                                            hc::array_view<double> &B_mat, const long ldb,
+                                            const double *beta, hc::array_view<double> &C_mat,
+                                            const long ldc, const long aOffset,
+                                            const long bOffset, const long cOffset) {
+    std::vector<hc::accelerator>acc = hc::accelerator::get_all();
+    accelerator_view accl_view = (acc[1].create_view());
+    hcblasStatus status = gemm_HC_d(accl_view, order, typeA, typeB, M, N, K,
                                     *alpha, A_mat, aOffset, lda, B_mat, bOffset,
-                                    ldb, *beta, C_mat, cOffset, ldc, *temp_buf);
+                                    ldb, *beta, C_mat, cOffset, ldc);
 
     return status;
 }

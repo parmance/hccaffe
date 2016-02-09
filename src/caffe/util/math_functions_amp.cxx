@@ -4,22 +4,23 @@
 #include <glog/logging.h>
 #include <limits>
 #include <vector>
-#include "amp.h"
-#include "amp_math.h"
+#include "hc.hpp"
 #include "caffe/common.hpp"
 #include "caffe/util/math_functions.hpp"
-#include "cppamp/ampblaslib.h"
+#include "cppamp/hcblaslib.h"
+#include "hc_math.hpp"
+using namespace hc::fast_math;
 
 namespace caffe {
 template <typename Dtype>
 void transform_gpu(void* src, void* dst, int top_offset, int N_,
   int M_, int packing_num) {
-  Concurrency::array_view<Dtype, 1> avSrc =
-    *(static_cast<Concurrency::array_view<Dtype, 1>*>(src));
-  Concurrency::array_view<Dtype, 1> avDst =
-    *(static_cast<Concurrency::array_view<Dtype, 1>*>(dst));
-  Concurrency::extent<1> e(M_*packing_num);
-  parallel_for_each(e, [=](Concurrency::index<1> idx) restrict(amp) {
+  hc::array_view<Dtype, 1> avSrc =
+    *(static_cast<hc::array_view<Dtype, 1>*>(src));
+  hc::array_view<Dtype, 1> avDst =
+    *(static_cast<hc::array_view<Dtype, 1>*>(dst));
+  hc::extent<1> e(M_*packing_num);
+  parallel_for_each(e, [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int i = 0;
     for (i = 0 ; i < N_; i++){
       if (packing_num == 1)
@@ -39,15 +40,15 @@ template void transform_gpu<double>(void* src, void* dst, int top_offset,
 template <typename Dtype>
 void opttrans(void* data_im, int im_offset, int channels,
     int height, int width, void* data_opt, int opt_offset, int packing_num) {
-  Concurrency::array_view<Dtype, 1> avIm =
-    *(static_cast<Concurrency::array_view<Dtype, 1>*>(data_im));
-  Concurrency::array_view<Dtype, 1> avOpt =
-    *(static_cast<Concurrency::array_view<Dtype, 1>*>(data_opt));
+  hc::array_view<Dtype, 1> avIm =
+    *(static_cast<hc::array_view<Dtype, 1>*>(data_im));
+  hc::array_view<Dtype, 1> avOpt =
+    *(static_cast<hc::array_view<Dtype, 1>*>(data_opt));
 
   int num_kernels = channels * height * width * packing_num;
 
-  Concurrency::extent<1> e(num_kernels);
-  parallel_for_each(e, [=](Concurrency::index<1> idx) restrict(amp) {
+  hc::extent<1> e(num_kernels);
+  parallel_for_each(e, [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int w = idx[0] % width;
     int h = (idx[0] / width) % height;
     int c = idx[0] / (width * height) % channels;
@@ -68,15 +69,15 @@ template void opttrans<double>(void* data_im, int im_offset, int channels,
 void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
     bool is_int) {
   // Use default device
-  concurrency::accelerator currentAcc(accelerator::default_accelerator);
+  hc::accelerator currentAcc(L"default");
   if (is_int) {
     if (element_size == sizeof(int)) {
-      Concurrency::extent<1> eA(size/sizeof(int));
+      hc::extent<1> eA(size/sizeof(int));
       // Allocating device array of given size
-      Concurrency::array<int, 1> arr =
-        Concurrency::array<int, 1>(eA, currentAcc.get_default_view());
-      Concurrency::array_view<int>* avData =
-        new Concurrency::array_view<int>(arr);
+      hc::array<int, 1> arr =
+        hc::array<int, 1>(eA, currentAcc.get_default_view());
+      hc::array_view<int>* avData =
+        new hc::array_view<int>(arr);
       avData->discard_data();
       *ptr = static_cast<void*>(avData);
     } else {
@@ -84,19 +85,19 @@ void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
     }
   } else {
     if (element_size == sizeof(float)) {
-      Concurrency::extent<1> eA(size/sizeof(float));
-      Concurrency::array<float, 1> arr =
-        Concurrency::array<float, 1>(eA, currentAcc.get_default_view());
-      Concurrency::array_view<float>* avData =
-        new Concurrency::array_view<float>(arr);
+      hc::extent<1> eA(size/sizeof(float));
+      hc::array<float, 1> arr =
+        hc::array<float, 1>(eA, currentAcc.get_default_view());
+      hc::array_view<float>* avData =
+        new hc::array_view<float>(arr);
       avData->discard_data();
       *ptr = static_cast<void*>(avData);
     } else if (element_size == sizeof(double)) {
-      Concurrency::extent<1> eA(size/sizeof(double));
-      Concurrency::array<double, 1> arr =
-        Concurrency::array<double, 1>(eA, currentAcc.get_default_view());
-      Concurrency::array_view<double>* avData =
-        new Concurrency::array_view<double>(arr);
+      hc::extent<1> eA(size/sizeof(double));
+      hc::array<double, 1> arr =
+        hc::array<double, 1>(eA, currentAcc.get_default_view());
+      hc::array_view<double>* avData =
+        new hc::array_view<double>(arr);
      avData->discard_data();
      *ptr = static_cast<void*>(avData);
     } else {
@@ -110,10 +111,10 @@ void caffe_amp_malloc(void** ptr, void* src, size_t size, size_t element_size,
   // Use default device
   if (is_int) {
     if (element_size == sizeof(int)) {
-      Concurrency::extent<1> eA(size/sizeof(int));
+      hc::extent<1> eA(size/sizeof(int));
       // Allocating device array of given size
-      Concurrency::array_view<int>* avData =
-        new Concurrency::array_view<int>(eA, static_cast<int*>(src));
+      hc::array_view<int>* avData =
+        new hc::array_view<int>(eA, static_cast<int*>(src));
       avData->discard_data();
       *ptr = static_cast<void*>(avData);
     } else {
@@ -121,15 +122,15 @@ void caffe_amp_malloc(void** ptr, void* src, size_t size, size_t element_size,
     }
   } else {
     if (element_size == sizeof(float)) {
-      Concurrency::extent<1> eA(size/sizeof(float));
-      Concurrency::array_view<float>* avData =
-        new Concurrency::array_view<float>(eA, static_cast<float*>(src));
+      hc::extent<1> eA(size/sizeof(float));
+      hc::array_view<float>* avData =
+        new hc::array_view<float>(eA, static_cast<float*>(src));
       avData->discard_data();
       *ptr = static_cast<void*>(avData);
     } else if (element_size == sizeof(double)) {
-      Concurrency::extent<1> eA(size/sizeof(double));
-      Concurrency::array_view<double>* avData =
-        new Concurrency::array_view<double>(eA, static_cast<double*>(src));
+      hc::extent<1> eA(size/sizeof(double));
+      hc::array_view<double>* avData =
+        new hc::array_view<double>(eA, static_cast<double*>(src));
       avData->discard_data();
      *ptr = static_cast<void*>(avData);
     } else {
@@ -142,15 +143,15 @@ void caffe_amp_free(void* ptr, size_t element_size, bool is_int) {
   if (ptr) {
     if (is_int) {
       if (element_size == sizeof(int)) {
-        delete static_cast<Concurrency::array_view<int> *>(ptr);
+        delete static_cast<hc::array_view<int> *>(ptr);
       } else {
         LOG(FATAL) << "Wrong element size for caffe_amp_free.";
       }
     } else {
       if (element_size == sizeof(float)) {
-        delete static_cast<Concurrency::array_view<float> *>(ptr);
+        delete static_cast<hc::array_view<float> *>(ptr);
       } else if (element_size == sizeof(double)) {
-        delete static_cast<Concurrency::array_view<double> *>(ptr);
+        delete static_cast<hc::array_view<double> *>(ptr);
       } else {
         LOG(FATAL) << "Wrong element size for caffe_amp_free.";
       }
@@ -165,21 +166,21 @@ void caffe_amp_D2H(void* src, void* dst, size_t element_size, bool is_int) {
   }
   if (is_int) {
     if (element_size == sizeof(int)) {
-      Concurrency::array_view<int, 1>* avSrc =
-       static_cast<Concurrency::array_view<int, 1>*>(src);
-      Concurrency::copy(*avSrc, static_cast<int*>(dst));
+      hc::array_view<int, 1>* avSrc =
+       static_cast<hc::array_view<int, 1>*>(src);
+      hc::copy(*avSrc, static_cast<int*>(dst));
     } else {
       LOG(FATAL) << "Wrong element size for caffe_amp_D2H.";
     }
   } else {
     if (element_size == sizeof(float)) {
-      Concurrency::array_view<float, 1>* avSrc =
-        static_cast<Concurrency::array_view<float, 1>*>(src);
-      Concurrency::copy(*avSrc, static_cast<float*>(dst));
+      hc::array_view<float, 1>* avSrc =
+        static_cast<hc::array_view<float, 1>*>(src);
+      hc::copy(*avSrc, static_cast<float*>(dst));
     } else if (element_size == sizeof(double)) {
-      Concurrency::array_view<double, 1>* avSrc =
-        (Concurrency::array_view<double, 1>*)(src);
-      Concurrency::copy(*avSrc, static_cast<double*>(dst));
+      hc::array_view<double, 1>* avSrc =
+        (hc::array_view<double, 1>*)(src);
+      hc::copy(*avSrc, static_cast<double*>(dst));
     } else {
       LOG(FATAL) << "Wrong element size for caffe_amp_D2H.";
     }
@@ -192,21 +193,21 @@ void caffe_amp_H2D(void* src, void* dst, size_t element_size, bool is_int) {
   }
   if (is_int) {
     if (element_size == sizeof(int)) {
-      Concurrency::array_view<int, 1>* avDst =
-        static_cast<Concurrency::array_view<int, 1>*>(dst);
-      Concurrency::copy(static_cast<int*>(src), *avDst);
+      hc::array_view<int, 1>* avDst =
+        static_cast<hc::array_view<int, 1>*>(dst);
+      hc::copy(static_cast<int*>(src), *avDst);
     } else {
       LOG(FATAL) << "Wrong element size for caffe_amp_H2D.";
     }
   } else {
     if (element_size == sizeof(float)) {
-      Concurrency::array_view<float, 1>* avDst =
-        (Concurrency::array_view<float, 1>*)(dst);
-      Concurrency::copy(static_cast<float*>(src), *avDst);
+      hc::array_view<float, 1>* avDst =
+        (hc::array_view<float, 1>*)(dst);
+      hc::copy(static_cast<float*>(src), *avDst);
     } else if (element_size == sizeof(double)) {
-      Concurrency::array_view<double, 1>* avDst =
-        static_cast<Concurrency::array_view<double, 1>*>(dst);
-      Concurrency::copy(static_cast<double*>(src), *avDst);
+      hc::array_view<double, 1>* avDst =
+        static_cast<hc::array_view<double, 1>*>(dst);
+      hc::copy(static_cast<double*>(src), *avDst);
     } else {
       LOG(FATAL) << "Wrong element size for caffe_amp_H2D.";
     }
@@ -219,27 +220,27 @@ void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int) {
   }
   if (is_int) {
     if (element_size == sizeof(int)) {
-      Concurrency::array_view<int, 1>* avSrc =
-        static_cast<Concurrency::array_view<int, 1>*>(src);
-      Concurrency::array_view<int, 1>* avDst =
-        static_cast<Concurrency::array_view<int, 1>*>(dst);
-      Concurrency::copy(*avSrc, *avDst);
+      hc::array_view<int, 1>* avSrc =
+        static_cast<hc::array_view<int, 1>*>(src);
+      hc::array_view<int, 1>* avDst =
+        static_cast<hc::array_view<int, 1>*>(dst);
+      hc::copy(*avSrc, *avDst);
     } else {
       LOG(FATAL) << "Wrong element size for caffe_amp_D2D.";
     }
   } else {
     if (element_size == sizeof(float)) {
-      Concurrency::array_view<float, 1>* avSrc =
-        static_cast<Concurrency::array_view<float, 1>*>(src);
-      Concurrency::array_view<float, 1>* avDst =
-        static_cast<Concurrency::array_view<float, 1>*>(dst);
-      Concurrency::copy(*avSrc, *avDst);
+      hc::array_view<float, 1>* avSrc =
+        static_cast<hc::array_view<float, 1>*>(src);
+      hc::array_view<float, 1>* avDst =
+        static_cast<hc::array_view<float, 1>*>(dst);
+      hc::copy(*avSrc, *avDst);
     } else if (element_size == sizeof(double)) {
-      Concurrency::array_view<double, 1>* avSrc =
-        static_cast<Concurrency::array_view<double, 1>*>(src);
-      Concurrency::array_view<double, 1>* avDst =
-        static_cast<Concurrency::array_view<double, 1>*>(dst);
-      Concurrency::copy(*avSrc, *avDst);  // NOLINT(build/include_what_you_use)
+      hc::array_view<double, 1>* avSrc =
+        static_cast<hc::array_view<double, 1>*>(src);
+      hc::array_view<double, 1>* avDst =
+        static_cast<hc::array_view<double, 1>*>(dst);
+      hc::copy(*avSrc, *avDst);  // NOLINT(build/include_what_you_use)
     } else {
       LOG(FATAL) << "Wrong element size for caffe_amp_D2D.";
     }
@@ -249,10 +250,10 @@ void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int) {
 template <typename Dtype>
 void caffe_amp_copy(int N, void* src, void* dst,
     int srcOffset, int dstOffset) {
-  Concurrency::array_view<Dtype, 1> avSrc =
-    *(static_cast<Concurrency::array_view<Dtype, 1>*>(src));
-  Concurrency::array_view<Dtype, 1> avDst =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(dst));
+  hc::array_view<Dtype, 1> avSrc =
+    *(static_cast<hc::array_view<Dtype, 1>*>(src));
+  hc::array_view<Dtype, 1> avDst =
+      *(static_cast<hc::array_view<Dtype, 1>*>(dst));
   if (src == NULL || dst == NULL ||
       N > avSrc.get_extent().size() - srcOffset ||
       N > avDst.get_extent().size() - dstOffset) {
@@ -264,8 +265,8 @@ void caffe_amp_copy(int N, void* src, void* dst,
       N <= avDst.get_extent().size()) {
     caffe_amp_D2D(src, dst, sizeof(Dtype), boost::is_same<Dtype, int>::value);
   } else {
-    Concurrency::extent<1> e(N);
-    parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+    hc::extent<1> e(N);
+    parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
       avDst[dstOffset + idx] = avSrc[srcOffset + idx];
     });
   }
@@ -280,16 +281,16 @@ template void caffe_amp_copy<double>(int N, void* src, void* dst,
 
 template <typename Dtype>
 void caffe_amp_copy_H2D(int N, void* src, void* dst, int dstOffset) {
-  Concurrency::array_view<Dtype, 1> avDst =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(dst));
+  hc::array_view<Dtype, 1> avDst =
+      *(static_cast<hc::array_view<Dtype, 1>*>(dst));
   if (src == NULL || dst == NULL ||
       N > avDst.get_extent().size() - dstOffset) {
     LOG(FATAL) << "Wrong Parameters for caffe_amp_copy_H2D.";
   }
-  Concurrency::array_view<Dtype, 1> avSrc(N, static_cast<Dtype*>(src));
+  hc::array_view<Dtype, 1> avSrc(N, static_cast<Dtype*>(src));
 
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
     avDst[dstOffset + idx] = avSrc[idx];
   });
 }
@@ -303,15 +304,15 @@ template void caffe_amp_copy_H2D<double>(int N, void* srci, void* dst,
 
 template <typename Dtype>
 void caffe_amp_copy_D2H(int N, void* src, void* dst, int srcOffset) {
-  Concurrency::array_view<Dtype, 1> avSrc =
-    *(static_cast<Concurrency::array_view<Dtype, 1>*>(src));
+  hc::array_view<Dtype, 1> avSrc =
+    *(static_cast<hc::array_view<Dtype, 1>*>(src));
   if (src == NULL || dst == NULL ||
       N > avSrc.get_extent().size() - srcOffset) {
     LOG(FATAL) << "Wrong Parameters for caffe_amp_copy_D2H.";
   }
-  Concurrency::array_view<Dtype, 1> avDst(N, static_cast<Dtype*>(dst));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+  hc::array_view<Dtype, 1> avDst(N, static_cast<Dtype*>(dst));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
     avDst[idx] = avSrc[srcOffset + idx];
   });
   avDst.synchronize();
@@ -326,37 +327,37 @@ template void caffe_amp_copy_D2H<double>(int N, void* src, void* dst,
 
 template <typename Dtype>
 void abs_kernel(const int N, Dtype* a, Dtype* y) {
-  Concurrency::array_view<Dtype, 1> aView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(a)));
-  Concurrency::array_view<Dtype, 1> yView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(y)));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+  hc::array_view<Dtype, 1> aView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(a)));
+  hc::array_view<Dtype, 1> yView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(y)));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
     yView[idx] = aView[idx] >= 0 ? aView[idx] : -1 * aView[idx];
   });
 }
 
 template <typename Dtype>
 void sign_kernel(const int N, Dtype* a, Dtype* y) {
-  Concurrency::array_view<Dtype, 1> aView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(a)));
-  Concurrency::array_view<Dtype, 1> yView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(y)));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+  hc::array_view<Dtype, 1> aView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(a)));
+  hc::array_view<Dtype, 1> yView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(y)));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
     yView[idx] = aView[idx] == 0 ? 0 : (aView[idx] < 0 ? -1 : 1);
   });
 }
 
 template <typename Dtype>
 void sgnbit_kernel(const int N, Dtype* a, Dtype* y) {
-  Concurrency::array_view<Dtype, 1> aView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(a)));
-  Concurrency::array_view<Dtype, 1> yView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(y)));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
-    yView[idx] = Concurrency::fast_math::signbit(aView[idx]);
+  hc::array_view<Dtype, 1> aView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(a)));
+  hc::array_view<Dtype, 1> yView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(y)));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
+    yView[idx] = hc::fast_math::signbit(aView[idx]);
   });
 }
 
@@ -371,14 +372,14 @@ void caffe_gpu_sgnbit<double>(const int n, const double* x, double* y) {
 
 template <typename Dtype>
 void mul_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
-  Concurrency::array_view<Dtype, 1> aView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(a)));
-  Concurrency::array_view<Dtype, 1> bView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(b)));
-  Concurrency::array_view<Dtype, 1> yView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(y)));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+  hc::array_view<Dtype, 1> aView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(a)));
+  hc::array_view<Dtype, 1> bView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(b)));
+  hc::array_view<Dtype, 1> yView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(y)));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
       yView[idx] = (aView[idx] * bView[idx]);
   });
 }
@@ -421,14 +422,14 @@ void caffe_gpu_mul<double>(const int N, const double* a,
 
 template <typename Dtype>
 void div_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
-  Concurrency::array_view<Dtype, 1> aView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(a)));
-  Concurrency::array_view<Dtype, 1> bView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(b)));
-  Concurrency::array_view<Dtype, 1> yView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(y)));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+  hc::array_view<Dtype, 1> aView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(a)));
+  hc::array_view<Dtype, 1> bView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(b)));
+  hc::array_view<Dtype, 1> yView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(y)));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
     yView[idx] = (aView[idx] / bView[idx]);
   });
 }
@@ -449,14 +450,14 @@ void caffe_gpu_div<double>(const int N, const double* a,
 
 template <typename Dtype>
 void add_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
-  Concurrency::array_view<Dtype, 1> aView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(a)));
-  Concurrency::array_view<Dtype, 1> bView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(b)));
-  Concurrency::array_view<Dtype, 1> yView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(y)));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+  hc::array_view<Dtype, 1> aView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(a)));
+  hc::array_view<Dtype, 1> bView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(b)));
+  hc::array_view<Dtype, 1> yView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(y)));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
     yView[idx] = (aView[idx] + bView[idx]);
   });
 }
@@ -477,14 +478,14 @@ void caffe_gpu_add<double>(const int N, const double* a, const double* b,
 
 template <typename Dtype>
 void sub_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
-  Concurrency::array_view<Dtype, 1> aView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(a)));
-  Concurrency::array_view<Dtype, 1> bView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(b)));
-  Concurrency::array_view<Dtype, 1> yView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(y)));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+  hc::array_view<Dtype, 1> aView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(a)));
+  hc::array_view<Dtype, 1> bView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(b)));
+  hc::array_view<Dtype, 1> yView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(y)));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
     yView[idx] = (aView[idx] - bView[idx]);
   });
 }
@@ -505,10 +506,10 @@ void caffe_gpu_sub<double>(const int N, const double* a, const double* b,
 
 template <typename Dtype>
 void set_kernel(const int N, const Dtype alpha, Dtype* y) {
-  Concurrency::array_view<Dtype, 1> outView =
-    *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(y)));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp){
+  hc::array_view<Dtype, 1> outView =
+    *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(y)));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)){
     outView[idx] = alpha;
   });
 }
@@ -527,13 +528,13 @@ void caffe_gpu_set<double>(const int N, const double alpha, double* Y) {
 
 template <typename Dtype>
 void exp_kernel(const int N, Dtype* a, Dtype* y) {
-  Concurrency::array_view<Dtype, 1> aView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(a)));
-  Concurrency::array_view<Dtype, 1> yView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(y)));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
-    yView[idx] = Concurrency::fast_math::exp(aView[idx]);
+  hc::array_view<Dtype, 1> aView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(a)));
+  hc::array_view<Dtype, 1> yView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(y)));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
+    yView[idx] = hc::fast_math::exp(aView[idx]);
   });
 }
 
@@ -551,10 +552,10 @@ void caffe_gpu_exp<double>(const int N, const double* a, double* y) {
 
 template <typename Dtype>
 void add_scalar_kernel(const int N, const Dtype alpha, Dtype* y) {
-  Concurrency::array_view<Dtype, 1> outView =
-    *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(y)));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+  hc::array_view<Dtype, 1> outView =
+    *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(y)));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
     outView[idx] += alpha;
   });
 }
@@ -573,13 +574,13 @@ void caffe_gpu_add_scalar<double>(const int N, const double alpha, double* Y) {
 
 template <typename Dtype>
 void powx_kernel(const int N, Dtype* a, Dtype alpha, Dtype* y) {
-  Concurrency::array_view<Dtype, 1> aView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(a)));
-  Concurrency::array_view<Dtype, 1> yView =
-      *(static_cast<Concurrency::array_view<Dtype, 1>*>(static_cast<void*>(y)));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
-    yView[idx] = Concurrency::fast_math::pow(aView[idx], alpha);
+  hc::array_view<Dtype, 1> aView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(a)));
+  hc::array_view<Dtype, 1> yView =
+      *(static_cast<hc::array_view<Dtype, 1>*>(static_cast<void*>(y)));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
+    yView[idx] = hc::fast_math::pow(aView[idx], alpha);
   });
 }
 
@@ -600,11 +601,11 @@ void caffe_gpu_powx<double>(const int N, const double* a,
 template <>
 void caffe_gpu_dot<float>(const int n, const float* x, const float* y,
   float* out) {
-  Concurrency::array_view<float, 1> xView =
-      *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(
+  hc::array_view<float, 1> xView =
+      *(static_cast<hc::array_view<float, 1>*>(static_cast<void*>(
               const_cast<float*>(x))));
-  Concurrency::array_view<float, 1> yView =
-      *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(
+  hc::array_view<float, 1> yView =
+      *(static_cast<hc::array_view<float, 1>*>(static_cast<void*>(
               const_cast<float*>(y))));
 
   // runtime sizes
@@ -613,13 +614,13 @@ void caffe_gpu_dot<float>(const int n, const float* x, const float* y,
   // simultaneous live threads
   const unsigned int thread_count = tile_count * TILE_SIZE;
   // global buffer (return type)
-  concurrency::array<float, 1> global_buffer(tile_count);
-  concurrency::array_view<float, 1> global_buffer_view(global_buffer);
+  hc::array<float, 1> global_buffer(tile_count);
+  hc::array_view<float, 1> global_buffer_view(global_buffer);
   // configuration
-  concurrency::extent<1> extent(thread_count);
-  concurrency::parallel_for_each(
-    extent.tile<TILE_SIZE>(),
-    [=] (concurrency::tiled_index<TILE_SIZE> tid) restrict(amp) {
+  hc::extent<1> extent(thread_count);
+  hc::parallel_for_each(
+    extent.tile(TILE_SIZE),
+    [=] (hc::tiled_index<1>& tid) __attribute__((hc, cpu)) {
     // shared tile buffer
     tile_static float local_buffer[TILE_SIZE];
     // indexes
@@ -631,8 +632,8 @@ void caffe_gpu_dot<float>(const int n, const float* x, const float* y,
     // fold data into local buffer
     while (idx < n) {
       // reduction of smem and X[idx] with results stored in smem
-      smem += xView[concurrency::index<1>(idx)] *
-        yView[concurrency::index<1>(idx)];
+      smem += xView[hc::index<1>(idx)] *
+        yView[hc::index<1>(idx)];
       // next chunk
       idx += thread_count;
     }
@@ -672,11 +673,11 @@ void caffe_gpu_dot<float>(const int n, const float* x, const float* y,
 template <>
 void caffe_gpu_dot<double>(const int n, const double* x, const double* y,
   double * out) {
-  Concurrency::array_view<double, 1> xView =
-      *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(
+  hc::array_view<double, 1> xView =
+      *(static_cast<hc::array_view<double, 1>*>(static_cast<void*>(
             const_cast<double*>(x))));
-  Concurrency::array_view<double, 1> yView =
-      *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(
+  hc::array_view<double, 1> yView =
+      *(static_cast<hc::array_view<double, 1>*>(static_cast<void*>(
             const_cast<double*>(y))));
 
   // runtime sizes
@@ -685,13 +686,13 @@ void caffe_gpu_dot<double>(const int n, const double* x, const double* y,
   // simultaneous live threads
   const unsigned int thread_count = tile_count * TILE_SIZE;
   // global buffer (return type)
-  concurrency::array<double, 1> global_buffer(tile_count);
-  concurrency::array_view<double, 1> global_buffer_view(global_buffer);
+  hc::array<double, 1> global_buffer(tile_count);
+  hc::array_view<double, 1> global_buffer_view(global_buffer);
   // configuration
-  concurrency::extent<1> extent(thread_count);
-  concurrency::parallel_for_each(
-    extent.tile<TILE_SIZE>(),
-    [=] (concurrency::tiled_index<TILE_SIZE> tid) restrict(amp) {
+  hc::extent<1> extent(thread_count);
+  hc::parallel_for_each(
+    extent.tile(TILE_SIZE),
+    [=] (hc::tiled_index<1>& tid) __attribute__((hc, cpu)) {
     // shared tile buffer
     tile_static double local_buffer[TILE_SIZE];
     // indexes
@@ -703,8 +704,8 @@ void caffe_gpu_dot<double>(const int n, const double* x, const double* y,
     // fold data into local buffer
     while (idx < n) {
       // reduction of smem and X[idx] with results stored in smem
-      smem += xView[concurrency::index<1>(idx)] *
-        yView[concurrency::index<1>(idx)];
+      smem += xView[hc::index<1>(idx)] *
+        yView[hc::index<1>(idx)];
       // next chunk
       idx += thread_count;
     }
@@ -744,13 +745,13 @@ void caffe_gpu_dot<double>(const int n, const double* x, const double* y,
 template <>
 void caffe_gpu_axpy<float>(const int N, const float alpha, const float* X,
         float* Y) {
-  amp_axpy(N, alpha, const_cast <float*>(X), Y);
+  hc_axpy(N, alpha, const_cast <float*>(X), Y);
 }
 
 template <>
 void caffe_gpu_axpy<double>(const int N, const double alpha, const double* X,
         double* Y) {
-  amp_axpy(N, alpha, const_cast <double*>(X), Y);
+  hc_axpy(N, alpha, const_cast <double*>(X), Y);
 }
 
 template <>
@@ -759,7 +760,7 @@ void caffe_gpu_scale<float>(const int n, const float alpha, const float *x,
   caffe_amp_D2D(static_cast<void*>(const_cast<float*>(x)),
       static_cast<void*>(const_cast<float*>(y)), sizeof(float),
       false);
-  amp_scale(n, alpha, y);
+  hc_scale(n, alpha, y);
 }
 
 template <>
@@ -768,17 +769,17 @@ void caffe_gpu_scale<double>(const int n, const double alpha, const double *x,
   caffe_amp_D2D(static_cast<void*>(const_cast<double*>(x)),
       static_cast<void*>(const_cast<double*>(y)), sizeof(double),
       false);
-  amp_scale(n, alpha, y);
+  hc_scale(n, alpha, y);
 }
 
 template <>
 void caffe_gpu_scal<float>(const int N, const float alpha, float *X) {
-  amp_scale(N, alpha, X);
+  hc_scale(N, alpha, X);
 }
 
 template <>
 void caffe_gpu_scal<double>(const int N, const double alpha, double *X) {
-  amp_scale(N, alpha, X);
+  hc_scale(N, alpha, X);
 }
 
 template <>
@@ -799,24 +800,24 @@ void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const float alpha, const float* A, const int offseta,
   const float* x, const int offsetx,
   const float beta, float* y, const int offsety) {
-  AMPBLAS_TRANS ampTransA = trans;
-  Ampblaslibrary amp;
+  hcblasTranspose ampTransA = trans;
+  Hcblaslibrary hc;
   if (TransA == CblasTrans) {
       ampTransA = noTrans;
   }
   if (TransA == CblasConjTrans) {
       ampTransA = conjugate;
   }
-  Concurrency::array_view<float, 1> A_mat =
-    *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(
+  hc::array_view<float, 1> A_mat =
+    *(static_cast<hc::array_view<float, 1>*>(static_cast<void*>(
             const_cast<float*>(A))));
-  Concurrency::array_view<float, 1> X_mat =
-    *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(
+  hc::array_view<float, 1> X_mat =
+    *(static_cast<hc::array_view<float, 1>*>(static_cast<void*>(
             const_cast<float*>(x))));
-  Concurrency::array_view<float, 1> Y_mat =
-    *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(y)));
+  hc::array_view<float, 1> Y_mat =
+    *(static_cast<hc::array_view<float, 1>*>(static_cast<void*>(y)));
 
-  amp.ampblas_sgemv2(ampTransA, N, M, &alpha, A_mat, offseta, N, X_mat,
+  hc.hcblas_sgemv2(ColMajor, ampTransA, N, M, &alpha, A_mat, offseta, N, X_mat,
       offsetx, 1, &beta, Y_mat, offsety, 1);
 }
 
@@ -826,23 +827,23 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
   const int N, const double alpha, const double* A, const int offseta,
   const double* x, const int offsetx,
   const double beta, double* y, const int offsety) {
-  AMPBLAS_TRANS ampTransA = trans;
-  Ampblaslibrary amp;
+  hcblasTranspose ampTransA = trans;
+  Hcblaslibrary hc;
   if (TransA == CblasTrans) {
       ampTransA = noTrans;
   }
   if (TransA == CblasConjTrans) {
       ampTransA = conjugate;
   }
-  Concurrency::array_view<double, 1> A_mat =
-    *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(
+  hc::array_view<double, 1> A_mat =
+    *(static_cast<hc::array_view<double, 1>*>(static_cast<void*>(
             const_cast<double*>(A))));
-  Concurrency::array_view<double, 1> X_mat =
-    *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(
+  hc::array_view<double, 1> X_mat =
+    *(static_cast<hc::array_view<double, 1>*>(static_cast<void*>(
             const_cast<double*>(x))));
-  Concurrency::array_view<double, 1> Y_mat =
-    *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(y)));
-  amp.ampblas_dgemv2(ampTransA, N, M, &alpha, A_mat, offseta, N, X_mat,
+  hc::array_view<double, 1> Y_mat =
+    *(static_cast<hc::array_view<double, 1>*>(static_cast<void*>(y)));
+  hc.hcblas_dgemv2(ColMajor, ampTransA, N, M, &alpha, A_mat, offseta, N, X_mat,
       offsetx, 1, &beta, Y_mat, offsety, 1);
 }
 template <>
@@ -850,24 +851,24 @@ void caffe_gpu_gemv2<float>(const CBLAS_TRANSPOSE TransA, const int M,
     const int N, const float alpha, const float* A, size_t offA, int lda,
     const float* x, size_t offx, const float beta, int incx,
     float* y, size_t offy, int incy) {
-    AMPBLAS_TRANS ampTransA = trans;
-    Ampblaslibrary amp;
+    hcblasTranspose ampTransA = trans;
+    Hcblaslibrary hc;
     if (TransA == CblasTrans) {
         ampTransA = noTrans;
     }
     if (TransA == CblasConjTrans) {
         ampTransA = conjugate;
     }
-    Concurrency::array_view<float, 1> A_mat =
-      *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(
+    hc::array_view<float, 1> A_mat =
+      *(static_cast<hc::array_view<float, 1>*>(static_cast<void*>(
               const_cast<float*>(A))));
-    Concurrency::array_view<float, 1> X_mat =
-      *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(
+    hc::array_view<float, 1> X_mat =
+      *(static_cast<hc::array_view<float, 1>*>(static_cast<void*>(
               const_cast<float*>(x))));
-    Concurrency::array_view<float, 1> Y_mat =
-      *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(y)));
+    hc::array_view<float, 1> Y_mat =
+      *(static_cast<hc::array_view<float, 1>*>(static_cast<void*>(y)));
 
-    amp.ampblas_sgemv2(ampTransA, N, M, &alpha, A_mat, offA, lda, X_mat,
+    hc.hcblas_sgemv2(ColMajor, ampTransA, N, M, &alpha, A_mat, offA, lda, X_mat,
         offx, incx, &beta, Y_mat, offy, incy);
 }
 
@@ -876,24 +877,24 @@ void caffe_gpu_gemv2<double>(const CBLAS_TRANSPOSE TransA, const int M,
     const int N, const double alpha, const double* A, size_t offA, int lda,
     const double* x, size_t offx, const double beta, int incx,
     double* y, size_t offy, int incy) {
-      AMPBLAS_TRANS ampTransA = trans;
-      Ampblaslibrary amp;
+      hcblasTranspose ampTransA = trans;
+      Hcblaslibrary hc;
       if (TransA == CblasTrans) {
           ampTransA = noTrans;
       }
       if (TransA == CblasConjTrans) {
           ampTransA = conjugate;
       }
-      Concurrency::array_view<double, 1> A_mat =
-        *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(
+      hc::array_view<double, 1> A_mat =
+        *(static_cast<hc::array_view<double, 1>*>(static_cast<void*>(
             const_cast<double*>(A))));
-      Concurrency::array_view<double, 1> X_mat =
-        *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(
+      hc::array_view<double, 1> X_mat =
+        *(static_cast<hc::array_view<double, 1>*>(static_cast<void*>(
             const_cast<double*>(x))));
-      Concurrency::array_view<double, 1> Y_mat =
-        *(static_cast<Concurrency::array_view<double, 1>*>
+      hc::array_view<double, 1> Y_mat =
+        *(static_cast<hc::array_view<double, 1>*>
           (static_cast<void*>(y)));
-      amp.ampblas_dgemv2(ampTransA, N, M, &alpha, A_mat, offA, lda, X_mat,
+      hc.hcblas_dgemv2(ColMajor, ampTransA, N, M, &alpha, A_mat, offA, lda, X_mat,
         offx, incx, &beta, Y_mat, offy, incy);
 }
 template <>
@@ -904,9 +905,9 @@ void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
   const int offset_B, const float beta, float* C, const int offset_C) {
   int lda = (TransA == CblasNoTrans) ? K : M;
   int ldb = (TransB == CblasNoTrans) ? N : K;
-  AMPBLAS_TRANS ampTransA = noTrans;
-  AMPBLAS_TRANS ampTransB = noTrans;
-  Ampblaslibrary amp;
+  hcblasTranspose ampTransA = noTrans;
+  hcblasTranspose ampTransB = noTrans;
+  Hcblaslibrary hc;
   if (TransA == CblasTrans) {
       ampTransA = trans;
   }
@@ -921,15 +922,15 @@ void caffe_gpu_gemm<float>(const CBLAS_TRANSPOSE TransA,
   if (TransB == CblasConjTrans) {
       ampTransB = conjugate;
   }
-  Concurrency::array_view<float, 1> A_mat =
-    *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(
+  hc::array_view<float, 1> A_mat =
+    *(static_cast<hc::array_view<float, 1>*>(static_cast<void*>(
             const_cast<float*>(A))));
-  Concurrency::array_view<float, 1> B_mat =
-    *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(
+  hc::array_view<float, 1> B_mat =
+    *(static_cast<hc::array_view<float, 1>*>(static_cast<void*>(
             const_cast<float*>(B))));
-  Concurrency::array_view<float, 1> C_mat =
-    *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(C)));
-    amp.ampblas_sgemm2(colMajor, ampTransB, ampTransA, N, M, K, &alpha, B_mat,
+  hc::array_view<float, 1> C_mat =
+    *(static_cast<hc::array_view<float, 1>*>(static_cast<void*>(C)));
+    hc.hcblas_sgemm2(ColMajor, ampTransB, ampTransA, N, M, K, &alpha, B_mat,
                 ldb, A_mat, lda, &beta, C_mat, N, offset_B, offset_A,
                 offset_C);
 }
@@ -943,9 +944,9 @@ void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
   const int offset_B, const double beta, double* C, const int offset_C) {
   int lda = (TransA == CblasNoTrans) ? K : M;
   int ldb = (TransB == CblasNoTrans) ? N : K;
-  AMPBLAS_TRANS ampTransA = noTrans;
-  AMPBLAS_TRANS ampTransB = noTrans;
-  Ampblaslibrary amp;
+  hcblasTranspose ampTransA = noTrans;
+  hcblasTranspose ampTransB = noTrans;
+  Hcblaslibrary hc;
   if (TransA == CblasTrans) {
       ampTransA = trans;
   }
@@ -960,21 +961,21 @@ void caffe_gpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
   if (TransB == CblasConjTrans) {
       ampTransB = conjugate;
   }
-  Concurrency::array_view<double, 1> A_mat =
-    *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(
+  hc::array_view<double, 1> A_mat =
+    *(static_cast<hc::array_view<double, 1>*>(static_cast<void*>(
             const_cast<double*>(A))));
-  Concurrency::array_view<double, 1> B_mat =
-    *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(
+  hc::array_view<double, 1> B_mat =
+    *(static_cast<hc::array_view<double, 1>*>(static_cast<void*>(
             const_cast<double*>(B))));
-  Concurrency::array_view<double, 1> C_mat =
-    *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(C)));
-    amp.ampblas_dgemm2(colMajor, ampTransB, ampTransA, N, M, K, &alpha, B_mat,
+  hc::array_view<double, 1> C_mat =
+    *(static_cast<hc::array_view<double, 1>*>(static_cast<void*>(C)));
+    hc.hcblas_dgemm2(ColMajor, ampTransB, ampTransA, N, M, K, &alpha, B_mat,
                 ldb, A_mat, lda, &beta, C_mat, N, offset_B, offset_A, offset_C);
 }
 template <>
 void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
-  Concurrency::array_view<float, 1> xView =
-    *(static_cast<Concurrency::array_view<float, 1>*>(static_cast<void*>(
+  hc::array_view<float, 1> xView =
+    *(static_cast<hc::array_view<float, 1>*>(static_cast<void*>(
             const_cast<float*>(x))));
 
   // runtime sizes
@@ -983,13 +984,13 @@ void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
   // simultaneous live threads
   const unsigned int thread_count = tile_count * TILE_SIZE;
   // global buffer (return type)
-  concurrency::array<float, 1> global_buffer(tile_count);
-  concurrency::array_view<float, 1> global_buffer_view(global_buffer);
+  hc::array<float, 1> global_buffer(tile_count);
+  hc::array_view<float, 1> global_buffer_view(global_buffer);
   // configuration
-  concurrency::extent<1> extent(thread_count);
-  concurrency::parallel_for_each(
-    extent.tile<TILE_SIZE>(),
-    [=] (concurrency::tiled_index<TILE_SIZE> tid) restrict(amp) {
+  hc::extent<1> extent(thread_count);
+  hc::parallel_for_each(
+    extent.tile(TILE_SIZE),
+    [=] (hc::tiled_index<1>& tid) __attribute__((hc, cpu)) {
     // shared tile buffer
     tile_static float local_buffer[TILE_SIZE];
     // indexes
@@ -1001,7 +1002,7 @@ void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
     // fold data into local buffer
     while (idx < n) {
       // reduction of smem and X[idx] with results stored in smem
-      smem += Concurrency::fast_math::fabs(xView[concurrency::index<1>(idx)]);
+      smem += hc::fast_math::fabs(xView[hc::index<1>(idx)]);
       // next chunk
       idx += thread_count;
     }
@@ -1040,8 +1041,8 @@ void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
 
 template <>
 void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
-  Concurrency::array_view<double, 1> xView =
-    *(static_cast<Concurrency::array_view<double, 1>*>(static_cast<void*>(
+  hc::array_view<double, 1> xView =
+    *(static_cast<hc::array_view<double, 1>*>(static_cast<void*>(
             const_cast<double*>(x))));
 
   // runtime sizes
@@ -1050,13 +1051,13 @@ void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
   // simultaneous live threads
   const unsigned int thread_count = tile_count * TILE_SIZE;
   // global buffer (return type)
-  concurrency::array<double, 1> global_buffer(tile_count);
-  concurrency::array_view<double, 1> global_buffer_view(global_buffer);
+  hc::array<double, 1> global_buffer(tile_count);
+  hc::array_view<double, 1> global_buffer_view(global_buffer);
   // configuration
-  concurrency::extent<1> extent(thread_count);
-  concurrency::parallel_for_each(
-    extent.tile<TILE_SIZE>(),
-    [=] (concurrency::tiled_index<TILE_SIZE> tid) restrict(amp) {
+  hc::extent<1> extent(thread_count);
+  hc::parallel_for_each(
+    extent.tile(TILE_SIZE),
+    [=] (hc::tiled_index<1>& tid) __attribute__((hc, cpu)) {
     // shared tile buffer
     tile_static double local_buffer[TILE_SIZE];
     // indexes
@@ -1068,7 +1069,7 @@ void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
     // fold data into local buffer
     while (idx < n) {
       // reduction of smem and X[idx] with results stored in smem
-      smem += Concurrency::fast_math::fabs(xView[concurrency::index<1>(idx)]);
+      smem += hc::fast_math::fabs(xView[hc::index<1>(idx)]);
       // next chunk
       idx += thread_count;
     }
@@ -1110,9 +1111,9 @@ void caffe_gpu_rng_uniform(const int n, unsigned int* r) {
   caffe_rng_uniform(n, temp);
   array_view<unsigned int, 1> tempView(n, temp);
   array_view<unsigned int, 1> rView =
-    *((Concurrency::array_view<unsigned int, 1>*)(r));
-  Concurrency::extent<1> e(n);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp){
+    *((hc::array_view<unsigned int, 1>*)(r));
+  hc::extent<1> e(n);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)){
     rView[idx] = tempView(idx);
   });
 }
@@ -1124,9 +1125,9 @@ void caffe_gpu_rng_uniform<float>(const int N, const float a, const float b,
   caffe_rng_uniform(N, a, b, temp);
   array_view<float, 1> tempView(N, temp);
   array_view<float, 1> rView =
-    *((Concurrency::array_view<float, 1>*)(r));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp){
+    *((hc::array_view<float, 1>*)(r));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)){
     rView[idx] = tempView(idx);
   });
 }
@@ -1138,9 +1139,9 @@ void caffe_gpu_rng_uniform<double>(const int N, const double a, const double b,
   caffe_rng_uniform(N, a, b, temp);
   array_view<double, 1> tempView(N, temp);
   array_view<double, 1> rView =
-    *((Concurrency::array_view<double, 1>*)(r));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp){
+    *((hc::array_view<double, 1>*)(r));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)){
     rView[idx] = tempView(idx);
   });
 }
@@ -1152,9 +1153,9 @@ void caffe_gpu_rng_gaussian(const int N, const float mu, const float sigma,
   caffe_rng_gaussian(N, mu, sigma, temp);
   array_view<float, 1> tempView(N, temp);
   array_view<float, 1> rView =
-    *((Concurrency::array_view<float, 1>*)(r));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp){
+    *((hc::array_view<float, 1>*)(r));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)){
     rView[idx] = tempView(idx);
   });
 }
@@ -1167,9 +1168,9 @@ void caffe_gpu_rng_gaussian(const int N, const double mu,
   caffe_rng_gaussian(N, mu, sigma, temp);
   array_view<double, 1> tempView(N, temp);
   array_view<double, 1> rView =
-    *((Concurrency::array_view<double, 1>*)(r));
-  Concurrency::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp){
+    *((hc::array_view<double, 1>*)(r));
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)){
     rView[idx] = tempView(idx);
   });
 }
@@ -1178,10 +1179,10 @@ template <>
 uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
                                   const float* y) {
   array_view<float, 1> axView =
-    *(static_cast<Concurrency::array_view<float, 1>*>(
+    *(static_cast<hc::array_view<float, 1>*>(
           (static_cast<void*>(const_cast<float*>(x)))));
   array_view<float, 1> ayView =
-    *(static_cast<Concurrency::array_view<float, 1>*>(
+    *(static_cast<hc::array_view<float, 1>*>(
           (static_cast<void*>(const_cast<float*>(y)))));
 
   uint32_t* result = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
@@ -1199,8 +1200,8 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
   array_view<uint32_t, 1> xView(axView.get_extent().size(), ax);
   array_view<uint32_t, 1> yView(ayView.get_extent().size(), ay);
 
-  Concurrency::extent<1> e(n);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+  hc::extent<1> e(n);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
     uint32_t ret = 0;
     uint32_t u = xView[idx] ^ yView[idx];
     while (u) {
@@ -1226,10 +1227,10 @@ template <>
 uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
                                    const double* y) {
   array_view<double, 1> axView =
-    *(static_cast<Concurrency::array_view<double, 1>*>(
+    *(static_cast<hc::array_view<double, 1>*>(
           (static_cast<void*>(const_cast<double*>(x)))));
   array_view<double, 1> ayView =
-    *(static_cast<Concurrency::array_view<double, 1>*>(
+    *(static_cast<hc::array_view<double, 1>*>(
           (static_cast<void*>(const_cast<double*>(y)))));
 
   uint32_t* result = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
@@ -1244,8 +1245,8 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
   array_view<uint32_t, 1> resultView(n, result);
   array_view<uint64_t, 1> xView(axView.get_extent().size(), ax);
   array_view<uint64_t, 1> yView(ayView.get_extent().size(), ay);
-  Concurrency::extent<1> e(n);
-  parallel_for_each(e, [=](index<1> idx) restrict(amp) {
+  hc::extent<1> e(n);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
     uint32_t ret = 0;
     uint64_t u = xView[idx] ^ yView[idx];
     while (u) {

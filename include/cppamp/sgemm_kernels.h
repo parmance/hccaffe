@@ -1,9 +1,7 @@
-#include "ampblaslib.h"
-#include <amp.h>
-#include <amp_math.h>
-
-using namespace Concurrency;
-
+#include "hcblaslib.h"
+#include <hc.hpp>
+#include <hc_math.hpp>
+using namespace hc;
 #define TILESIZE 8
 #define STEPSIZE 8
 #define MICROTILESIZE 2
@@ -69,58 +67,73 @@ using namespace Concurrency;
            }                                                                \
            offA += BANKMICROTILESIZE;                              \
            offB += BANKMICROTILESIZE;                              \
- 
 
+#define  MTS_AB                                                                \
+           for (int iter = 0; iter < MICROTILESIZE_A ; iter++) {               \
+             rA[0][iter] = lA[offA + (iter * TILESIZE_A)];                     \
+           }                                                                   \
+           for (int iter = 0; iter < MICROTILESIZE_B ; iter++) {               \
+             rB[0][iter] = lB[offB + (iter * TILESIZE_B)];                     \
+           }                                                                   \
+           for (int rowIndex = 0; rowIndex < MICROTILESIZE_A ; rowIndex++) {   \
+             for (int colIndex = 0; colIndex < MICROTILESIZE_B ; colIndex++) { \
+               rC[rowIndex][colIndex] = rA[0][rowIndex] * rB[0][colIndex] +    \
+                                        rC[rowIndex][colIndex];                \
+             }                                                                 \
+           }                                                                   \
+           offA += (MICROTILESIZE_A * TILESIZE_A);                             \
+           offB += (MICROTILESIZE_B * TILESIZE_B);                             \
+ 
 /*
 *  SGEMM kernels - column major Order
 */
-ampblasStatus gemm_NoTransAB(Concurrency::accelerator_view &accl_view,
-                             Concurrency::array_view<float, 1> &A, long aOffset,
-                             Concurrency::array_view<float, 1> &B, long bOffset,
-                             Concurrency::array_view<float, 1> &C, long cOffset,
+hcblasStatus gemm_NoTransAB(hc::accelerator_view &accl_view,
+                             hc::array_view<float, 1> &A, long aOffset,
+                             hc::array_view<float, 1> &B, long bOffset,
+                             hc::array_view<float, 1> &C, long cOffset,
                              int M, int N, int K, int lda, int ldb, int ldc,
                              float alpha, float beta);
-ampblasStatus gemm_NoTransAB_d(Concurrency::accelerator_view &accl_view,
-                               Concurrency::array_view<double, 1> &A, long aOffset,
-                               Concurrency::array_view<double, 1> &B, long bOffset,
-                               Concurrency::array_view<double, 1> &C, long cOffset,
+hcblasStatus gemm_NoTransAB_d(hc::accelerator_view &accl_view,
+                               hc::array_view<double, 1> &A, long aOffset,
+                               hc::array_view<double, 1> &B, long bOffset,
+                               hc::array_view<double, 1> &C, long cOffset,
                                int M, int N, int K, int lda, int ldb, int ldc,
                                double alpha, double beta);
-ampblasStatus gemm_NoTransA(Concurrency::accelerator_view &accl_view,
-                            Concurrency::array_view<float, 1> &A, long aOffset,
-                            Concurrency::array_view<float, 1> &B, long bOffset,
-                            Concurrency::array_view<float, 1> &C, long cOffset,
+hcblasStatus gemm_NoTransA(hc::accelerator_view &accl_view,
+                            hc::array_view<float, 1> &A, long aOffset,
+                            hc::array_view<float, 1> &B, long bOffset,
+                            hc::array_view<float, 1> &C, long cOffset,
                             int M, int N, int K, int lda, int ldb, int ldc,
                             float alpha, float beta);
-ampblasStatus gemm_NoTransA_d(Concurrency::accelerator_view &accl_view,
-                              Concurrency::array_view<double, 1> &A, long aOffset,
-                              Concurrency::array_view<double, 1> &B, long bOffset,
-                              Concurrency::array_view<double, 1> &C, long cOffset,
+hcblasStatus gemm_NoTransA_d(hc::accelerator_view &accl_view,
+                              hc::array_view<double, 1> &A, long aOffset,
+                              hc::array_view<double, 1> &B, long bOffset,
+                              hc::array_view<double, 1> &C, long cOffset,
                               int M, int N, int K, int lda, int ldb, int ldc,
                               double alpha, double beta);
-ampblasStatus gemm_NoTransB(Concurrency::accelerator_view &accl_view,
-                            Concurrency::array_view<float, 1> &A, long aOffset,
-                            Concurrency::array_view<float, 1> &B, long bOffset,
-                            Concurrency::array_view<float, 1> &C, long cOffset,
+hcblasStatus gemm_NoTransB(hc::accelerator_view &accl_view,
+                            hc::array_view<float, 1> &A, long aOffset,
+                            hc::array_view<float, 1> &B, long bOffset,
+                            hc::array_view<float, 1> &C, long cOffset,
                             int M, int N, int K, int lda, int ldb, int ldc,
                             float alpha, float beta);
-ampblasStatus gemm_NoTransB_d(Concurrency::accelerator_view &accl_view,
-                              Concurrency::array_view<double, 1> &A, long aOffset,
-                              Concurrency::array_view<double, 1> &B, long bOffset,
-                              Concurrency::array_view<double, 1> &C, long cOffset,
+hcblasStatus gemm_NoTransB_d(hc::accelerator_view &accl_view,
+                              hc::array_view<double, 1> &A, long aOffset,
+                              hc::array_view<double, 1> &B, long bOffset,
+                              hc::array_view<double, 1> &C, long cOffset,
                               int M, int N, int K, int lda, int ldb, int ldc,
                               double alpha, double beta);
 
-ampblasStatus gemm_TransAB(Concurrency::accelerator_view &accl_view,
-                           Concurrency::array_view<float, 1> &A, long aOffset,
-                           Concurrency::array_view<float, 1> &B, long bOffset,
-                           Concurrency::array_view<float, 1> &C, long cOffset,
+hcblasStatus gemm_TransAB(hc::accelerator_view &accl_view,
+                           hc::array_view<float, 1> &A, long aOffset,
+                           hc::array_view<float, 1> &B, long bOffset,
+                           hc::array_view<float, 1> &C, long cOffset,
                            int M, int N, int K, int lda, int ldb, int ldc,
                            float alpha, float beta);
-ampblasStatus gemm_TransAB_d(Concurrency::accelerator_view &accl_view,
-                             Concurrency::array_view<double, 1> &A, long aOffset,
-                             Concurrency::array_view<double, 1> &B, long bOffset,
-                             Concurrency::array_view<double, 1> &C, long cOffset,
+hcblasStatus gemm_TransAB_d(hc::accelerator_view &accl_view,
+                             hc::array_view<double, 1> &A, long aOffset,
+                             hc::array_view<double, 1> &B, long bOffset,
+                             hc::array_view<double, 1> &C, long cOffset,
                              int M, int N, int K, int lda, int ldb, int ldc,
                              double alpha, double beta);
 
@@ -128,52 +141,52 @@ ampblasStatus gemm_TransAB_d(Concurrency::accelerator_view &accl_view,
 * SGEMM Kernels for Batch processing in column major order
 */
 
-ampblasStatus gemm_NoTransAB(Concurrency::accelerator_view &accl_view,
-                             Concurrency::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                             Concurrency::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                             Concurrency::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_NoTransAB(hc::accelerator_view &accl_view,
+                             hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
+                             hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
+                             hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
                              int M, int N, int K, int lda, int ldb, int ldc,
                              float alpha, float beta, int batchSize);
-ampblasStatus gemm_NoTransAB_d(Concurrency::accelerator_view &accl_view,
-                               Concurrency::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                               Concurrency::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                               Concurrency::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_NoTransAB_d(hc::accelerator_view &accl_view,
+                               hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
+                               hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
+                               hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
                                int M, int N, int K, int lda, int ldb, int ldc,
                                double alpha, double beta, int batchSize);
-ampblasStatus gemm_NoTransA(Concurrency::accelerator_view &accl_view,
-                            Concurrency::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                            Concurrency::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                            Concurrency::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_NoTransA(hc::accelerator_view &accl_view,
+                            hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
+                            hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
+                            hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
                             int M, int N, int K, int lda, int ldb, int ldc,
                             float alpha, float beta, int batchSize);
-ampblasStatus gemm_NoTransA_d(Concurrency::accelerator_view &accl_view,
-                              Concurrency::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                              Concurrency::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                              Concurrency::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_NoTransA_d(hc::accelerator_view &accl_view,
+                              hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
+                              hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
+                              hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
                               int M, int N, int K, int lda, int ldb, int ldc,
                               double alpha, double beta, int batchSize);
-ampblasStatus gemm_NoTransB(Concurrency::accelerator_view &accl_view,
-                            Concurrency::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                            Concurrency::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                            Concurrency::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_NoTransB(hc::accelerator_view &accl_view,
+                            hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
+                            hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
+                            hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
                             int M, int N, int K, int lda, int ldb, int ldc,
                             float alpha, float beta, int batchSize);
-ampblasStatus gemm_NoTransB_d(Concurrency::accelerator_view &accl_view,
-                              Concurrency::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                              Concurrency::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                              Concurrency::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_NoTransB_d(hc::accelerator_view &accl_view,
+                              hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
+                              hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
+                              hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
                               int M, int N, int K, int lda, int ldb, int ldc,
                               double alpha, double beta, int batchSize);
-ampblasStatus gemm_TransAB(Concurrency::accelerator_view &accl_view,
-                           Concurrency::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                           Concurrency::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                           Concurrency::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_TransAB(hc::accelerator_view &accl_view,
+                           hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
+                           hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
+                           hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
                            int M, int N, int K, int lda, int ldb, int ldc,
                            float alpha, float beta, int batchSize);
-ampblasStatus gemm_TransAB_d(Concurrency::accelerator_view &accl_view,
-                             Concurrency::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                             Concurrency::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                             Concurrency::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_TransAB_d(hc::accelerator_view &accl_view,
+                             hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
+                             hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
+                             hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
                              int M, int N, int K, int lda, int ldb, int ldc,
                              double alpha, double beta, int batchSize);
 
@@ -181,53 +194,53 @@ ampblasStatus gemm_TransAB_d(Concurrency::accelerator_view &accl_view,
 * SGEMM Kernels - Row major order
 */
 
-ampblasStatus gemm_NoTransAB_rMajor(Concurrency::accelerator_view &accl_view,
-                                    Concurrency::array_view<float, 1> &A, long aOffset,
-                                    Concurrency::array_view<float, 1> &B, long bOffset,
-                                    Concurrency::array_view<float, 1> &C, long cOffset,
+hcblasStatus gemm_NoTransAB_rMajor(hc::accelerator_view &accl_view,
+                                    hc::array_view<float, 1> &A, long aOffset,
+                                    hc::array_view<float, 1> &B, long bOffset,
+                                    hc::array_view<float, 1> &C, long cOffset,
                                     int M, int N, int K, int lda, int ldb, int ldc,
                                     float alpha, float beta);
-ampblasStatus gemm_NoTransAB_rMajor_d(Concurrency::accelerator_view &accl_view,
-                                      Concurrency::array_view<double, 1> &A, long aOffset,
-                                      Concurrency::array_view<double, 1> &B, long bOffset,
-                                      Concurrency::array_view<double, 1> &C, long cOffset,
+hcblasStatus gemm_NoTransAB_rMajor_d(hc::accelerator_view &accl_view,
+                                      hc::array_view<double, 1> &A, long aOffset,
+                                      hc::array_view<double, 1> &B, long bOffset,
+                                      hc::array_view<double, 1> &C, long cOffset,
                                       int M, int N, int K, int lda, int ldb, int ldc,
                                       double alpha, double beta);
-ampblasStatus gemm_NoTransA_rMajor(Concurrency::accelerator_view &accl_view,
-                                   Concurrency::array_view<float, 1> &A, long aOffset,
-                                   Concurrency::array_view<float, 1> &B, long bOffset,
-                                   Concurrency::array_view<float, 1> &C, long cOffset,
+hcblasStatus gemm_NoTransA_rMajor(hc::accelerator_view &accl_view,
+                                   hc::array_view<float, 1> &A, long aOffset,
+                                   hc::array_view<float, 1> &B, long bOffset,
+                                   hc::array_view<float, 1> &C, long cOffset,
                                    int M, int N, int K, int lda, int ldb, int ldc,
                                    float alpha, float beta);
-ampblasStatus gemm_NoTransA_rMajor_d(Concurrency::accelerator_view &accl_view,
-                                     Concurrency::array_view<double, 1> &A, long aOffset,
-                                     Concurrency::array_view<double, 1> &B, long bOffset,
-                                     Concurrency::array_view<double, 1> &C, long cOffset,
+hcblasStatus gemm_NoTransA_rMajor_d(hc::accelerator_view &accl_view,
+                                     hc::array_view<double, 1> &A, long aOffset,
+                                     hc::array_view<double, 1> &B, long bOffset,
+                                     hc::array_view<double, 1> &C, long cOffset,
                                      int M, int N, int K, int lda, int ldb, int ldc,
                                      double alpha, double beta);
-ampblasStatus gemm_NoTransB_rMajor(Concurrency::accelerator_view &accl_view,
-                                   Concurrency::array_view<float, 1> &A, long aOffset,
-                                   Concurrency::array_view<float, 1> &B, long bOffset,
-                                   Concurrency::array_view<float, 1> &C, long cOffset,
+hcblasStatus gemm_NoTransB_rMajor(hc::accelerator_view &accl_view,
+                                   hc::array_view<float, 1> &A, long aOffset,
+                                   hc::array_view<float, 1> &B, long bOffset,
+                                   hc::array_view<float, 1> &C, long cOffset,
                                    int M, int N, int K, int lda, int ldb, int ldc,
                                    float alpha, float beta);
-ampblasStatus gemm_NoTransB_rMajor_d(Concurrency::accelerator_view &accl_view,
-                                     Concurrency::array_view<double, 1> &A, long aOffset,
-                                     Concurrency::array_view<double, 1> &B, long bOffset,
-                                     Concurrency::array_view<double, 1> &C, long cOffset,
+hcblasStatus gemm_NoTransB_rMajor_d(hc::accelerator_view &accl_view,
+                                     hc::array_view<double, 1> &A, long aOffset,
+                                     hc::array_view<double, 1> &B, long bOffset,
+                                     hc::array_view<double, 1> &C, long cOffset,
                                      int M, int N, int K, int lda, int ldb, int ldc,
                                      double alpha, double beta);
-ampblasStatus gemm_TransAB_rMajor(Concurrency::accelerator_view &accl_view,
-                                  Concurrency::array_view<float, 1> &A, long aOffset,
-                                  Concurrency::array_view<float, 1> &B, long bOffset,
-                                  Concurrency::array_view<float, 1> &C, long cOffset,
+hcblasStatus gemm_TransAB_rMajor(hc::accelerator_view &accl_view,
+                                  hc::array_view<float, 1> &A, long aOffset,
+                                  hc::array_view<float, 1> &B, long bOffset,
+                                  hc::array_view<float, 1> &C, long cOffset,
                                   int M, int N, int K, int lda, int ldb, int ldc,
                                   float alpha, float beta);
 
-ampblasStatus gemm_TransAB_rMajor_d(Concurrency::accelerator_view &accl_view,
-                                    Concurrency::array_view<double, 1> &A, long aOffset,
-                                    Concurrency::array_view<double, 1> &B, long bOffset,
-                                    Concurrency::array_view<double, 1> &C, long cOffset,
+hcblasStatus gemm_TransAB_rMajor_d(hc::accelerator_view &accl_view,
+                                    hc::array_view<double, 1> &A, long aOffset,
+                                    hc::array_view<double, 1> &B, long bOffset,
+                                    hc::array_view<double, 1> &C, long cOffset,
                                     int M, int N, int K, int lda, int ldb, int ldc,
                                     double alpha, double beta);
 
@@ -235,52 +248,52 @@ ampblasStatus gemm_TransAB_rMajor_d(Concurrency::accelerator_view &accl_view,
 * SGEMM Kernels for Batch-processing in Row major order
 */
 
-ampblasStatus gemm_NoTransAB_rMajor(Concurrency::accelerator_view &accl_view,
-                                    Concurrency::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                                    Concurrency::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                                    Concurrency::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_NoTransAB_rMajor(hc::accelerator_view &accl_view,
+                                    hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
+                                    hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
+                                    hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
                                     int M, int N, int K, int lda, int ldb, int ldc,
                                     float alpha, float beta, int batchSize);
-ampblasStatus gemm_NoTransAB_rMajor_d(Concurrency::accelerator_view &accl_view,
-                                      Concurrency::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                                      Concurrency::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                                      Concurrency::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_NoTransAB_rMajor_d(hc::accelerator_view &accl_view,
+                                      hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
+                                      hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
+                                      hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
                                       int M, int N, int K, int lda, int ldb, int ldc,
                                       double alpha, double beta, int batchSize);
-ampblasStatus gemm_NoTransA_rMajor(Concurrency::accelerator_view &accl_view,
-                                   Concurrency::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                                   Concurrency::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                                   Concurrency::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_NoTransA_rMajor(hc::accelerator_view &accl_view,
+                                   hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
+                                   hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
+                                   hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
                                    int M, int N, int K, int lda, int ldb, int ldc,
                                    float alpha, float beta, int batchSize);
-ampblasStatus gemm_NoTransA_rMajor_d(Concurrency::accelerator_view &accl_view,
-                                     Concurrency::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                                     Concurrency::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                                     Concurrency::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_NoTransA_rMajor_d(hc::accelerator_view &accl_view,
+                                     hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
+                                     hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
+                                     hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
                                      int M, int N, int K, int lda, int ldb, int ldc,
                                      double alpha, double beta, int batchSize);
-ampblasStatus gemm_NoTransB_rMajor(Concurrency::accelerator_view &accl_view,
-                                   Concurrency::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                                   Concurrency::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                                   Concurrency::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_NoTransB_rMajor(hc::accelerator_view &accl_view,
+                                   hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
+                                   hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
+                                   hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
                                    int M, int N, int K, int lda, int ldb, int ldc,
                                    float alpha, float beta, int batchSize);
-ampblasStatus gemm_NoTransB_rMajor_d(Concurrency::accelerator_view &accl_view,
-                                     Concurrency::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                                     Concurrency::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                                     Concurrency::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_NoTransB_rMajor_d(hc::accelerator_view &accl_view,
+                                     hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
+                                     hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
+                                     hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
                                      int M, int N, int K, int lda, int ldb, int ldc,
                                      double alpha, double beta, int batchSize);
-ampblasStatus gemm_TransAB_rMajor(Concurrency::accelerator_view &accl_view,
-                                  Concurrency::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                                  Concurrency::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                                  Concurrency::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_TransAB_rMajor(hc::accelerator_view &accl_view,
+                                  hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
+                                  hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
+                                  hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
                                   int M, int N, int K, int lda, int ldb, int ldc,
                                   float alpha, float beta, int batchSize);
 
-ampblasStatus gemm_TransAB_rMajor_d(Concurrency::accelerator_view &accl_view,
-                                    Concurrency::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                                    Concurrency::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                                    Concurrency::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+hcblasStatus gemm_TransAB_rMajor_d(hc::accelerator_view &accl_view,
+                                    hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
+                                    hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
+                                    hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
                                     int M, int N, int K, int lda, int ldb, int ldc,
                                     double alpha, double beta, int batchSize);
