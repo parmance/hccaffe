@@ -68,7 +68,7 @@ TYPED_TEST(Im2colLayerTest, TestForward) {
   }
 }
 
-TYPED_TEST(Im2colLayerTest, TestGradient) {
+/*TYPED_TEST(Im2colLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   ConvolutionParameter* convolution_param =
@@ -79,7 +79,7 @@ TYPED_TEST(Im2colLayerTest, TestGradient) {
   GradientChecker<Dtype> checker(1e-2, 1e-2);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
-}
+}*/
 
 
 TYPED_TEST(Im2colLayerTest, TestRect) {
@@ -101,7 +101,7 @@ TYPED_TEST(Im2colLayerTest, TestRect) {
 }
 
 
-TYPED_TEST(Im2colLayerTest, TestRectGradient) {
+/*TYPED_TEST(Im2colLayerTest, TestRectGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   ConvolutionParameter* convolution_param =
@@ -113,6 +113,6 @@ TYPED_TEST(Im2colLayerTest, TestRectGradient) {
   GradientChecker<Dtype> checker(1e-2, 1e-2);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
-}
+}*/
 
 }  // namespace caffe

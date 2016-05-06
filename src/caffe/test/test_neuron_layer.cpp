@@ -442,7 +442,7 @@ TYPED_TEST(NeuronLayerTest, TestPReLUForwardChannelShared) {
   this->TestPReLU(&layer);
 }
 
-TYPED_TEST(NeuronLayerTest, TestPReLUGradient) {
+/*TYPED_TEST(NeuronLayerTest, TestPReLUGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   PReLULayer<Dtype> layer(layer_param);
@@ -465,7 +465,7 @@ TYPED_TEST(NeuronLayerTest, TestPReLUGradientChannelShared) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
 }
-
+*/
 TYPED_TEST(NeuronLayerTest, TestPReLUConsistencyReLU) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter prelu_layer_param;

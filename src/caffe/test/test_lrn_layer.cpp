@@ -154,7 +154,7 @@ TYPED_TEST(LRNLayerTest, TestForwardAcrossChannelsLargeRegion) {
   }
 }
 
-TYPED_TEST(LRNLayerTest, TestGradientAcrossChannels) {
+/*TYPED_TEST(LRNLayerTest, TestGradientAcrossChannels) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   LRNLayer<Dtype> layer(layer_param);
@@ -173,9 +173,9 @@ TYPED_TEST(LRNLayerTest, TestGradientAcrossChannels) {
   // }
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
-}
+}*/
 
-TYPED_TEST(LRNLayerTest, TestGradientAcrossChannelsLargeRegion) {
+/*TYPED_TEST(LRNLayerTest, TestGradientAcrossChannelsLargeRegion) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   layer_param.mutable_lrn_param()->set_local_size(15);
@@ -195,7 +195,7 @@ TYPED_TEST(LRNLayerTest, TestGradientAcrossChannelsLargeRegion) {
   // }
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
-}
+}*/
 
 TYPED_TEST(LRNLayerTest, TestSetupWithinChannel) {
   typedef typename TypeParam::Dtype Dtype;
@@ -229,7 +229,7 @@ TYPED_TEST(LRNLayerTest, TestForwardWithinChannel) {
   }
 }
 
-TYPED_TEST(LRNLayerTest, TestGradientWithinChannel) {
+/*TYPED_TEST(LRNLayerTest, TestGradientWithinChannel) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   layer_param.mutable_lrn_param()->set_norm_region(
@@ -244,7 +244,7 @@ TYPED_TEST(LRNLayerTest, TestGradientWithinChannel) {
   }
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
-}
+}*/
 
 
 }  // namespace caffe
