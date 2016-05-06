@@ -79,9 +79,11 @@ This section enumerates the list of tested combinations of Hardware and system s
 
 A. ROCM 1.0 Installation (If not done so far)
 
-B. HCCaffe Build
+B. Pre-requisites Installation
 
-C. Unit Testing
+C. HCCaffe Build
+
+D. Unit Testing
 
 
 ## Installation Steps in detail:
@@ -118,9 +120,11 @@ C. Unit Testing
        
        * ./vector_copy
 
+### B. Pre-requisites Installation: 
 
+          sudo apt-get install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler libatlas-base-dev libblas-dev libgflags-dev libgoogle-glog-dev liblmdb-dev
       
-### B. Hccaffe Build Steps:
+### C. Hccaffe Build Steps:
 
 HcCaffe currently could be built in one of the following two ways
 
@@ -149,8 +153,8 @@ ii) Using hcc-hsail built from source
 
 
 
-## C. Unit Testing ##
+## D. Unit Testing ##
 
-After done with A and B, Now its time to test. Run the following commands to perform unit testing of different components of Caffe.
+After done with A, B and C, Now its time to test. Run the following commands to perform unit testing of different components of Caffe.
 
              ./build/test/test_all.testbin
