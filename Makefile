@@ -16,7 +16,7 @@ else
   OTHER_BUILD_DIR := $(DEBUG_BUILD_DIR)
 endif
 
-CLAMP_PREFIX=/opt/hcc
+HCC_PREFIX=/opt/rocm/hcc-hsail
 # All of the directories containing code.
 SRC_DIRS := $(shell find * -type d -exec bash -c "find {} -maxdepth 1 \
 	\( -name '*.cpp' -o -name '*.proto' \) | grep -q ." \; -print)
@@ -224,7 +224,7 @@ endif
 # Linux
 ifeq ($(LINUX), 1)
   ifeq ($(USE_CPPAMP), 1)
-    CXX := $(CLAMP_PREFIX)/bin/clang++
+    CXX := $(HCC_PREFIX)/bin/clang++
   else
     CXX ?= /usr/bin/g++
     GCCVERSION := $(shell $(CXX) -dumpversion | cut -f1,2 -d.)
@@ -265,7 +265,7 @@ endif
 #CPPAMP Build Option
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(USE_CPPAMP), 1)
-    AMP_COMMON_FLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --cxxflags)
+    AMP_COMMON_FLAGS += $(shell $(HCC_PREFIX)/bin/hcc-config --install --cxxflags)
   endif
 endif
 # Custom compiler
@@ -378,7 +378,7 @@ LINKFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
 
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(USE_CPPAMP), 1)
-     LINKFLAGS += $(shell $(CLAMP_PREFIX)/bin/clamp-config --install --ldflags)
+     LINKFLAGS += $(shell $(HCC_PREFIX)/bin/hcc-config --install --ldflags)
   endif
 endif
 USE_PKG_CONFIG ?= 0
