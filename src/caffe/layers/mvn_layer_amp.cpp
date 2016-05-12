@@ -26,12 +26,12 @@ namespace caffe {
                      temp_.mutable_gpu_data());
 
       // computes variance using var(X) = E(X^2) - (EX)^2
-      caffe_gpu_gemv<Dtype>(CblasNoTrans, num, dim, 1. / dim, bottom_data, 0,
-                            sum_multiplier_.gpu_data(),
-                            0, 0., mean_.mutable_gpu_data(), 0);  // EX
+      caffe_gpu_gemv<Dtype>(CblasNoTrans, num, dim, 1. / dim, const_cast<Dtype*>(bottom_data), 0,
+                            const_cast<Dtype*>(sum_multiplier_.gpu_data()),
+                            0, 0., const_cast<Dtype*>(mean_.mutable_gpu_data()), 0);  // EX
       caffe_gpu_gemv<Dtype>(CblasNoTrans, num, dim, 1. / dim,
-                            temp_.gpu_data(), 0,
-                            sum_multiplier_.gpu_data(), 0,  0.,
+                            const_cast<Dtype*>(temp_.gpu_data()), 0,
+                            const_cast<Dtype*>(sum_multiplier_.gpu_data()), 0,  0.,
                             variance_.mutable_gpu_data(), 0);  // E(X^2)
       caffe_gpu_powx(mean_.count(), mean_.gpu_data(), Dtype(2),
                      temp_.mutable_gpu_data());  // (EX)^2
@@ -44,8 +44,8 @@ namespace caffe {
       // subtract mean
       caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans,
                             num, dim, 1, -1.,
-                            mean_.gpu_data(), 0,
-                            sum_multiplier_.gpu_data(), 0, 0.,
+                            const_cast<Dtype*>(mean_.gpu_data()), 0,
+                            const_cast<Dtype*>(sum_multiplier_.gpu_data()), 0, 0.,
                             temp_.mutable_gpu_data(), 0);
 
       caffe_gpu_add(temp_.count(), bottom_data,
@@ -60,21 +60,21 @@ namespace caffe {
                            variance_.mutable_gpu_data());
 
       caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num, dim, 1, 1.,
-                            variance_.gpu_data(), 0,
-                            sum_multiplier_.gpu_data(), 0, 0.,
+                            const_cast<Dtype*>(variance_.gpu_data()), 0,
+                            const_cast<Dtype*>(sum_multiplier_.gpu_data()), 0, 0.,
                             temp_.mutable_gpu_data(), 0);
 
       caffe_gpu_div(temp_.count(), top_data, temp_.gpu_data(), top_data);
     } else {
-      caffe_gpu_gemv<Dtype>(CblasNoTrans, num, dim, 1. / dim, bottom_data, 0,
-                            sum_multiplier_.gpu_data(),
+      caffe_gpu_gemv<Dtype>(CblasNoTrans, num, dim, 1. / dim, const_cast<Dtype*>(bottom_data), 0,
+                            const_cast<Dtype*>(sum_multiplier_.gpu_data()),
                             0, 0., mean_.mutable_gpu_data(), 0);  // EX
 
       // subtract mean
       caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num, dim,
                             1, -1.,
-                            mean_.gpu_data(), 0,
-                            sum_multiplier_.gpu_data(), 0, 0.,
+                            const_cast<Dtype*>(mean_.gpu_data()), 0,
+                            const_cast<Dtype*>(sum_multiplier_.gpu_data()), 0, 0.,
                             temp_.mutable_gpu_data(), 0);
 
       caffe_gpu_add(temp_.count(), bottom_data, temp_.gpu_data(), top_data);
@@ -103,21 +103,21 @@ namespace caffe {
 
     if (this->layer_param_.mvn_param().normalize_variance()) {
       caffe_gpu_mul(temp_.count(), top_data, top_diff, bottom_diff);
-      caffe_gpu_gemv<Dtype>(CblasNoTrans, num, dim, 1., bottom_diff, 0,
-                            sum_multiplier_.gpu_data(), 0,
+      caffe_gpu_gemv<Dtype>(CblasNoTrans, num, dim, 1., const_cast<Dtype*>(bottom_diff), 0,
+                            const_cast<Dtype*>(sum_multiplier_.gpu_data()), 0,
                             0., mean_.mutable_gpu_data(), 0);
       caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num, dim, 1, 1.,
-                            mean_.gpu_data(), 0,
-                            sum_multiplier_.gpu_data(), 0, 0.,
+                            const_cast<Dtype*>(mean_.gpu_data()), 0,
+                            const_cast<Dtype*>(sum_multiplier_.gpu_data()), 0, 0.,
                             bottom_diff, 0);
       caffe_gpu_mul(temp_.count(), top_data, bottom_diff, bottom_diff);
 
-      caffe_gpu_gemv<Dtype>(CblasNoTrans, num, dim, 1., top_diff, 0,
-                            sum_multiplier_.gpu_data(),
+      caffe_gpu_gemv<Dtype>(CblasNoTrans, num, dim, 1., const_cast<Dtype*>(top_diff), 0,
+                            const_cast<Dtype*>(sum_multiplier_.gpu_data()),
                             0, 0., mean_.mutable_gpu_data(), 0);
       caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num, dim, 1, 1.,
-                            mean_.gpu_data(), 0,
-                            sum_multiplier_.gpu_data(), 0, 1.,
+                            const_cast<Dtype*>(mean_.gpu_data()), 0,
+                            const_cast<Dtype*>(sum_multiplier_.gpu_data()), 0, 1.,
                             bottom_diff, 0);
 
       caffe_gpu_axpby(temp_.count(), Dtype(1), top_diff, Dtype(-1. / dim),
@@ -129,12 +129,12 @@ namespace caffe {
 
       // computes variance using var(X) = E(X^2) - (EX)^2
       caffe_gpu_gemv<Dtype>(CblasNoTrans, num,
-                            dim, 1. / dim, bottom_data, 0,
-                            sum_multiplier_.gpu_data(),
+                            dim, 1. / dim, const_cast<Dtype*>(bottom_data), 0,
+                            const_cast<Dtype*>(sum_multiplier_.gpu_data()),
                             0, 0., mean_.mutable_gpu_data(), 0);  // EX
       caffe_gpu_gemv<Dtype>(CblasNoTrans, num, dim, 1. / dim,
-                            temp_.gpu_data(), 0,
-                            sum_multiplier_.gpu_data(), 0, 0.,
+                            const_cast<Dtype*>(temp_.gpu_data()), 0,
+                            const_cast<Dtype*>(sum_multiplier_.gpu_data()), 0, 0.,
                             variance_.mutable_gpu_data(), 0);  // E(X^2)
       caffe_gpu_powx(mean_.count(), mean_.gpu_data(), Dtype(2),
                      temp_.mutable_gpu_data());  // (EX)^2
@@ -149,8 +149,8 @@ namespace caffe {
                            variance_.mutable_gpu_data());
 
       caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num, dim, 1, 1.,
-                            variance_.gpu_data(), 0,
-                            sum_multiplier_.gpu_data(), 0, 0.,
+                            const_cast<Dtype*>(variance_.gpu_data()), 0,
+                            const_cast<Dtype*>(sum_multiplier_.gpu_data()), 0, 0.,
                             temp_.mutable_gpu_data(), 0);
 
       caffe_gpu_div(temp_.count(), bottom_diff,

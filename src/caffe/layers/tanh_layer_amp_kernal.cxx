@@ -17,66 +17,46 @@ void TanHBackward(const int N, Dtype* in_diff,
 
 template <>
 void TanHForward(const int N, float* in, float* out) {
-  hc::array_view<float, 1> inView =
-    *((hc::array_view<float, 1>*)(in));
-  hc::array_view<float, 1> outView =
-    *((hc::array_view<float, 1>*)(out));
   hc::extent<1> e(N);
   parallel_for_each(
     e,
     [=](hc::index<1> idx) __attribute__((hc, cpu)){
-    outView[idx] = hc::fast_math::tanh(inView[idx]);
-  });
+    out[idx[0]] = hc::fast_math::tanh(in[idx[0]]);
+  }).wait();
 }
 
 template <>
 void TanHBackward(const int N, float* in_diff,
   float* out_data, float* out_diff) {
-  hc::array_view<float, 1> in_diffView =
-    *((hc::array_view<float, 1>*)(in_diff));
-  hc::array_view<float, 1> out_diffView =
-    *((hc::array_view<float, 1>*)(out_diff));
-  hc::array_view<float, 1> out_dataView =
-    *((hc::array_view<float, 1>*)(out_data));
   hc::extent<1> e(N);
   parallel_for_each(
     e,
     [=](hc::index<1> idx) __attribute__((hc, cpu)){
-    float tanhx = out_dataView[idx];
-    out_diffView[idx] = in_diffView[idx] * (1 - tanhx * tanhx);
-  });
+    float tanhx = out_data[idx[0]];
+    out_diff[idx[0]] = in_diff[idx[0]] * (1 - tanhx * tanhx);
+  }).wait();
 }
 
 template <>
 void TanHForward(const int N, double* in, double* out) {
-  hc::array_view<double, 1> inView =
-    *((hc::array_view<double, 1>*)(in));
-  hc::array_view<double, 1> outView =
-    *((hc::array_view<double, 1>*)(out));
   hc::extent<1> e(N);
   parallel_for_each(
     e,
     [=](hc::index<1> idx) __attribute__((hc, cpu)){
-    outView[idx] = hc::fast_math::tanh(inView[idx]);
-  });
+    out[idx[0]] = hc::fast_math::tanh(in[idx[0]]);
+  }).wait();
 }
 
 template <>
 void TanHBackward(const int N, double* in_diff,
   double* out_data, double* out_diff) {
-  hc::array_view<double, 1> in_diffView =
-    *((hc::array_view<double, 1>*)(in_diff));
-  hc::array_view<double, 1> out_diffView =
-    *((hc::array_view<double, 1>*)(out_diff));
-  hc::array_view<double, 1> out_dataView =
-    *((hc::array_view<double, 1>*)(out_data));
   hc::extent<1> e(N);
   parallel_for_each(
     e,
     [=](hc::index<1> idx) __attribute__((hc, cpu)){
-    double tanhx = out_dataView[idx];
-    out_diffView[idx] = in_diffView[idx] * (1 - tanhx * tanhx);
-  });
+    double tanhx = out_data[idx[0]];
+    out_diff[idx[0]] = in_diff[idx[0]] * (1 - tanhx * tanhx);
+  }).wait();
 }
 
 

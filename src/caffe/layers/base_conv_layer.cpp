@@ -282,21 +282,21 @@ template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::forward_gpu_bias(Dtype* output,
     const int offset, const Dtype* bias) {
   caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_output_,
-      height_out_ * width_out_, 1, (Dtype)1., bias, 0,
-      bias_multiplier_.gpu_data(), 0, (Dtype)1., output, offset);
+      height_out_ * width_out_, 1, (Dtype)1., const_cast<Dtype*>(bias), 0,
+      const_cast<Dtype*>(bias_multiplier_.gpu_data()), 0, (Dtype)1., output, offset);
 }
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::backward_gpu_bias(Dtype* bias,
     const Dtype* input, const int offset) {
   caffe_gpu_gemv<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_,
-      1., input, offset, bias_multiplier_.gpu_data(), 0, 1., bias, 0);
+      1., const_cast<Dtype*>(input), offset, const_cast<Dtype*>(bias_multiplier_.gpu_data()), 0, 1., bias, 0);
 }
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::backward_gpu_bias_opt(Dtype* bias,
     const Dtype* input) {
       caffe_gpu_gemv2<Dtype>(CblasNoTrans, num_output_, N_,
-          1., input, top_offset_, N_,
-          reinterpret_cast<const Dtype*>(bias_multiplier_.gpu_data()),
+          1., const_cast<Dtype*>(input), top_offset_, N_,
+          const_cast<Dtype*>(bias_multiplier_.gpu_data()),
           (size_t)0, 1., 1, bias, (size_t)0, 1);
 }
 template <typename Dtype>
@@ -316,7 +316,7 @@ void BaseConvolutionLayer<Dtype>::forward_gpu_gemm(int N1, int N2,
   for (int g = 0; g < group_; ++g) {
     caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, conv_out_channels_ /
         group_, conv_out_spatial_dim_, kernel_dim_ / group_,
-        (Dtype)1., weights , weight_offset_ * g, col_buff,
+        (Dtype)1., const_cast<Dtype*>(weights) , weight_offset_ * g, const_cast<Dtype*>(col_buff),
         offset_col+col_offset_ * g, (Dtype)0., output,
         offset_output+output_offset_ * g);
   }
@@ -331,8 +331,8 @@ void BaseConvolutionLayer<Dtype>::forward_gpu_gemm_opt(const Dtype* input,
   }
     for (int g = 0; g < group_; ++g) {
         caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_ * opt_num2,
-        K_, 1., weight, weight_offset_ * g, static_cast<Dtype*>(transMem),
-        col_offset_ * g, 0., static_cast<Dtype*>(subTopMem),
+        K_, 1., const_cast<Dtype*>(weight), weight_offset_ * g, static_cast<Dtype*>(transMem),
+        col_offset_ * g, 0.,  static_cast<Dtype*>(subTopMem),
         top_offset_opt * g);
     }
   transform_gpu<Dtype>(subTopMem, output, top_offset_, N_, M_*group_, opt_num2);
@@ -342,7 +342,7 @@ void BaseConvolutionLayer<Dtype>::forward_gpu_bias_opt(Dtype* output,
     const Dtype* bias) {
   for (int z = 0; z < opt_num2; z++)
     caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_output_,
-      N_, 1, 1., bias, 0, bias_multiplier_.gpu_data(), 0,
+      N_, 1, 1., const_cast<Dtype*>(bias), 0, const_cast<Dtype*>(bias_multiplier_.gpu_data()), 0,
       1., output, top_offset_ + num_output_ * N_ * z);
 }
 template <typename Dtype>
@@ -372,7 +372,7 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_gemm_opt(const Dtype* output,
   }
   for (int g = 0; g < group_; ++g) {
        caffe_gpu_gemm<Dtype>(CblasTrans, CblasNoTrans, K_, N_ * opt_num2, M_,
-          (Dtype)1., weights,  weight_offset_ * g,
+          (Dtype)1., const_cast<Dtype*>(weights),  weight_offset_ * g,
           static_cast<Dtype*>(subTopMem), top_offset_opt * g,
           (Dtype)0., static_cast<Dtype*>(transMem), col_offset_ * g);
       }
@@ -394,7 +394,7 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_gemm(int N1, int N2,
   for (int g = 0; g < group_; ++g) {
     caffe_gpu_gemm<Dtype>(CblasTrans, CblasNoTrans, kernel_dim_ / group_,
         conv_out_spatial_dim_, conv_out_channels_ / group_,
-        (Dtype)1., weights, weight_offset_ * g, output,
+        (Dtype)1., const_cast<Dtype*>(weights), weight_offset_ * g, const_cast<Dtype*>(output),
         offset_output+output_offset_ * g,
         (Dtype)0., col_buff, offset_col+col_offset_ * g);
   }
@@ -417,9 +417,9 @@ void BaseConvolutionLayer<Dtype>::weight_gpu_gemm(int N1, int N2,
   for (int g = 0; g < group_; ++g) {
     caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
         conv_out_channels_ / group_, kernel_dim_ / group_,
-        conv_out_spatial_dim_, (Dtype)1., output,
+        conv_out_spatial_dim_, (Dtype)1., const_cast<Dtype*>(output),
         offset_output+output_offset_ * g,
-        col_buff ,  col_offset+col_offset_ * g,
+        const_cast<Dtype*>(col_buff) ,  col_offset+col_offset_ * g,
         (Dtype)1., weights , weight_offset_ * g);
   }
 }
@@ -487,7 +487,7 @@ void BaseConvolutionLayer<Dtype>::weight_gpu_gemm(const Dtype* input,
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::backward_gpu_bias(Dtype* bias,
     const Dtype* input) {
-  caffe_gpu_gemv<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_, 1.,
+  caffe_gpu_emv<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_, 1.,
       input, bias_multiplier_.gpu_data(), 1., bias);
 }
 #endif  // USE_CPPAMP

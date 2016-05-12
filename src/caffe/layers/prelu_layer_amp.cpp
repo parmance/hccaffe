@@ -77,8 +77,8 @@ void PReLULayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
         dsum += d;
       } else {
         caffe_gpu_gemv<Dtype>(CblasNoTrans, channels, dim, 1.,
-                              multiplier_.gpu_diff(),
-                              0, multiplier_.gpu_data(), 0,
+                              const_cast<Dtype*>(multiplier_.gpu_diff()),
+                              0, const_cast<Dtype*>(multiplier_.gpu_data()), 0,
                               1., slope_diff, 0);
       }
     }

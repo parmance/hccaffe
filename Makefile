@@ -379,6 +379,7 @@ LINKFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(USE_CPPAMP), 1)
      LINKFLAGS += $(shell $(HCC_PREFIX)/bin/hcc-config --install --ldflags)
+     LINKFLAGS += "-lhc_am"
   endif
 endif
 USE_PKG_CONFIG ?= 0

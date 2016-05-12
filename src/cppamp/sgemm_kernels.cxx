@@ -3,9 +3,9 @@
 using namespace hc::fast_math;
 
 hcblasStatus gemm_NoTransAB_STEP_TS8XSS8(hc::accelerator_view &accl_view,
-                                         hc::array_view<float, 1> &A, long aOffset,
-                                         hc::array_view<float, 1> &B, long bOffset,
-                                         hc::array_view<float, 1> &C, long cOffset,
+                                         float* &A, long aOffset,
+                                         float* &B, long bOffset,
+                                         float* &C, long cOffset,
                                          int M, int N, int K, int lda, int ldb, int ldc,
                                          float alpha, float beta) {
 #define TILESIZE 8
@@ -76,9 +76,9 @@ hcblasStatus gemm_NoTransAB_STEP_TS8XSS8(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransAB_MICRO_NBK_TS16XMTS2(hc::accelerator_view &accl_view,
-                                                hc::array_view<float, 1> &A, long aOffset,
-                                                hc::array_view<float, 1> &B, long bOffset,
-                                                hc::array_view<float, 1> &C, long cOffset,
+                                                float* &A, long aOffset,
+                                                float* &B, long bOffset,
+                                                float* &C, long cOffset,
                                                 int M, int N, int K, int lda, int ldb, int ldc,
                                                 float alpha, float beta) {
 #define TILESIZE 16
@@ -156,9 +156,9 @@ hcblasStatus gemm_NoTransAB_MICRO_NBK_TS16XMTS2(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransA_STEP_TS8XSS8(hc::accelerator_view &accl_view,
-                                        hc::array_view<float, 1> &A, long aOffset,
-                                        hc::array_view<float, 1> &B, long bOffset,
-                                        hc::array_view<float, 1> &C, long cOffset,
+                                        float* &A, long aOffset,
+                                        float* &B, long bOffset,
+                                        float* &C, long cOffset,
                                         int M, int N, int K, int lda, int ldb, int ldc,
                                         float alpha, float beta) {
 #define TILESIZE 8
@@ -226,9 +226,9 @@ hcblasStatus gemm_NoTransA_STEP_TS8XSS8(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransAB_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_view,
-                                             hc::array_view<float, 1> &A, long aOffset,
-                                             hc::array_view<float, 1> &B, long bOffset,
-                                             hc::array_view<float, 1> &C, long cOffset,
+                                             float* &A, long aOffset,
+                                             float* &B, long bOffset,
+                                             float* &C, long cOffset,
                                              int M, int N, int K, int lda, int ldb, int ldc,
                                              float alpha, float beta) {
 #define TILESIZE 8
@@ -297,9 +297,9 @@ hcblasStatus gemm_NoTransAB_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransAB_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_view,
-                                               hc::array_view<float, 1> &A, long aOffset,
-                                               hc::array_view<float, 1> &B, long bOffset,
-                                               hc::array_view<float, 1> &C, long cOffset,
+                                               float* &A, long aOffset,
+                                               float* &B, long bOffset,
+                                               float* &C, long cOffset,
                                                int M, int N, int K, int lda, int ldb, int ldc,
                                                float alpha, float beta) {
 #define TILESIZE 16
@@ -368,9 +368,9 @@ hcblasStatus gemm_NoTransAB_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransAB_MICRO_TS16XMTS2(hc::accelerator_view &accl_view,
-                                            hc::array_view<float, 1> &A, long aOffset,
-                                            hc::array_view<float, 1> &B, long bOffset,
-                                            hc::array_view<float, 1> &C, long cOffset,
+                                            float* &A, long aOffset,
+                                            float* &B, long bOffset,
+                                            float* &C, long cOffset,
                                             int M, int N, int K, int lda, int ldb, int ldc,
                                             float alpha, float beta) {
 #define TILESIZE 16
@@ -442,9 +442,9 @@ hcblasStatus gemm_NoTransAB_MICRO_TS16XMTS2(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransA_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_view,
-                                              hc::array_view<float, 1> &A, long aOffset,
-                                              hc::array_view<float, 1> &B, long bOffset,
-                                              hc::array_view<float, 1> &C, long cOffset,
+                                              float* &A, long aOffset,
+                                              float* &B, long bOffset,
+                                              float* &C, long cOffset,
                                               int M, int N, int K, int lda, int ldb, int ldc,
                                               float alpha, float beta) {
 #define TILESIZE 16
@@ -522,9 +522,9 @@ hcblasStatus gemm_NoTransA_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransA_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_view,
-                                            hc::array_view<float, 1> &A, long aOffset,
-                                            hc::array_view<float, 1> &B, long bOffset,
-                                            hc::array_view<float, 1> &C, long cOffset,
+                                            float* &A, long aOffset,
+                                            float* &B, long bOffset,
+                                            float* &C, long cOffset,
                                             int M, int N, int K, int lda, int ldb, int ldc,
                                             float alpha, float beta) {
 #define TILESIZE 8
@@ -604,9 +604,9 @@ hcblasStatus gemm_NoTransA_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransA_STEP_TS16XSS16(hc::accelerator_view &accl_view,
-                                          hc::array_view<float, 1> &A, long aOffset,
-                                          hc::array_view<float, 1> &B, long bOffset,
-                                          hc::array_view<float, 1> &C, long cOffset,
+                                          float* &A, long aOffset,
+                                          float* &B, long bOffset,
+                                          float* &C, long cOffset,
                                           int M, int N, int K, int lda, int ldb, int ldc,
                                           float alpha, float beta) {
 #define TILESIZE 16
@@ -673,9 +673,9 @@ hcblasStatus gemm_NoTransA_STEP_TS16XSS16(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransA_MICRO_NBK_TS16XMTS2(hc::accelerator_view &accl_view,
-                                               hc::array_view<float, 1> &A, long aOffset,
-                                               hc::array_view<float, 1> &B, long bOffset,
-                                               hc::array_view<float, 1> &C, long cOffset,
+                                               float* &A, long aOffset,
+                                               float* &B, long bOffset,
+                                               float* &C, long cOffset,
                                                int M, int N, int K, int lda, int ldb, int ldc,
                                                float alpha, float beta) {
 #define TILESIZE 16
@@ -754,9 +754,9 @@ hcblasStatus gemm_NoTransA_MICRO_NBK_TS16XMTS2(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransA_MICRO_TS16XMTS2(hc::accelerator_view &accl_view,
-                                           hc::array_view<float, 1> &A, long aOffset,
-                                           hc::array_view<float, 1> &B, long bOffset,
-                                           hc::array_view<float, 1> &C, long cOffset,
+                                           float* &A, long aOffset,
+                                           float* &B, long bOffset,
+                                           float* &C, long cOffset,
                                            int M, int N, int K, int lda, int ldb, int ldc,
                                            float alpha, float beta) {
 #define TILESIZE 16
@@ -828,9 +828,9 @@ hcblasStatus gemm_NoTransA_MICRO_TS16XMTS2(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransB_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_view,
-                                            hc::array_view<float, 1> &A, long aOffset,
-                                            hc::array_view<float, 1> &B, long bOffset,
-                                            hc::array_view<float, 1> &C, long cOffset,
+                                            float* &A, long aOffset,
+                                            float* &B, long bOffset,
+                                            float* &C, long cOffset,
                                             int M, int N, int K, int lda, int ldb, int ldc,
                                             float alpha, float beta) {
 #define TILESIZE 8
@@ -908,9 +908,9 @@ hcblasStatus gemm_NoTransB_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransB_STEP_TS8XSS8(hc::accelerator_view &accl_view,
-                                        hc::array_view<float, 1> &A, long aOffset,
-                                        hc::array_view<float, 1> &B, long bOffset,
-                                        hc::array_view<float, 1> &C, long cOffset,
+                                        float* &A, long aOffset,
+                                        float* &B, long bOffset,
+                                        float* &C, long cOffset,
                                         int M, int N, int K, int lda, int ldb, int ldc,
                                         float alpha, float beta) {
 #define TILESIZE 8
@@ -977,9 +977,9 @@ hcblasStatus gemm_NoTransB_STEP_TS8XSS8(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransB_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_view,
-                                              hc::array_view<float, 1> &A, long aOffset,
-                                              hc::array_view<float, 1> &B, long bOffset,
-                                              hc::array_view<float, 1> &C, long cOffset,
+                                              float* &A, long aOffset,
+                                              float* &B, long bOffset,
+                                              float* &C, long cOffset,
                                               int M, int N, int K, int lda, int ldb, int ldc,
                                               float alpha, float beta) {
 #define TILESIZE 16
@@ -1058,9 +1058,9 @@ hcblasStatus gemm_NoTransB_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransB_MICRO_NBK_TS16XMTS2(hc::accelerator_view &accl_view,
-                                               hc::array_view<float, 1> &A, long aOffset,
-                                               hc::array_view<float, 1> &B, long bOffset,
-                                               hc::array_view<float, 1> &C, long cOffset,
+                                               float* &A, long aOffset,
+                                               float* &B, long bOffset,
+                                               float* &C, long cOffset,
                                                int M, int N, int K, int lda, int ldb, int ldc,
                                                float alpha, float beta) {
 #define TILESIZE 16
@@ -1140,9 +1140,9 @@ hcblasStatus gemm_NoTransB_MICRO_NBK_TS16XMTS2(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransB_MICRO_TS16XMTS2(hc::accelerator_view &accl_view,
-                                           hc::array_view<float, 1> &A, long aOffset,
-                                           hc::array_view<float, 1> &B, long bOffset,
-                                           hc::array_view<float, 1> &C, long cOffset,
+                                           float* &A, long aOffset,
+                                           float* &B, long bOffset,
+                                           float* &C, long cOffset,
                                            int M, int N, int K, int lda, int ldb, int ldc,
                                            float alpha, float beta) {
 #define TILESIZE 16
@@ -1213,9 +1213,9 @@ hcblasStatus gemm_NoTransB_MICRO_TS16XMTS2(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransAB_largeK(hc::accelerator_view &accl_view,
-                                   hc::array_view<float, 1> &A, long aOffset,
-                                   hc::array_view<float, 1> &B, long bOffset,
-                                   hc::array_view<float, 1> &C, long cOffset,
+                                   float* &A, long aOffset,
+                                   float* &B, long bOffset,
+                                   float* &C, long cOffset,
                                    int M, int N, int K, int lda, int ldb, int ldc,
                                    float alpha, float beta) {
 #define GEMM_BLOCK 256
@@ -1256,9 +1256,9 @@ hcblasStatus gemm_NoTransAB_largeK(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransA_largeK(hc::accelerator_view &accl_view,
-                                  hc::array_view<float, 1> &A, long aOffset,
-                                  hc::array_view<float, 1> &B, long bOffset,
-                                  hc::array_view<float, 1> &C, long cOffset,
+                                  float* &A, long aOffset,
+                                  float* &B, long bOffset,
+                                  float* &C, long cOffset,
                                   int M, int N, int K, int lda, int ldb, int ldc,
                                   float alpha, float beta) {
 #define GEMM_BLOCK 256
@@ -1300,9 +1300,9 @@ hcblasStatus gemm_NoTransA_largeK(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransB_largeK(hc::accelerator_view &accl_view,
-                                  hc::array_view<float, 1> &A, long aOffset,
-                                  hc::array_view<float, 1> &B, long bOffset,
-                                  hc::array_view<float, 1> &C, long cOffset,
+                                  float* &A, long aOffset,
+                                  float* &B, long bOffset,
+                                  float* &C, long cOffset,
                                   int M, int N, int K, int lda, int ldb, int ldc,
                                   float alpha, float beta) {
 #define GEMM_BLOCK 256
@@ -1343,9 +1343,9 @@ hcblasStatus gemm_NoTransB_largeK(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_TransAB_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_view,
-                                           hc::array_view<float, 1> &A, long aOffset,
-                                           hc::array_view<float, 1> &B, long bOffset,
-                                           hc::array_view<float, 1> &C, long cOffset,
+                                           float* &A, long aOffset,
+                                           float* &B, long bOffset,
+                                           float* &C, long cOffset,
                                            int M, int N, int K, int lda, int ldb, int ldc,
                                            float alpha, float beta) {
 #define TILESIZE 8
@@ -1411,9 +1411,9 @@ hcblasStatus gemm_TransAB_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_TransAB_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_view,
-                                             hc::array_view<float, 1> &A, long aOffset,
-                                             hc::array_view<float, 1> &B, long bOffset,
-                                             hc::array_view<float, 1> &C, long cOffset,
+                                             float* &A, long aOffset,
+                                             float* &B, long bOffset,
+                                             float* &C, long cOffset,
                                              int M, int N, int K, int lda, int ldb, int ldc,
                                              float alpha, float beta) {
 #define TILESIZE 16
@@ -1479,9 +1479,9 @@ hcblasStatus gemm_TransAB_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_TransAB_MICRO_TS16XMTS2(hc::accelerator_view &accl_view,
-                                          hc::array_view<float, 1> &A, long aOffset,
-                                          hc::array_view<float, 1> &B, long bOffset,
-                                          hc::array_view<float, 1> &C, long cOffset,
+                                          float* &A, long aOffset,
+                                          float* &B, long bOffset,
+                                          float* &C, long cOffset,
                                           int M, int N, int K, int lda, int ldb, int ldc,
                                           float alpha, float beta) {
 #define TILESIZE 16
@@ -1556,9 +1556,9 @@ hcblasStatus gemm_TransAB_MICRO_TS16XMTS2(hc::accelerator_view &accl_view,
 /* Inputs and outputs are double array_view containers */
 
 hcblasStatus gemm_NoTransAB_STEP_TS8XSS8_d(hc::accelerator_view &accl_view,
-                                         hc::array_view<double, 1> &A, long aOffset,
-                                         hc::array_view<double, 1> &B, long bOffset,
-                                         hc::array_view<double, 1> &C, long cOffset,
+                                         double* &A, long aOffset,
+                                         double* &B, long bOffset,
+                                         double* &C, long cOffset,
                                          int M, int N, int K, int lda, int ldb, int ldc,
                                          double alpha, double beta) {
 #define TILESIZE 8
@@ -1629,9 +1629,9 @@ hcblasStatus gemm_NoTransAB_STEP_TS8XSS8_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransAB_MICRO_NBK_TS16XMTS2_d(hc::accelerator_view &accl_view,
-                                                hc::array_view<double, 1> &A, long aOffset,
-                                                hc::array_view<double, 1> &B, long bOffset,
-                                                hc::array_view<double, 1> &C, long cOffset,
+                                                double* &A, long aOffset,
+                                                double* &B, long bOffset,
+                                                double* &C, long cOffset,
                                                 int M, int N, int K, int lda, int ldb, int ldc,
                                                 double alpha, double beta) {
 #define TILESIZE 16
@@ -1709,9 +1709,9 @@ hcblasStatus gemm_NoTransAB_MICRO_NBK_TS16XMTS2_d(hc::accelerator_view &accl_vie
 }
 
 hcblasStatus gemm_NoTransA_STEP_TS8XSS8_d(hc::accelerator_view &accl_view,
-                                        hc::array_view<double, 1> &A, long aOffset,
-                                        hc::array_view<double, 1> &B, long bOffset,
-                                        hc::array_view<double, 1> &C, long cOffset,
+                                        double* &A, long aOffset,
+                                        double* &B, long bOffset,
+                                        double* &C, long cOffset,
                                         int M, int N, int K, int lda, int ldb, int ldc,
                                         double alpha, double beta) {
 #define TILESIZE 8
@@ -1779,9 +1779,9 @@ hcblasStatus gemm_NoTransA_STEP_TS8XSS8_d(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransAB_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_view,
-                                             hc::array_view<double, 1> &A, long aOffset,
-                                             hc::array_view<double, 1> &B, long bOffset,
-                                             hc::array_view<double, 1> &C, long cOffset,
+                                             double* &A, long aOffset,
+                                             double* &B, long bOffset,
+                                             double* &C, long cOffset,
                                              int M, int N, int K, int lda, int ldb, int ldc,
                                              double alpha, double beta) {
 #define TILESIZE 8
@@ -1850,9 +1850,9 @@ hcblasStatus gemm_NoTransAB_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransAB_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl_view,
-                                               hc::array_view<double, 1> &A, long aOffset,
-                                               hc::array_view<double, 1> &B, long bOffset,
-                                               hc::array_view<double, 1> &C, long cOffset,
+                                               double* &A, long aOffset,
+                                               double* &B, long bOffset,
+                                               double* &C, long cOffset,
                                                int M, int N, int K, int lda, int ldb, int ldc,
                                                double alpha, double beta) {
 #define TILESIZE 16
@@ -1921,9 +1921,9 @@ hcblasStatus gemm_NoTransAB_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl_view
 }
 
 hcblasStatus gemm_NoTransAB_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_view,
-                                            hc::array_view<double, 1> &A, long aOffset,
-                                            hc::array_view<double, 1> &B, long bOffset,
-                                            hc::array_view<double, 1> &C, long cOffset,
+                                            double* &A, long aOffset,
+                                            double* &B, long bOffset,
+                                            double* &C, long cOffset,
                                             int M, int N, int K, int lda, int ldb, int ldc,
                                             double alpha, double beta) {
 #define TILESIZE 16
@@ -1995,9 +1995,9 @@ hcblasStatus gemm_NoTransAB_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransA_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl_view,
-                                              hc::array_view<double, 1> &A, long aOffset,
-                                              hc::array_view<double, 1> &B, long bOffset,
-                                              hc::array_view<double, 1> &C, long cOffset,
+                                              double* &A, long aOffset,
+                                              double* &B, long bOffset,
+                                              double* &C, long cOffset,
                                               int M, int N, int K, int lda, int ldb, int ldc,
                                               double alpha, double beta) {
 #define TILESIZE 16
@@ -2075,9 +2075,9 @@ hcblasStatus gemm_NoTransA_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransA_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_view,
-                                            hc::array_view<double, 1> &A, long aOffset,
-                                            hc::array_view<double, 1> &B, long bOffset,
-                                            hc::array_view<double, 1> &C, long cOffset,
+                                            double* &A, long aOffset,
+                                            double* &B, long bOffset,
+                                            double* &C, long cOffset,
                                             int M, int N, int K, int lda, int ldb, int ldc,
                                             double alpha, double beta) {
 #define TILESIZE 8
@@ -2157,9 +2157,9 @@ hcblasStatus gemm_NoTransA_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransA_STEP_TS16XSS16_d(hc::accelerator_view &accl_view,
-                                          hc::array_view<double, 1> &A, long aOffset,
-                                          hc::array_view<double, 1> &B, long bOffset,
-                                          hc::array_view<double, 1> &C, long cOffset,
+                                          double* &A, long aOffset,
+                                          double* &B, long bOffset,
+                                          double* &C, long cOffset,
                                           int M, int N, int K, int lda, int ldb, int ldc,
                                           double alpha, double beta) {
 #define TILESIZE 16
@@ -2226,9 +2226,9 @@ hcblasStatus gemm_NoTransA_STEP_TS16XSS16_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransA_MICRO_NBK_TS16XMTS2_d(hc::accelerator_view &accl_view,
-                                               hc::array_view<double, 1> &A, long aOffset,
-                                               hc::array_view<double, 1> &B, long bOffset,
-                                               hc::array_view<double, 1> &C, long cOffset,
+                                               double* &A, long aOffset,
+                                               double* &B, long bOffset,
+                                               double* &C, long cOffset,
                                                int M, int N, int K, int lda, int ldb, int ldc,
                                                double alpha, double beta) {
 #define TILESIZE 16
@@ -2307,9 +2307,9 @@ hcblasStatus gemm_NoTransA_MICRO_NBK_TS16XMTS2_d(hc::accelerator_view &accl_view
 
 
 hcblasStatus gemm_NoTransA_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_view,
-                                           hc::array_view<double, 1> &A, long aOffset,
-                                           hc::array_view<double, 1> &B, long bOffset,
-                                           hc::array_view<double, 1> &C, long cOffset,
+                                           double* &A, long aOffset,
+                                           double* &B, long bOffset,
+                                           double* &C, long cOffset,
                                            int M, int N, int K, int lda, int ldb, int ldc,
                                            double alpha, double beta) {
 #define TILESIZE 16
@@ -2381,9 +2381,9 @@ hcblasStatus gemm_NoTransA_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransB_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_view,
-                                            hc::array_view<double, 1> &A, long aOffset,
-                                            hc::array_view<double, 1> &B, long bOffset,
-                                            hc::array_view<double, 1> &C, long cOffset,
+                                            double* &A, long aOffset,
+                                            double* &B, long bOffset,
+                                            double* &C, long cOffset,
                                             int M, int N, int K, int lda, int ldb, int ldc,
                                             double alpha, double beta) {
 #define TILESIZE 8
@@ -2461,9 +2461,9 @@ hcblasStatus gemm_NoTransB_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransB_STEP_TS8XSS8_d(hc::accelerator_view &accl_view,
-                                        hc::array_view<double, 1> &A, long aOffset,
-                                        hc::array_view<double, 1> &B, long bOffset,
-                                        hc::array_view<double, 1> &C, long cOffset,
+                                        double* &A, long aOffset,
+                                        double* &B, long bOffset,
+                                        double* &C, long cOffset,
                                         int M, int N, int K, int lda, int ldb, int ldc,
                                         double alpha, double beta) {
 #define TILESIZE 8
@@ -2530,9 +2530,9 @@ hcblasStatus gemm_NoTransB_STEP_TS8XSS8_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransB_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl_view,
-                                              hc::array_view<double, 1> &A, long aOffset,
-                                              hc::array_view<double, 1> &B, long bOffset,
-                                              hc::array_view<double, 1> &C, long cOffset,
+                                              double* &A, long aOffset,
+                                              double* &B, long bOffset,
+                                              double* &C, long cOffset,
                                               int M, int N, int K, int lda, int ldb, int ldc,
                                               double alpha, double beta) {
 #define TILESIZE 16
@@ -2611,9 +2611,9 @@ hcblasStatus gemm_NoTransB_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransB_MICRO_NBK_TS16XMTS2_d(hc::accelerator_view &accl_view,
-                                               hc::array_view<double, 1> &A, long aOffset,
-                                               hc::array_view<double, 1> &B, long bOffset,
-                                               hc::array_view<double, 1> &C, long cOffset,
+                                               double* &A, long aOffset,
+                                               double* &B, long bOffset,
+                                               double* &C, long cOffset,
                                                int M, int N, int K, int lda, int ldb, int ldc,
                                                double alpha, double beta) {
 #define TILESIZE 16
@@ -2693,9 +2693,9 @@ hcblasStatus gemm_NoTransB_MICRO_NBK_TS16XMTS2_d(hc::accelerator_view &accl_view
 
 
 hcblasStatus gemm_NoTransB_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_view,
-                                           hc::array_view<double, 1> &A, long aOffset,
-                                           hc::array_view<double, 1> &B, long bOffset,
-                                           hc::array_view<double, 1> &C, long cOffset,
+                                           double* &A, long aOffset,
+                                           double* &B, long bOffset,
+                                           double* &C, long cOffset,
                                            int M, int N, int K, int lda, int ldb, int ldc,
                                            double alpha, double beta) {
 #define TILESIZE 16
@@ -2766,9 +2766,9 @@ hcblasStatus gemm_NoTransB_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransAB_largeK_d(hc::accelerator_view &accl_view,
-                                   hc::array_view<double, 1> &A, long aOffset,
-                                   hc::array_view<double, 1> &B, long bOffset,
-                                   hc::array_view<double, 1> &C, long cOffset,
+                                   double* &A, long aOffset,
+                                   double* &B, long bOffset,
+                                   double* &C, long cOffset,
                                    int M, int N, int K, int lda, int ldb, int ldc,
                                    double alpha, double beta) {
 #define GEMM_BLOCK 256
@@ -2809,9 +2809,9 @@ hcblasStatus gemm_NoTransAB_largeK_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransA_largeK_d(hc::accelerator_view &accl_view,
-                                  hc::array_view<double, 1> &A, long aOffset,
-                                  hc::array_view<double, 1> &B, long bOffset,
-                                  hc::array_view<double, 1> &C, long cOffset,
+                                  double* &A, long aOffset,
+                                  double* &B, long bOffset,
+                                  double* &C, long cOffset,
                                   int M, int N, int K, int lda, int ldb, int ldc,
                                   double alpha, double beta) {
 #define GEMM_BLOCK 256
@@ -2853,9 +2853,9 @@ hcblasStatus gemm_NoTransA_largeK_d(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransB_largeK_d(hc::accelerator_view &accl_view,
-                                  hc::array_view<double, 1> &A, long aOffset,
-                                  hc::array_view<double, 1> &B, long bOffset,
-                                  hc::array_view<double, 1> &C, long cOffset,
+                                  double* &A, long aOffset,
+                                  double* &B, long bOffset,
+                                  double* &C, long cOffset,
                                   int M, int N, int K, int lda, int ldb, int ldc,
                                   double alpha, double beta) {
 #define GEMM_BLOCK 256
@@ -2896,9 +2896,9 @@ hcblasStatus gemm_NoTransB_largeK_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_TransAB_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_view,
-                                           hc::array_view<double, 1> &A, long aOffset,
-                                           hc::array_view<double, 1> &B, long bOffset,
-                                           hc::array_view<double, 1> &C, long cOffset,
+                                           double* &A, long aOffset,
+                                           double* &B, long bOffset,
+                                           double* &C, long cOffset,
                                            int M, int N, int K, int lda, int ldb, int ldc,
                                            double alpha, double beta) {
 #define TILESIZE 8
@@ -2964,9 +2964,9 @@ hcblasStatus gemm_TransAB_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_TransAB_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl_view,
-                                             hc::array_view<double, 1> &A, long aOffset,
-                                             hc::array_view<double, 1> &B, long bOffset,
-                                             hc::array_view<double, 1> &C, long cOffset,
+                                             double* &A, long aOffset,
+                                             double* &B, long bOffset,
+                                             double* &C, long cOffset,
                                              int M, int N, int K, int lda, int ldb, int ldc,
                                              double alpha, double beta) {
 #define TILESIZE 16
@@ -3032,9 +3032,9 @@ hcblasStatus gemm_TransAB_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_TransAB_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_view,
-                                          hc::array_view<double, 1> &A, long aOffset,
-                                          hc::array_view<double, 1> &B, long bOffset,
-                                          hc::array_view<double, 1> &C, long cOffset,
+                                          double* &A, long aOffset,
+                                          double* &B, long bOffset,
+                                          double* &C, long cOffset,
                                           int M, int N, int K, int lda, int ldb, int ldc,
                                           double alpha, double beta) {
 #define TILESIZE 16
@@ -3130,9 +3130,9 @@ hcblasStatus gemm_TransAB_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_view,
  */
 
 hcblasStatus gemm_TransAB_K1(hc::accelerator_view &accl_view,
-                             hc::array_view<float, 1> &A, long aOffset,
-                             hc::array_view<float, 1> &B, long bOffset,
-                             hc::array_view<float, 1> &C, long cOffset,
+                             float* &A, long aOffset,
+                             float* &B, long bOffset,
+                             float* &C, long cOffset,
                              int M, int N, int K, int lda, int ldb, int ldc,
                              float alpha, float beta) {
 #define TILESIZE 8
@@ -3232,9 +3232,9 @@ hcblasStatus gemm_TransAB_K1(hc::accelerator_view &accl_view,
  *   localThreadCount := TILESIZE*TILESIZE
  */
 hcblasStatus gemm_NoTransAB_K2(hc::accelerator_view &accl_view,
-                               hc::array_view<float, 1> &A, long aOffset,
-                               hc::array_view<float, 1> &B, long bOffset,
-                               hc::array_view<float, 1> &C, long cOffset,
+                               float* &A, long aOffset,
+                               float* &B, long bOffset,
+                               float* &C, long cOffset,
                                int M, int N, int K, int lda, int ldb, int ldc,
                                float alpha, float beta) {
 #define TILESIZE 8
@@ -3332,9 +3332,9 @@ hcblasStatus gemm_NoTransAB_K2(hc::accelerator_view &accl_view,
  *   localThreadCount := TILESIZE*TILESIZE
  */
 hcblasStatus gemm_TransAB_K3(hc::accelerator_view &accl_view,
-                             hc::array_view<float, 1> &A, long aOffset,
-                             hc::array_view<float, 1> &B, long bOffset,
-                             hc::array_view<float, 1> &C, long cOffset,
+                             float* &A, long aOffset,
+                             float* &B, long bOffset,
+                             float* &C, long cOffset,
                              int M, int N, int K, int lda, int ldb, int ldc,
                              float alpha, float beta) {
 #undef  TILESIZE
@@ -3443,9 +3443,9 @@ hcblasStatus gemm_TransAB_K3(hc::accelerator_view &accl_view,
  */
 
 hcblasStatus gemm_NoTransA_K4(hc::accelerator_view &accl_view,
-                              hc::array_view<float, 1> &A, long aOffset,
-                              hc::array_view<float, 1> &B, long bOffset,
-                              hc::array_view<float, 1> &C, long cOffset,
+                              float* &A, long aOffset,
+                              float* &B, long bOffset,
+                              float* &C, long cOffset,
                               int M, int N, int K, int lda, int ldb, int ldc,
                               float alpha, float beta) {
 #undef TILESIZE
@@ -3544,9 +3544,9 @@ hcblasStatus gemm_NoTransA_K4(hc::accelerator_view &accl_view,
  *   localThreadCount := TILESIZE*TILESIZE
  */
 hcblasStatus gemm_NoTransB_K5(hc::accelerator_view &accl_view,
-                              hc::array_view<float, 1> &A, long aOffset,
-                              hc::array_view<float, 1> &B, long bOffset,
-                              hc::array_view<float, 1> &C, long cOffset,
+                              float* &A, long aOffset,
+                              float* &B, long bOffset,
+                              float* &C, long cOffset,
                               int M, int N, int K, int lda, int ldb, int ldc,
                               float alpha, float beta) {
 #define TILESIZE 8
@@ -3648,9 +3648,9 @@ hcblasStatus gemm_NoTransB_K5(hc::accelerator_view &accl_view,
  *   localThreadCount := TILESIZE_1D_X*TILESIZE_1D_Y
  */
 hcblasStatus gemm_TransAB_K6(hc::accelerator_view &accl_view,
-                             hc::array_view<float, 1> &A, long aOffset,
-                             hc::array_view<float, 1> &B, long bOffset,
-                             hc::array_view<float, 1> &C, long cOffset,
+                             float* &A, long aOffset,
+                             float* &B, long bOffset,
+                             float* &C, long cOffset,
                              int M, int N, int K, int lda, int ldb, int ldc,
                              float alpha, float beta) {
 #define TILESIZE_1D_Y 32
@@ -3774,9 +3774,9 @@ hcblasStatus gemm_TransAB_K6(hc::accelerator_view &accl_view,
  */
 
 hcblasStatus gemm_TransAB_K7(hc::accelerator_view &accl_view,
-                             hc::array_view<float, 1> &A, long aOffset,
-                             hc::array_view<float, 1> &B, long bOffset,
-                             hc::array_view<float, 1> &C, long cOffset,
+                             float* &A, long aOffset,
+                             float* &B, long bOffset,
+                             float* &C, long cOffset,
                              int M, int N, int K, int lda, int ldb, int ldc,
                              float alpha, float beta) {
 #define TILESIZE_1D_Y 8
@@ -3895,9 +3895,9 @@ hcblasStatus gemm_TransAB_K7(hc::accelerator_view &accl_view,
  */
 
 hcblasStatus gemm_TransAB_K8(hc::accelerator_view &accl_view,
-                             hc::array_view<float, 1> &A, long aOffset,
-                             hc::array_view<float, 1> &B, long bOffset,
-                             hc::array_view<float, 1> &C, long cOffset,
+                             float* &A, long aOffset,
+                             float* &B, long bOffset,
+                             float* &C, long cOffset,
                              int M, int N, int K, int lda, int ldb, int ldc,
                              float alpha, float beta) {
 #define TILESIZE_1D_Y 1
@@ -3977,9 +3977,9 @@ hcblasStatus gemm_TransAB_K8(hc::accelerator_view &accl_view,
  */
 
 hcblasStatus gemm_TransAB_K9(hc::accelerator_view &accl_view,
-                             hc::array_view<float, 1> &A, long aOffset,
-                             hc::array_view<float, 1> &B, long bOffset,
-                             hc::array_view<float, 1> &C, long cOffset,
+                             float* &A, long aOffset,
+                             float* &B, long bOffset,
+                             float* &C, long cOffset,
                              int M, int N, int K, int lda, int ldb, int ldc,
                              float alpha, float beta) {
 #define TILESIZE_1D_Y 1
@@ -4032,9 +4032,9 @@ hcblasStatus gemm_TransAB_K9(hc::accelerator_view &accl_view,
  */
 /*
 hcblasStatus gemm_TransAB_K10(hc::accelerator_view &accl_view,
-                              hc::array_view<float, 1> &A, long aOffset,
-                              hc::array_view<float, 1> &B, long bOffset,
-                              hc::array_view<float, 1> &C, long cOffset,
+                              float* &A, long aOffset,
+                              float* &B, long bOffset,
+                              float* &C, long cOffset,
                               int M, int N, int K, int lda, int ldb, int ldc,
                               float alpha, float beta) {
 #define TILESIZE 8
@@ -4098,9 +4098,9 @@ hcblasStatus gemm_TransAB_K10(hc::accelerator_view &accl_view,
  */
 
 hcblasStatus gemm_TransAB_11(hc::accelerator_view &accl_view,
-                             hc::array_view<float, 1> &A, long aOffset,
-                             hc::array_view<float, 1> &B, long bOffset,
-                             hc::array_view<float, 1> &C, long cOffset,
+                             float* &A, long aOffset,
+                             float* &B, long bOffset,
+                             float* &C, long cOffset,
                              int M, int N, int K, int lda, int ldb, int ldc,
                              float alpha, float beta) {
 #define TILESIZE 16
@@ -4155,9 +4155,9 @@ hcblasStatus gemm_TransAB_11(hc::accelerator_view &accl_view,
  */
 
 hcblasStatus gemm_TransAB_12(hc::accelerator_view &accl_view,
-                             hc::array_view<float, 1> &A, long aOffset,
-                             hc::array_view<float, 1> &B, long bOffset,
-                             hc::array_view<float, 1> &C, long cOffset,
+                             float* &A, long aOffset,
+                             float* &B, long bOffset,
+                             float* &C, long cOffset,
                              int M, int N, int K, int lda, int ldb, int ldc,
                              float alpha, float beta) {
 #define TILESIZE 8
@@ -4238,9 +4238,9 @@ hcblasStatus gemm_TransAB_12(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransAB_K3(hc::accelerator_view &accl_view,
-                               hc::array_view<float, 1> &A, long aOffset,
-                               hc::array_view<float, 1> &B, long bOffset,
-                               hc::array_view<float, 1> &C, long cOffset,
+                               float* &A, long aOffset,
+                               float* &B, long bOffset,
+                               float* &C, long cOffset,
                                int M, int N, int K, int lda, int ldb, int ldc,
                                float alpha, float beta) {
 #undef  TILESIZE
@@ -4332,9 +4332,9 @@ hcblasStatus gemm_NoTransAB_K3(hc::accelerator_view &accl_view,
   return HCBLAS_SUCCESS;
 }
 hcblasStatus gemm_NoTransA_K3(hc::accelerator_view &accl_view,
-                              hc::array_view<float, 1> &A, long aOffset,
-                              hc::array_view<float, 1> &B, long bOffset,
-                              hc::array_view<float, 1> &C, long cOffset,
+                              float* &A, long aOffset,
+                              float* &B, long bOffset,
+                              float* &C, long cOffset,
                               int M, int N, int K, int lda, int ldb, int ldc,
                               float alpha, float beta)
 
@@ -4427,9 +4427,9 @@ hcblasStatus gemm_NoTransA_K3(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransB_K3(hc::accelerator_view &accl_view,
-                              hc::array_view<float, 1> &A, long aOffset,
-                              hc::array_view<float, 1> &B, long bOffset,
-                              hc::array_view<float, 1> &C, long cOffset,
+                              float* &A, long aOffset,
+                              float* &B, long bOffset,
+                              float* &C, long cOffset,
                               int M, int N, int K, int lda, int ldb, int ldc,
                               float alpha, float beta)
 
@@ -4524,9 +4524,9 @@ hcblasStatus gemm_NoTransB_K3(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransAB(hc::accelerator_view &accl_view,
-                            hc::array_view<float, 1> &A, long aOffset,
-                            hc::array_view<float, 1> &B, long bOffset,
-                            hc::array_view<float, 1> &C, long cOffset,
+                            float* &A, long aOffset,
+                            float* &B, long bOffset,
+                            float* &C, long cOffset,
                             int M, int N, int K, int lda, int ldb, int ldc,
                             float alpha, float beta) {
   if(M < 1000 && N < 1000 && K > 10000) {
@@ -4547,9 +4547,9 @@ hcblasStatus gemm_NoTransAB(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransA(hc::accelerator_view &accl_view,
-                           hc::array_view<float, 1> &A, long aOffset,
-                           hc::array_view<float, 1> &B, long bOffset,
-                           hc::array_view<float, 1> &C, long cOffset,
+                           float* &A, long aOffset,
+                           float* &B, long bOffset,
+                           float* &C, long cOffset,
                            int M, int N, int K, int lda, int ldb, int ldc,
                            float alpha, float beta) {
   if(M < 1000 && N < 1000 && K > 10000) {
@@ -4570,9 +4570,9 @@ hcblasStatus gemm_NoTransA(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransB(hc::accelerator_view &accl_view,
-                           hc::array_view<float, 1> &A, long aOffset,
-                           hc::array_view<float, 1> &B, long bOffset,
-                           hc::array_view<float, 1> &C, long cOffset,
+                           float* &A, long aOffset,
+                           float* &B, long bOffset,
+                           float* &C, long cOffset,
                            int M, int N, int K, int lda, int ldb, int ldc,
                            float alpha, float beta) {
   if(M < 1000 && N < 1000 && K > 10000) {
@@ -4591,9 +4591,9 @@ hcblasStatus gemm_NoTransB(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_TransAB(hc::accelerator_view &accl_view,
-                          hc::array_view<float, 1> &A, long aOffset,
-                          hc::array_view<float, 1> &B, long bOffset,
-                          hc::array_view<float, 1> &C, long cOffset,
+                          float* &A, long aOffset,
+                          float* &B, long bOffset,
+                          float* &C, long cOffset,
                           int M, int N, int K, int lda, int ldb, int ldc,
                           float alpha, float beta) {
   if ((M < 600 && N < 600 && K < 10) || (M < 1800 && N < 600 && K < 600)) {
@@ -4606,9 +4606,9 @@ hcblasStatus gemm_TransAB(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransAB_d(hc::accelerator_view &accl_view,
-                            hc::array_view<double, 1> &A, long aOffset,
-                            hc::array_view<double, 1> &B, long bOffset,
-                            hc::array_view<double, 1> &C, long cOffset,
+                            double* &A, long aOffset,
+                            double* &B, long bOffset,
+                            double* &C, long cOffset,
                             int M, int N, int K, int lda, int ldb, int ldc,
                             double alpha, double beta) {
   if(M < 1000 && N < 1000 && K > 10000) {
@@ -4629,9 +4629,9 @@ hcblasStatus gemm_NoTransAB_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransA_d(hc::accelerator_view &accl_view,
-                           hc::array_view<double, 1> &A, long aOffset,
-                           hc::array_view<double, 1> &B, long bOffset,
-                           hc::array_view<double, 1> &C, long cOffset,
+                           double* &A, long aOffset,
+                           double* &B, long bOffset,
+                           double* &C, long cOffset,
                            int M, int N, int K, int lda, int ldb, int ldc,
                            double alpha, double beta) {
   if(M < 1000 && N < 1000 && K > 10000) {
@@ -4652,9 +4652,9 @@ hcblasStatus gemm_NoTransA_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransB_d(hc::accelerator_view &accl_view,
-                           hc::array_view<double, 1> &A, long aOffset,
-                           hc::array_view<double, 1> &B, long bOffset,
-                           hc::array_view<double, 1> &C, long cOffset,
+                           double* &A, long aOffset,
+                           double* &B, long bOffset,
+                           double* &C, long cOffset,
                            int M, int N, int K, int lda, int ldb, int ldc,
                            double alpha, double beta) {
   if(M < 1000 && N < 1000 && K > 10000) {
@@ -4673,9 +4673,9 @@ hcblasStatus gemm_NoTransB_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_TransAB_d(hc::accelerator_view &accl_view,
-                          hc::array_view<double, 1> &A, long aOffset,
-                          hc::array_view<double, 1> &B, long bOffset,
-                          hc::array_view<double, 1> &C, long cOffset,
+                          double* &A, long aOffset,
+                          double* &B, long bOffset,
+                          double* &C, long cOffset,
                           int M, int N, int K, int lda, int ldb, int ldc,
                           double alpha, double beta) {
   if ((M < 600 && N < 600 && K < 10) || (M < 1800 && N < 600 && K < 600)) {

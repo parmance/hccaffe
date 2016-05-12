@@ -1,4 +1,5 @@
-#include <hc.hpp>
+#include "hc.hpp"
+#include "hc_am.hpp"
 #include <algorithm>
 #include <cfloat>
 #include <vector>
@@ -25,35 +26,25 @@ void SoftmaxLossForwardGPU(int N, const int nthreads,
                            const bool has_ignore_label_,
                            const int ignore_label_,
                            float* counts) {
-    hc::array_view<float, 1> probDataView =
-      *((hc::array_view<float, 1>*)(prob_data));
-    hc::array_view<float, 1> labelView =
-      *((hc::array_view<float, 1>*)(label));
-    hc::array_view<float, 1> countsView =
-      *((hc::array_view<float, 1>*)(counts));
-    hc::array_view<float, 1> lossView =
-      *((hc::array_view<float, 1>*)(loss));
-
-     hc::extent<1> e(nthreads);
-
+    hc::extent<1> e(nthreads);
     parallel_for_each(
         e,
     [=](hc::index<1> idx) __attribute__((hc, cpu)) {
         const int n = idx[0] / spatial_dim;
         const int s = idx[0] % spatial_dim;
         float data_temp;
-        int label_value = static_cast<int>(labelView[n * spatial_dim + s]);
+        int label_value = static_cast<int>(label[n * spatial_dim + s]);
         if (has_ignore_label_ && (label_value == ignore_label_)) {
-            lossView[idx] = 0;
-            countsView[idx] = 0;
+            loss[idx[0]] = 0;
+            counts[idx[0]] = 0;
         } else {
             data_temp = hc::fast_math::fmax(
-            probDataView[n * dim + label_value * spatial_dim + s],
+            prob_data[n * dim + label_value * spatial_dim + s],
             static_cast<float>(FLT_MIN));
-            lossView[idx] = -hc::fast_math::log(data_temp);
-            countsView[idx] = 1;
+            loss[idx[0]] = -hc::fast_math::log(data_temp);
+            counts[idx[0]] = 1;
         }
-    });
+    }).wait();
 }
 template <>
 void SoftmaxLossForwardGPU(int N, const int nthreads,
@@ -62,16 +53,7 @@ void SoftmaxLossForwardGPU(int N, const int nthreads,
                            const bool has_ignore_label_,
                            const int ignore_label_,
                            double* counts) {
-    hc::array_view<double, 1> probDataView =
-      *((hc::array_view<double, 1>*)(prob_data));
-    hc::array_view<double, 1> labelView =
-      *((hc::array_view<double, 1>*)(label));
-    hc::array_view<double, 1> countsView =
-      *((hc::array_view<double, 1>*)(counts));
-    hc::array_view<double, 1> lossView =
-      *((hc::array_view<double, 1>*)(loss));
-
-     hc::extent<1> e(nthreads);
+    hc::extent<1> e(nthreads);
 
     parallel_for_each(
         e,
@@ -79,19 +61,19 @@ void SoftmaxLossForwardGPU(int N, const int nthreads,
         const int n = idx[0] / spatial_dim;
         const int s = idx[0] % spatial_dim;
         double data_temp;
-        int label_value = static_cast<int>(labelView[n * spatial_dim + s]);
+        int label_value = static_cast<int>(label[n * spatial_dim + s]);
         if (has_ignore_label_ && (label_value == ignore_label_)) {
-            lossView[idx] = 0;
-            countsView[idx] = 0;
+            loss[idx[0]] = 0;
+            counts[idx[0]] = 0;
         } else {
             data_temp = hc::fast_math::fmax(
-              probDataView[n * dim + label_value * spatial_dim + s],
+              prob_data[n * dim + label_value * spatial_dim + s],
               static_cast<double>(FLT_MIN));
-            lossView[idx] = -hc::fast_math::log(data_temp);
-            lossView[idx] = -hc::fast_math::log(data_temp);
-            countsView[idx] = 1;
+            loss[idx[0]] = -hc::fast_math::log(data_temp);
+            loss[idx[0]] = -hc::fast_math::log(data_temp);
+            counts[idx[0]] = 1;
         }
-    });
+    }).wait();
 }
 template <>
 void SoftmaxLossBackwardGPU(int N, const int nthreads,  float* top,
@@ -100,32 +82,23 @@ void SoftmaxLossBackwardGPU(int N, const int nthreads,  float* top,
                             const int spatial_dim, const bool has_ignore_label_,
                             const int ignore_label_, float* counts) {
     const int channels = dim / spatial_dim;
-
-    hc::array_view<float, 1> bottomDiffView =
-      *((hc::array_view<float, 1>*)(bottom_diff));
-    hc::array_view<float, 1> labelView =
-      *((hc::array_view<float, 1>*)(label));
-    hc::array_view<float, 1> countsView =
-      *((hc::array_view<float, 1>*)(counts));
-
-     hc::extent<1> e(nthreads);
-
+    hc::extent<1> e(nthreads);
     parallel_for_each(e,
                       [=](hc::index<1> idx) __attribute__((hc, cpu)){
         const int n = idx[0] / spatial_dim;
         const int s = idx[0] % spatial_dim;
         const int label_value =
-            static_cast<int>(labelView[n * spatial_dim + s]);
+            static_cast<int>(label[n * spatial_dim + s]);
         if (has_ignore_label_ && label_value == ignore_label_) {
             for (int c = 0; c < channels; ++c) {
-                bottomDiffView[n * dim + c * spatial_dim + s] = 0;
+                bottom_diff[n * dim + c * spatial_dim + s] = 0;
             }
-            countsView[idx] = 0;
+            counts[idx[0]] = 0;
         } else {
-            bottomDiffView[n * dim + label_value * spatial_dim + s] -= 1;
-            countsView[idx] = 1;
+            bottom_diff[n * dim + label_value * spatial_dim + s] -= 1;
+            counts[idx[0]] = 1;
         }
-    });
+    }).wait();
 }
 template <>
 void SoftmaxLossBackwardGPU(int N, const int nthreads, double* top,
@@ -134,30 +107,21 @@ void SoftmaxLossBackwardGPU(int N, const int nthreads, double* top,
                             const int spatial_dim, const bool has_ignore_label_,
                             const int ignore_label_, double* counts) {
     const int channels = dim / spatial_dim;
-
-    hc::array_view<double, 1> bottomDiffView =
-      *((hc::array_view<double, 1>*)(bottom_diff));
-    hc::array_view<double, 1> labelView =
-      *((hc::array_view<double, 1>*)(label));
-    hc::array_view<double, 1> countsView =
-      *((hc::array_view<double, 1>*)(counts));
-
-     hc::extent<1> e(nthreads);
-
+    hc::extent<1> e(nthreads);
     parallel_for_each(e,
                       [=](hc::index<1> idx) __attribute__((hc, cpu)){
         const int n = idx[0] / spatial_dim;
         const int s = idx[0] % spatial_dim;
         const int label_value =
-            static_cast<int>(labelView[n * spatial_dim + s]);
+            static_cast<int>(label[n * spatial_dim + s]);
         if (has_ignore_label_ && label_value == ignore_label_) {
             for (int c = 0; c < channels; ++c) {
-                bottomDiffView[n * dim + c * spatial_dim + s] = 0;
+                bottom_diff[n * dim + c * spatial_dim + s] = 0;
             }
-            countsView[idx] = 0;
+            counts[idx[0]] = 0;
         } else {
-            bottomDiffView[n * dim + label_value * spatial_dim + s] -= 1;
-            countsView[idx] = 1;
+            bottom_diff[n * dim + label_value * spatial_dim + s] -= 1;
+            counts[idx[0]] = 1;
         }
-    });
+    }).wait();
 }

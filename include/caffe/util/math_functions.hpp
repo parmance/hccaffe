@@ -158,20 +158,20 @@ void opttrans(void* data_im, int im_offset, int channels,
 
 template <typename Dtype>
 void caffe_gpu_gemv(const CBLAS_TRANSPOSE TransA, const int M,
-  const int N, const Dtype alpha, const Dtype* A, const int offseta,
-  const Dtype* x, const int offsetx,
+  const int N, const Dtype alpha, Dtype* A, const int offseta,
+  Dtype* x, const int offsetx,
   const Dtype beta, Dtype* y, const int offsety);
 template <typename Dtype>
 void caffe_gpu_gemv2(const CBLAS_TRANSPOSE TransA, const int M,
-    const int N, const Dtype alpha, const Dtype* A, size_t offA, int lda,
-    const Dtype * x, size_t offx, const Dtype beta, int incx,
+    const int N, const Dtype alpha, Dtype* A, size_t offA, int lda,
+    Dtype * x, size_t offx, const Dtype beta, int incx,
     Dtype* y, size_t offy, int incy);
 
 template <typename Dtype>
 void caffe_gpu_gemm(const CBLAS_TRANSPOSE TransA,
   const CBLAS_TRANSPOSE TransB,
   const int M, const int N, const int K,
-  const Dtype alpha, const Dtype* A, const int offet_A, const Dtype* B,
+  const Dtype alpha, Dtype* A, const int offet_A, Dtype* B,
   const int offset_B, const Dtype beta, Dtype* C, const int offset_C);
 #else
 template <typename Dtype>

@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <vector>
 #include "hc.hpp"
+#include "hc_am.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/util/io.hpp"
 #include "caffe/util/math_functions.hpp"
@@ -29,31 +30,22 @@ void CLLForward<float>(const int N,
     float* dist_sq,
     float* bottom_diff) {
 
-  hc::array_view<float, 1> yView =
-    *((hc::array_view<float, 1>*)(y));
-  hc::array_view<float, 1> diffView =
-    *((hc::array_view<float, 1>*)(diff));
-  hc::array_view<float, 1> dist_sqView =
-    *((hc::array_view<float, 1>*)(dist_sq));
-  hc::array_view<float, 1> bottom_diffView =
-    *((hc::array_view<float, 1>*)(bottom_diff));
-
   hc::extent<1> e(N);
 
   parallel_for_each(
     e,
     [=](hc::index<1> idx) __attribute__((hc, cpu)){
       int n = idx[0] / channels;  // the num index, to access y and dist_sq
-      if (static_cast<int>(yView[n])) {  // similar pairsS
-        bottom_diffView[idx] = alpha * diffView[idx];
+      if (static_cast<int>(y[n])) {  // similar pairsS
+        bottom_diff[idx[0]] = alpha * diff[idx[0]];
       } else {  // dissimilar pairs
-        if ((margin - dist_sqView[n]) > 0.0) {
-          bottom_diffView[idx] = -alpha * diffView[idx];
+        if ((margin - dist_sq[n]) > 0.0) {
+          bottom_diff[idx[0]] = -alpha * diff[idx[0]];
         } else {
-          bottom_diffView[idx] = 0;
+          bottom_diff[idx[0]] = 0;
         }
       }
-    });
+    }).wait();
 }
 
 template <>
@@ -67,30 +59,20 @@ void CLLForward<double>(const int N,
     double* dist_sq,
     double* bottom_diff) {
 
-  hc::array_view<double, 1> yView =
-    *((hc::array_view<double, 1>*)(y));
-  hc::array_view<double, 1> diffView =
-    *((hc::array_view<double, 1>*)(diff));
-  hc::array_view<double, 1> dist_sqView =
-    *((hc::array_view<double, 1>*)(dist_sq));
-  hc::array_view<double, 1> bottom_diffView =
-    *((hc::array_view<double, 1>*)(bottom_diff));
-
   hc::extent<1> e(N);
-
   parallel_for_each(
     e,
     [=](hc::index<1> idx) __attribute__((hc, cpu)){
       int n = idx[0] / channels;  // the num index, to access y and dist_sq
-      if (static_cast<int>(yView[n])) {  // similar pairsS
-        bottom_diffView[idx] = alpha * diffView[idx];
+      if (static_cast<int>(y[n])) {  // similar pairsS
+        bottom_diff[idx[0]] = alpha * diff[idx[0]];
       } else {  // dissimilar pairs
-        if ((margin - dist_sqView[n]) > 0.0) {
-          bottom_diffView[idx] = -alpha * diffView[idx];
+        if ((margin - dist_sq[n]) > 0.0) {
+          bottom_diff[idx[0]] = -alpha * diff[idx[0]];
         } else {
-          bottom_diffView[idx] = 0;
+          bottom_diff[idx[0]] = 0;
         }
       }
-    });
+    }).wait();
 }
 

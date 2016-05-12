@@ -36,10 +36,6 @@ void im2col_amp_kernel(const int N,
     const int stride_h, const int stride_w,
     const int height_col, const int width_col,
     float* data_col, const int im_offset, const int col_offset) {
-  hc::array_view<float, 1> im_view =
-    *((hc::array_view<float, 1>*)(data_im));
-  hc::array_view<float, 1> col_view =
-    *((hc::array_view<float, 1>*)(data_col));
   hc::extent<1> e(N);
   hc::parallel_for_each(e,
       [=](hc::index<1> idx) __attribute__((hc, cpu)) {
@@ -58,13 +54,13 @@ void im2col_amp_kernel(const int N,
       for (int j = 0; j < kernel_w; ++j) {
         int h = h_in + i;
         int w = w_in + j;
-        col_view[col_offset + data_col_num] =
+        data_col[col_offset + data_col_num] =
           (h >= 0 && w >= 0 && h < height && w < width) ?
-            im_view[im_offset + data_im_num + i * width + j] : 0;
+            data_im[im_offset + data_im_num + i * width + j] : 0;
         data_col_num += height_col * width_col;
       }
     }
-  });
+  }).wait();
 }
 
 template <>
@@ -76,11 +72,6 @@ void im2col_amp_kernel(const int N,
     const int stride_h, const int stride_w,
     const int height_col, const int width_col,
     double* data_col, const int im_offset, const int col_offset) {
-
-  hc::array_view<double, 1> im_view =
-    *((hc::array_view<double, 1>*)(data_im));
-  hc::array_view<double, 1> col_view =
-    *((hc::array_view<double, 1>*)(data_col));
   hc::extent<1> e(N);
   hc::parallel_for_each(e,
       [=](hc::index<1> idx) __attribute__((hc, cpu)) {
@@ -99,13 +90,13 @@ void im2col_amp_kernel(const int N,
       for (int j = 0; j < kernel_w; ++j) {
         int h = h_in + i;
         int w = w_in + j;
-        col_view[col_offset + data_col_num] =
+        data_col[col_offset + data_col_num] =
           (h >= 0 && w >= 0 && h < height && w < width) ?
-            im_view[im_offset + data_im_num + i * width + j] : 0;
+            data_im[im_offset + data_im_num + i * width + j] : 0;
         data_col_num += height_col * width_col;
       }
     }
-  });
+  }).wait();
 }
 
 template <>
@@ -116,10 +107,6 @@ void col2im_amp_kernel(const int N, float* data_col,
     const int stride_h, const int stride_w,
     const int height_col, const int width_col,
     float* data_im, const int col_offset, const int im_offset) {
-  hc::array_view<float, 1> im_view =
-    *((hc::array_view<float, 1>*)(data_im));
-  hc::array_view<float, 1> col_view =
-    *((hc::array_view<float, 1>*)(data_col));
   hc::extent<1> e(N);
   hc::parallel_for_each(e,
       [=](hc::index<1> idx) __attribute__((hc, cpu)) {
@@ -140,12 +127,12 @@ void col2im_amp_kernel(const int N, float* data_col,
     for (int h_col = h_col_start; h_col < h_col_end; ++h_col) {
       for (int w_col = w_col_start; w_col < w_col_end; ++w_col) {
         val +=
-         col_view[col_offset + offset + h_col * coeff_h_col + w_col *
+         data_col[col_offset + offset + h_col * coeff_h_col + w_col *
                   coeff_w_col];
       }
     }
-    im_view[im_offset + idx] = val;
-  });
+    data_im[im_offset + idx[0]] = val;
+  }).wait();
 }
 
 template <>
@@ -156,10 +143,6 @@ void col2im_amp_kernel(const int N, double* data_col,
     const int stride_h, const int stride_w,
     const int height_col, const int width_col,
     double* data_im, const int col_offset, const int im_offset) {
-  hc::array_view<double, 1> im_view =
-    *((hc::array_view<double, 1>*)(data_im));
-  hc::array_view<double, 1> col_view =
-    *((hc::array_view<double, 1>*)(data_col));
   hc::extent<1> e(N);
   hc::parallel_for_each(e,
       [=](hc::index<1> idx) __attribute__((hc, cpu)) {
@@ -180,12 +163,12 @@ void col2im_amp_kernel(const int N, double* data_col,
     for (int h_col = h_col_start; h_col < h_col_end; ++h_col) {
       for (int w_col = w_col_start; w_col < w_col_end; ++w_col) {
         val +=
-        col_view[col_offset + offset + h_col * coeff_h_col + w_col *
+        data_col[col_offset + offset + h_col * coeff_h_col + w_col *
                  coeff_w_col];
       }
     }
-    im_view[im_offset + idx] = val;
-  });
+    data_im[im_offset + idx[0]] = val;
+  }).wait();
 }
 template <typename Dtype>
 void im2col_amp_kernel_opt(const int n, Dtype* data_im,
@@ -208,10 +191,6 @@ void im2col_amp_kernel_opt(const int n, float* data_im,
   const int stride_h, const int stride_w, const int height_col,
   const int width_col, float* data_col, const int col_offset,
   const int optnum) {
-    hc::array_view<float, 1> im_view =
-      *((hc::array_view<float, 1>*)(data_im));
-    hc::array_view<float, 1> col_view =
-      *((hc::array_view<float, 1>*)(data_col));
     hc::extent<1> e(n);
     parallel_for_each(e, [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int x_out = idx[0] % width_col;
@@ -235,13 +214,13 @@ void im2col_amp_kernel_opt(const int n, float* data_im,
             int index_col = (k_h * kernel_w + k_w) * optnum *
               height_col * width_col + y_out * width_col + x_out;
             if (y_im >= 0 && y_im < height && x_im >= 0 && x_im < width)
-                col_view[col_offset+offset_col + index_col] =
-                  im_view[img_offset+offset_im + index_im];
+                data_col[col_offset+offset_col + index_col] =
+                  data_im[img_offset+offset_im + index_im];
             else
-                col_view[col_offset+offset_col + index_col] = 0;
+                data_col[col_offset+offset_col + index_col] = 0;
         }
     }
-  });
+  }).wait();
 }
 
 template <>
@@ -251,10 +230,6 @@ void im2col_amp_kernel_opt(const int n, double* data_im,
   const int stride_h, const int stride_w, const int height_col,
   const int width_col, double* data_col, const int col_offset,
   const int optnum) {
-    hc::array_view<double, 1> im_view =
-      *((hc::array_view<double, 1>*)(data_im));
-    hc::array_view<double, 1> col_view =
-      *((hc::array_view<double, 1>*)(data_col));
     hc::extent<1> e(n);
     parallel_for_each(e, [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int x_out = idx[0] % width_col;
@@ -278,13 +253,13 @@ void im2col_amp_kernel_opt(const int n, double* data_im,
             int index_col = (k_h * kernel_w + k_w) * optnum *
               height_col * width_col + y_out * width_col + x_out;
             if (y_im >= 0 && y_im < height && x_im >= 0 && x_im < width)
-                col_view[col_offset+offset_col + index_col] =
-                  im_view[img_offset+offset_im + index_im];
+                data_col[col_offset+offset_col + index_col] =
+                  data_im[img_offset+offset_im + index_im];
             else
-                col_view[col_offset+offset_col + index_col] = 0;
+                data_col[col_offset+offset_col + index_col] = 0;
         }
       }
-    });
+    }).wait();
   }
 
 template <>
@@ -295,10 +270,6 @@ void col2im_amp_kernel_opt(const int n, float* data_col,
   const int stride_h, const int stride_w,
   const int height_col, const int width_col,
   float* data_im, const int img_offset, const int optnum) {
-    hc::array_view<float, 1> im_view =
-      *((hc::array_view<float, 1>*)(data_im));
-    hc::array_view<float, 1> col_view =
-      *((hc::array_view<float, 1>*)(data_col));
     hc::extent<1> e(n);
     parallel_for_each(e, [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       float val = 0;
@@ -321,12 +292,12 @@ void col2im_amp_kernel_opt(const int n, float* data_col,
       int coeff_w_col = (1 - stride_w * height_col * width_col * optnum);
       for (int h_col = h_col_start; h_col < h_col_end; ++h_col) {
         for (int w_col = w_col_start; w_col < w_col_end; ++w_col) {
-          val += col_view[col_offset+offset + h_col * coeff_h_col
+          val += data_col[col_offset+offset + h_col * coeff_h_col
                  + w_col * coeff_w_col];
         }
       }
-      im_view[img_offset+idx] = val;
-    });
+      data_im[img_offset+idx[0]] = val;
+    }).wait();
   }
 
 template <>
@@ -336,10 +307,6 @@ void col2im_amp_kernel_opt(const int n, double* data_col, const int col_offset,
   const int stride_h, const int stride_w,
   const int height_col, const int width_col,
   double* data_im, const int img_offset, const int optnum) {
-    hc::array_view<double, 1> im_view =
-      *((hc::array_view<double, 1>*)(data_im));
-    hc::array_view<double, 1> col_view =
-      *((hc::array_view<double, 1>*)(data_col));
     hc::extent<1> e(n);
     parallel_for_each(e, [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       double val = 0;
@@ -362,10 +329,10 @@ void col2im_amp_kernel_opt(const int n, double* data_col, const int col_offset,
       int coeff_w_col = (1 - stride_w * height_col * width_col * optnum);
       for (int h_col = h_col_start; h_col < h_col_end; ++h_col) {
         for (int w_col = w_col_start; w_col < w_col_end; ++w_col) {
-          val += col_view[col_offset+offset + h_col * coeff_h_col
+          val += data_col[col_offset+offset + h_col * coeff_h_col
                  + w_col * coeff_w_col];
         }
       }
-      im_view[img_offset+idx] = val;
-    });
+      data_im[img_offset+idx[0]] = val;
+    }).wait();
   }

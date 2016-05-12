@@ -1,4 +1,5 @@
-#include <hc.hpp>
+#include "hc.hpp"
+#include "hc_am.hpp"
 #include <algorithm>
 #include <vector>
 #include "caffe/layer.hpp"
@@ -9,26 +10,28 @@ void ThresholdForwardKernel(const int N, Dtype threshold,
 template <>
 void ThresholdForwardKernel(const int N, float threshold,
                             float* in, float* out) {
-  hc::array_view<float, 1> inView =
-    *((hc::array_view<float, 1>*)(in));
-  hc::array_view<float, 1> outView =
-    *((hc::array_view<float, 1>*)(out));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo outInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&outInfo, out);
+  long numOutElts = outInfo._sizeBytes/sizeof(float);
+  hc::extent<1> grdExt(numOutElts);
   parallel_for_each(
-        outView.get_extent(),
+        grdExt,
         [=](hc::index<1> idx) __attribute__((hc, cpu)){
-        outView[idx] = inView[idx] > threshold ? 1 : 0;
-    });
+        out[idx[0]] = in[idx[0]] > threshold ? 1 : 0;
+    }).wait();
 }
 template <>
 void ThresholdForwardKernel(const int N, double threshold,
                             double* in, double* out) {
-  hc::array_view<double, 1> inView =
-    *((hc::array_view<double, 1>*)(in));
-  hc::array_view<double, 1> outView =
-    *((hc::array_view<double, 1>*)(out));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo outInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&outInfo, out);
+  long numOutElts = outInfo._sizeBytes/sizeof(double);
+  hc::extent<1> grdExt(numOutElts);
   parallel_for_each(
-        outView.get_extent(),
+        grdExt,
         [=](hc::index<1> idx) __attribute__((hc, cpu)){
-       outView[idx] = inView[idx] > threshold ? 1 : 0;
-  });
+       out[idx[0]] = in[idx[0]] > threshold ? 1 : 0;
+  }).wait();
 }

@@ -37,8 +37,8 @@ void ContrastiveLossLayer<Dtype>::Forward_gpu(
       bottom[0]->num(),
       bottom[0]->channels(),
       Dtype(1.0),
-      diff_sq_.gpu_data(), 0,  // (a_i-b_i)^2
-      summer_vec_.gpu_data(), 0,
+      const_cast<Dtype*>(diff_sq_.gpu_data()), 0,  // (a_i-b_i)^2
+      const_cast<Dtype*>(summer_vec_.gpu_data()), 0,
       Dtype(0.0),
       dist_sq_.mutable_gpu_data(), 0);  // \Sum (a_i-b_i)^2
   Dtype margin = this->layer_param_.contrastive_loss_param().margin();

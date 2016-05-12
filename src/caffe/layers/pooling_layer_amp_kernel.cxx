@@ -1,4 +1,5 @@
-#include <hc.hpp>
+#include "hc.hpp"
+#include "hc_am.hpp"
 #include <algorithm>
 #include <cfloat>
 #include <vector>
@@ -72,18 +73,18 @@ void MaxPoolForward(int top_count, int boottom_count, float *bottom_data,
                     const int stride_w, const int pad_h,
                     const int pad_w, float *top_data,
                     int *mask, float *top_mask) {
-  hc::array_view<float, 1> bottomDataView =
-    *((hc::array_view<float, 1> *)(bottom_data));
-  hc::array_view<float, 1> topDataView =
-    *((hc::array_view<float, 1> *)(top_data));
+
   bool maskTag = (mask == NULL ? false : true);
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo topInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&topInfo, top_data);
+  long numTopElts = topInfo._sizeBytes/sizeof(float);
+  hc::extent<1> grdExt(numTopElts);
 
   if (maskTag) {
-    //     delte maskView;
-    hc::array_view<int, 1>  maskView =
-      *((hc::array_view<int, 1> *)(mask));
+    //     delte mask;
     parallel_for_each(
-      topDataView.get_extent(),
+      grdExt,
       [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int pw = index % pooled_width;
@@ -101,20 +102,18 @@ void MaxPoolForward(int top_count, int boottom_count, float *bottom_data,
       int locan = (n * channels + c) * height * width;
       for (int h = hstart; h < hend; ++h) {
         for (int w = wstart; w < wend; ++w) {
-          if (bottomDataView[locan + h * width + w] > maxval) {
+          if (bottom_data[locan + h * width + w] > maxval) {
             maxidx = h * width + w;
-            maxval = bottomDataView[locan + maxidx];
+            maxval = bottom_data[locan + (int)maxidx];
           }
         }
       }
-      topDataView[index] = maxval;
-      maskView[index] = maxidx;
-    });
+      top_data[index] = maxval;
+      mask[index] = maxidx;
+    }).wait();
   } else {
-    hc::array_view<float, 1> topMaskView =
-      *((hc::array_view<float, 1> *)(top_mask));
     parallel_for_each(
-      topDataView.get_extent(),
+      grdExt,
       [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int pw = index % pooled_width;
@@ -132,15 +131,15 @@ void MaxPoolForward(int top_count, int boottom_count, float *bottom_data,
       int locan = (n * channels + c) * height * width;
       for (int h = hstart; h < hend; ++h) {
         for (int w = wstart; w < wend; ++w) {
-          if (bottomDataView[locan + h * width + w] > maxval) {
+          if (bottom_data[locan + h * width + w] > maxval) {
             maxidx = h * width + w;
-            maxval = bottomDataView[locan + maxidx];
+            maxval = bottom_data[locan + (int)maxidx];
           }
         }
       }
-      topDataView[index] = maxval;
-      topMaskView[index] = maxidx;
-    });
+      top_data[index] = maxval;
+      top_mask[index] = maxidx;
+    }).wait();
   }
 }
 template <>
@@ -153,16 +152,15 @@ void MaxPoolForward(int top_count,  int boottom_count, double *bottom_data,
                     const int stride_w, const int pad_h, const int pad_w,
                     double *top_data,
                     int *mask, double *top_mask) {
-  hc::array_view<double, 1> bottomDataView =
-    *((hc::array_view<double, 1> *)(bottom_data));
-  hc::array_view<double, 1> topDataView =
-    *((hc::array_view<double, 1> *)(top_data));
   bool maskTag = (mask == NULL ? false : true);
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo topInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&topInfo, top_data);
+  long numTopElts = topInfo._sizeBytes/sizeof(double);
+  hc::extent<1> grdExt(numTopElts);
   if (maskTag) {
-    hc::array_view<int, 1> maskView =
-      *((hc::array_view<int, 1> *)(mask));
     parallel_for_each(
-      topDataView.get_extent(),
+      grdExt,
       [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int pw = index % pooled_width;
@@ -180,20 +178,18 @@ void MaxPoolForward(int top_count,  int boottom_count, double *bottom_data,
       int locan = (n * channels + c) * height * width;
       for (int h = hstart; h < hend; ++h) {
         for (int w = wstart; w < wend; ++w) {
-          if (bottomDataView[locan + h * width + w] > maxval) {
+          if (bottom_data[locan + h * width + w] > maxval) {
             maxidx = h * width + w;
-            maxval = bottomDataView[locan + maxidx];
+            maxval = bottom_data[locan + (int)maxidx];
           }
         }
       }
-      topDataView[index] = maxval;
-      maskView[index] = maxidx;
-    });
+      top_data[index] = maxval;
+      mask[index] = maxidx;
+    }).wait();
   } else {
-    hc::array_view<double, 1>    topMaskView =
-      *((hc::array_view<double, 1> *)(top_mask));
     parallel_for_each(
-      topDataView.get_extent(),
+      grdExt,
       [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int pw = index % pooled_width;
@@ -211,15 +207,15 @@ void MaxPoolForward(int top_count,  int boottom_count, double *bottom_data,
       int locan = (n * channels + c) * height * width;
       for (int h = hstart; h < hend; ++h) {
         for (int w = wstart; w < wend; ++w) {
-          if (bottomDataView[locan + h * width + w] > maxval) {
+          if (bottom_data[locan + h * width + w] > maxval) {
             maxidx = h * width + w;
-            maxval = bottomDataView[locan + maxidx];
+            maxval = bottom_data[locan + (int)maxidx];
           }
         }
       }
-      topDataView[index] = maxval;
-      topMaskView[index] = maxidx;
-    });
+      top_data[index] = maxval;
+      top_mask[index] = maxidx;
+    }).wait();
   }
 }
 template <>
@@ -230,12 +226,14 @@ void AvePoolForward(int top_count, int boottom_count, float *bottom_data,
                     const int kernel_h, const int kernel_w, const int stride_h,
                     const int stride_w, const int pad_h, const int pad_w,
                     float *top_data) {
-  hc::array_view<float, 1> bottomDataView =
-    *((hc::array_view<float, 1> *)(bottom_data));
-  hc::array_view<float, 1> topDataView =
-    *((hc::array_view<float, 1> *)(top_data));
+
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo topInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&topInfo, top_data);
+  long numTopElts = topInfo._sizeBytes/sizeof(float);
+  hc::extent<1> grdExt(numTopElts);
   parallel_for_each(
-    topDataView.get_extent(),
+    grdExt,
     [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int pw = index % pooled_width;
@@ -255,11 +253,11 @@ void AvePoolForward(int top_count, int boottom_count, float *bottom_data,
     int bottom_count = (n * channels + c) * height * width;
     for (int h = hstart; h < hend; ++h) {
       for (int w = wstart; w < wend; ++w) {
-        aveval += bottomDataView[bottom_count + h * width + w];
+        aveval += bottom_data[bottom_count + h * width + w];
       }
     }
-    topDataView[index] = aveval / pool_size;
-  });
+    top_data[index] = aveval / pool_size;
+  }).wait();
 }
 template <>
 void AvePoolForward(int top_count, int boottom_count, double *bottom_data,
@@ -270,12 +268,13 @@ void AvePoolForward(int top_count, int boottom_count, double *bottom_data,
                     const int stride_h,
                     const int stride_w, const int pad_h,
                     const int pad_w, double *top_data) {
-  hc::array_view<double, 1> bottomDataView =
-    *((hc::array_view<double, 1> *)(bottom_data));
-  hc::array_view<double, 1> topDataView =
-    *((hc::array_view<double, 1> *)(top_data));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo topInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&topInfo, top_data);
+  long numTopElts = topInfo._sizeBytes/sizeof(double);
+  hc::extent<1> grdExt(numTopElts);
   parallel_for_each(
-    topDataView.get_extent(),
+    grdExt,
     [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int pw = index % pooled_width;
@@ -295,11 +294,11 @@ void AvePoolForward(int top_count, int boottom_count, double *bottom_data,
     int bottom_count = (n * channels + c) * height * width;
     for (int h = hstart; h < hend; ++h) {
       for (int w = wstart; w < wend; ++w) {
-        aveval += bottomDataView[bottom_count + h * width + w];
+        aveval += bottom_data[bottom_count + h * width + w];
       }
     }
-    topDataView[index] = aveval / pool_size;
-  });
+    top_data[index] = aveval / pool_size;
+  }).wait();
 }
 template <>
 void StoPoolForwardTrain(int top_count, int boottom_count,
@@ -312,14 +311,13 @@ void StoPoolForwardTrain(int top_count, int boottom_count,
                          const int stride_h,
                          const int stride_w, float *rand_idx,
                          float *top_data) {
-  hc::array_view<float, 1> bottomDataView =
-    *((hc::array_view<float, 1> *)(bottom_data));
-  hc::array_view<float, 1> randIdxView =
-    *((hc::array_view<float, 1> *)(rand_idx));
-  hc::array_view<float, 1> topDataView =
-    *((hc::array_view<float, 1> *)(top_data));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo topInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&topInfo, top_data);
+  long numTopElts = topInfo._sizeBytes/sizeof(float);
+  hc::extent<1> grdExt(numTopElts);
   parallel_for_each(
-    topDataView.get_extent(),
+   grdExt,
   [ = ](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int pw = index % pooled_width;
@@ -335,23 +333,23 @@ void StoPoolForwardTrain(int top_count, int boottom_count,
     // First pass: get sum
     for (int h = hstart; h < hend; ++h) {
       for (int w = wstart; w < wend; ++w) {
-        cumsum += bottomDataView[bottom_count + h * width + w];
+        cumsum += bottom_data[bottom_count + h * width + w];
       }
     }
-    float thres = randIdxView[index] * cumsum;
+    float thres = rand_idx[index] * cumsum;
     // Second pass: get value, and set index.
     cumsum = 0;
     for (int h = hstart; h < hend; ++h) {
       for (int w = wstart; w < wend; ++w) {
-        cumsum += bottomDataView[bottom_count + h * width + w];
+        cumsum += bottom_data[bottom_count + h * width + w];
         if (cumsum >= thres) {
-          randIdxView[index] = ((n * channels + c) * height + h) * width + w;
-          topDataView[index] = bottomDataView[bottom_count + h * width + w];
+          rand_idx[index] = ((n * channels + c) * height + h) * width + w;
+          top_data[index] = bottom_data[bottom_count + h * width + w];
           return;
         }
       }
     }
-  });
+  }).wait();;
 }
 template <>
 void StoPoolForwardTrain(int top_count, int boottom_count,
@@ -365,14 +363,13 @@ void StoPoolForwardTrain(int top_count, int boottom_count,
                          const int stride_w,
                          double *rand_idx,
                          double *top_data) {
-  hc::array_view<double, 1> bottomDataView =
-    *((hc::array_view<double, 1> *)(bottom_data));
-  hc::array_view<double, 1> randIdxView =
-    *((hc::array_view<double, 1> *)(rand_idx));
-  hc::array_view<double, 1> topDataView =
-    *((hc::array_view<double, 1> *)(top_data));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo topInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&topInfo, top_data);
+  long numTopElts = topInfo._sizeBytes/sizeof(float);
+  hc::extent<1> grdExt(numTopElts);
   parallel_for_each(
-    topDataView.get_extent(),
+    grdExt,
     [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int pw = index % pooled_width;
@@ -388,25 +385,25 @@ void StoPoolForwardTrain(int top_count, int boottom_count,
     // First pass: get sum
     for (int h = hstart; h < hend; ++h) {
       for (int w = wstart; w < wend; ++w) {
-        cumsum += bottomDataView[bottom_count + h * width + w];
+        cumsum += bottom_data[bottom_count + h * width + w];
       }
     }
-    double thres = randIdxView[index] * cumsum;
+    double thres = rand_idx[index] * cumsum;
     // Second pass: get value, and set index.
     cumsum = 0;
     for (int h = hstart; h < hend; ++h) {
       for (int w = wstart; w < wend; ++w) {
-        cumsum += bottomDataView[bottom_count + h * width + w];
+        cumsum += bottom_data[bottom_count + h * width + w];
         if (cumsum >= thres) {
-          randIdxView[index] =
+          rand_idx[index] =
             ((n * channels + c) * height + h) * width + w;
-          topDataView[index] =
-            bottomDataView[bottom_count + h * width + w];
+          top_data[index] =
+            bottom_data[bottom_count + h * width + w];
           return;
         }
       }
     }
-  });
+  }).wait();
 }
 template <>
 void StoPoolForwardTest(int top_count, int boottom_count,
@@ -418,12 +415,13 @@ void StoPoolForwardTest(int top_count, int boottom_count,
                         const int kernel_h, const int kernel_w,
                         const int stride_h,
                         const int stride_w, float *top_data) {
-  hc::array_view<float, 1> bottomDataView =
-    *((hc::array_view<float, 1> *)(bottom_data));
-  hc::array_view<float, 1> topDataView =
-    *((hc::array_view<float, 1> *)(top_data));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo topInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&topInfo, top_data);
+  long numTopElts = topInfo._sizeBytes/sizeof(float);
+  hc::extent<1> grdExt(numTopElts);
   parallel_for_each(
-    topDataView.get_extent(),
+    grdExt,
     [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int pw = index % pooled_width;
@@ -441,13 +439,13 @@ void StoPoolForwardTest(int top_count, int boottom_count,
     // First pass: get sum
     for (int h = hstart; h < hend; ++h) {
       for (int w = wstart; w < wend; ++w) {
-        cumsum += bottomDataView[bottom_count + h * width + w];
-        cumvalues += bottomDataView[bottom_count + h * width + w]
-            * bottomDataView[h * width + w];
+        cumsum += bottom_data[bottom_count + h * width + w];
+        cumvalues += bottom_data[bottom_count + h * width + w]
+            * bottom_data[h * width + w];
       }
     }
-    topDataView[index] = cumvalues / cumsum;
-  });
+    top_data[index] = cumvalues / cumsum;
+  }).wait();
 }
 template <>
 void StoPoolForwardTest(int top_count, int boottom_count,
@@ -459,12 +457,13 @@ void StoPoolForwardTest(int top_count, int boottom_count,
                         const int kernel_h, const int kernel_w,
                         const int stride_h,
                         const int stride_w, double *top_data) {
-  hc::array_view<double, 1> bottomDataView =
-    *((hc::array_view<double, 1> *)(bottom_data));
-  hc::array_view<double, 1> topDataView =
-    *((hc::array_view<double, 1> *)(top_data));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo topInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&topInfo, top_data);
+  long numTopElts = topInfo._sizeBytes/sizeof(double);
+  hc::extent<1> grdExt(numTopElts);
   parallel_for_each(
-    topDataView.get_extent(),
+    grdExt,
     [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int pw = index % pooled_width;
@@ -482,13 +481,13 @@ void StoPoolForwardTest(int top_count, int boottom_count,
     // First pass: get sum
     for (int h = hstart; h < hend; ++h) {
       for (int w = wstart; w < wend; ++w) {
-        cumsum += bottomDataView[bottom_count + h * width + w];
-        cumvalues += bottomDataView[bottom_count + h * width + w]
-          * bottomDataView[h * width + w];
+        cumsum += bottom_data[bottom_count + h * width + w];
+        cumvalues += bottom_data[bottom_count + h * width + w]
+          * bottom_data[h * width + w];
       }
     }
-    topDataView[index] = cumvalues / cumsum;
-  });
+    top_data[index] = cumvalues / cumsum;
+  }).wait();
 }
 template <>
 void MaxPoolBackward(int top_count, int boottom_count, float *top_diff,
@@ -501,16 +500,15 @@ void MaxPoolBackward(int top_count, int boottom_count, float *top_diff,
                      const int stride_h, const int stride_w,
                      const int pad_h, const int pad_w,
                      float *bottom_diff) {
-  hc::array_view<float, 1> bottomDiffView =
-    *((hc::array_view<float, 1> *)(bottom_diff));
-  hc::array_view<float, 1> topDiffView =
-    *((hc::array_view<float, 1> *)(top_diff));
   bool maskTag = (mask == NULL ? false : true);
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo bottomDiffInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&bottomDiffInfo, bottom_diff);
+  long numBotDiffElts = bottomDiffInfo._sizeBytes/sizeof(float);
+  hc::extent<1> grdExt(numBotDiffElts);
   if (maskTag) {
-    hc::array_view<int, 1>  maskView =
-      *((hc::array_view<int, 1> *)(mask));
     parallel_for_each(
-      bottomDiffView.get_extent(),
+      grdExt,
       [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int w = index % width;
@@ -533,20 +531,18 @@ void MaxPoolBackward(int top_count, int boottom_count, float *top_diff,
       int mask_offset = offset;
       for (int ph = phstart; ph < phend; ++ph) {
         for (int pw = pwstart; pw < pwend; ++pw) {
-          if (maskView[mask_offset + ph * pooled_width + pw] ==
+          if (mask[mask_offset + ph * pooled_width + pw] ==
                 h * width + w) {
-            gradient += topDiffView[top_diff_offset + ph * pooled_width + pw];
+            gradient += top_diff[top_diff_offset + ph * pooled_width + pw];
           }
         }
       }
-      bottomDiffView[index] = gradient;
-    });
+      bottom_diff[index] = gradient;
+    }).wait();
 
   } else {
-    hc::array_view<float, 1>  topMaskView =
-      *((hc::array_view<float, 1> *)(top_mask));
     parallel_for_each(
-      bottomDiffView.get_extent(),
+      grdExt,
       [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int w = index % width;
@@ -570,15 +566,15 @@ void MaxPoolBackward(int top_count, int boottom_count, float *top_diff,
       int top_mask_offset = offset;
       for (int ph = phstart; ph < phend; ++ph) {
         for (int pw = pwstart; pw < pwend; ++pw) {
-          if (topMaskView[top_mask_offset + ph * pooled_width + pw] ==
+          if (top_mask[top_mask_offset + ph * pooled_width + pw] ==
                 h * width + w) {
             gradient +=
-              topDiffView[top_diff_offset + ph * pooled_width + pw];
+              top_diff[top_diff_offset + ph * pooled_width + pw];
           }
         }
       }
-      bottomDiffView[index] = gradient;
-    });
+      bottom_diff[index] = gradient;
+    }).wait();
   }
 }
 template <>
@@ -592,16 +588,15 @@ void MaxPoolBackward(int top_count, int boottom_count, double *top_diff,
                      const int stride_h, const int stride_w,
                      const int pad_h, const int pad_w,
                      double *bottom_diff) {
-  hc::array_view<double, 1> bottomDiffView =
-    *((hc::array_view<double, 1> *)(bottom_diff));
-  hc::array_view<double, 1> topDiffView =
-    *((hc::array_view<double, 1> *)(top_diff));
   bool maskTag = (mask == NULL ? false : true);
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo bottomDiffInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&bottomDiffInfo, bottom_diff);
+  long numBotDiffElts = bottomDiffInfo._sizeBytes/sizeof(double);
+  hc::extent<1> grdExt(numBotDiffElts);
   if (maskTag) {
-    hc::array_view<int, 1> maskView =
-      *((hc::array_view<int, 1> *)(mask));
     parallel_for_each(
-      bottomDiffView.get_extent(),
+      grdExt,
       [=](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int w = index % width;
@@ -623,19 +618,17 @@ void MaxPoolBackward(int top_count, int boottom_count, double *top_diff,
       int mask_offset = offset;
       for (int ph = phstart; ph < phend; ++ph) {
         for (int pw = pwstart; pw < pwend; ++pw) {
-          if (maskView[mask_offset + ph * pooled_width + pw] ==
+          if (mask[mask_offset + ph * pooled_width + pw] ==
             h * width + w) {
-            gradient += topDiffView[top_diff_offset + ph * pooled_width + pw];
+            gradient += top_diff[top_diff_offset + ph * pooled_width + pw];
           }
         }
       }
-      bottomDiffView[index] = gradient;
-    });
+      bottom_diff[index] = gradient;
+    }).wait();
   } else {
-    hc::array_view<double, 1>  topMaskView =
-      *((hc::array_view<double, 1> *)(top_mask));
     parallel_for_each(
-      bottomDiffView.get_extent(),
+     grdExt,
     [ = ](hc::index<1> idx) __attribute__((hc, cpu)) {
       int index = idx[0];
       int w = index % width;
@@ -658,15 +651,15 @@ void MaxPoolBackward(int top_count, int boottom_count, double *top_diff,
       int top_mask_offset = offset;
       for (int ph = phstart; ph < phend; ++ph) {
         for (int pw = pwstart; pw < pwend; ++pw) {
-          if (topMaskView[top_mask_offset + ph * pooled_width + pw] ==
+          if (top_mask[top_mask_offset + ph * pooled_width + pw] ==
               h * width + w) {
             gradient +=
-              topDiffView[top_diff_offset + ph * pooled_width + pw];
+              top_diff[top_diff_offset + ph * pooled_width + pw];
           }
         }
       }
-      bottomDiffView[index] = gradient;
-    });
+      bottom_diff[index] = gradient;
+    }).wait();
   }
 }
 template <>
@@ -679,12 +672,13 @@ void AvePoolBackward(int top_count, int boottom_count,
                      const int stride_h,
                      const int stride_w, const int pad_h, const int pad_w,
                      float *bottom_diff) {
-  hc::array_view<float, 1> bottomDiffView =
-    *((hc::array_view<float, 1> *)(bottom_diff));
-  hc::array_view<float, 1> topDiffView =
-    *((hc::array_view<float, 1> *)(top_diff));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo bottomDiffInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&bottomDiffInfo, bottom_diff);
+  long numBotDiffElts = bottomDiffInfo._sizeBytes/sizeof(float);
+  hc::extent<1> grdExt(numBotDiffElts);
   parallel_for_each(
-    bottomDiffView.get_extent(),
+    grdExt,
     [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int w = index % width + pad_w;
@@ -710,11 +704,11 @@ void AvePoolBackward(int top_count, int boottom_count,
           hc::fast_math::fmin(wstart + kernel_w, width + pad_w);
         int pool_size = (hend - hstart) * (wend - wstart);
         gradient +=
-          topDiffView[top_diff_count + ph * pooled_width + pw] / pool_size;
+          top_diff[top_diff_count + ph * pooled_width + pw] / pool_size;
       }
     }
-    bottomDiffView[index] = gradient;
-  });
+    bottom_diff[index] = gradient;
+  }).wait();
 }
 template <>
 void AvePoolBackward(int top_count, int boottom_count, double *top_diff,
@@ -725,12 +719,13 @@ void AvePoolBackward(int top_count, int boottom_count, double *top_diff,
                      const int stride_h,
                      const int stride_w, const int pad_h, const int pad_w,
                      double *bottom_diff) {
-  hc::array_view<double, 1> bottomDiffView =
-    *((hc::array_view<double, 1> *)(bottom_diff));
-  hc::array_view<double, 1> topDiffView =
-    *((hc::array_view<double, 1> *)(top_diff));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo bottomDiffInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&bottomDiffInfo, bottom_diff);
+  long numBotDiffElts = bottomDiffInfo._sizeBytes/sizeof(double);
+  hc::extent<1> grdExt(numBotDiffElts);
   parallel_for_each(
-    bottomDiffView.get_extent(),
+    grdExt,
     [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int w = index % width + pad_w;
@@ -753,11 +748,11 @@ void AvePoolBackward(int top_count, int boottom_count, double *top_diff,
           hc::fast_math::fmin(wstart + kernel_w, width + pad_w);
         int pool_size = (hend - hstart) * (wend - wstart);
         gradient +=
-          topDiffView[top_diff_count + ph * pooled_width + pw] / pool_size;
+          top_diff[top_diff_count + ph * pooled_width + pw] / pool_size;
       }
     }
-    bottomDiffView[index] = gradient;
-  });
+    bottom_diff[index] = gradient;
+  }).wait();
 }
 template <>
 void StoPoolBackward(int top_count, int boottom_count,
@@ -769,14 +764,13 @@ void StoPoolBackward(int top_count, int boottom_count,
                      const int kernel_h, const int kernel_w,
                      const int stride_h,
                      const int stride_w, float *bottom_diff) {
-  hc::array_view<float, 1> bottomDiffView =
-    *((hc::array_view<float, 1> *)(bottom_diff));
-  hc::array_view<float, 1> randIdxView =
-    *((hc::array_view<float, 1> *)(rand_idx));
-  hc::array_view<float, 1> topDiffView =
-    *((hc::array_view<float, 1> *)(top_diff));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo bottomDiffInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&bottomDiffInfo, bottom_diff);
+  long numBotDiffElts = bottomDiffInfo._sizeBytes/sizeof(float);
+  hc::extent<1> grdExt(numBotDiffElts);
   parallel_for_each(
-    bottomDiffView.get_extent(),
+    grdExt,
     [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int w = index % width;
@@ -792,13 +786,13 @@ void StoPoolBackward(int top_count, int boottom_count,
     int top_diff_count = (n * channels + c) * pooled_height * pooled_width;
     for (int ph = phstart; ph < phend; ++ph) {
       for (int pw = pwstart; pw < pwend; ++pw) {
-        gradient += topDiffView[top_diff_count + ph * pooled_width + pw] *
-          (index == static_cast<int>(randIdxView[rand_idx_count +
+        gradient += top_diff[top_diff_count + ph * pooled_width + pw] *
+          (index == static_cast<int>(rand_idx[rand_idx_count +
              ph * pooled_width + pw]));
       }
     }
-    bottomDiffView[index] = gradient;
-  });
+    bottom_diff[index] = gradient;
+  }).wait();
 }
 template <>
 void StoPoolBackward(int top_count, int boottom_count,
@@ -809,14 +803,13 @@ void StoPoolBackward(int top_count, int boottom_count,
                      const int kernel_h, const int kernel_w,
                      const int stride_h,
                      const int stride_w, double *bottom_diff) {
-  hc::array_view<double, 1> bottomDiffView =
-    *((hc::array_view<double, 1> *)(bottom_diff));
-  hc::array_view<double, 1> randIdxView =
-    *((hc::array_view<double, 1> *)(rand_idx));
-  hc::array_view<double, 1> topDiffView =
-    *((hc::array_view<double, 1> *)(top_diff));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo bottomDiffInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&bottomDiffInfo, bottom_diff);
+  long numBotDiffElts = bottomDiffInfo._sizeBytes/sizeof(double);
+  hc::extent<1> grdExt(numBotDiffElts);
   parallel_for_each(
-    bottomDiffView.get_extent(),
+    grdExt,
     [=](hc::index<1> idx) __attribute__((hc, cpu)) {
     int index = idx[0];
     int w = index % width;
@@ -836,12 +829,12 @@ void StoPoolBackward(int top_count, int boottom_count,
       (n * channels + c) * pooled_height * pooled_width;
     for (int ph = phstart; ph < phend; ++ph) {
       for (int pw = pwstart; pw < pwend; ++pw) {
-        gradient += topDiffView[top_diff_count + ph * pooled_width + pw] *
+        gradient += top_diff[top_diff_count + ph * pooled_width + pw] *
                     (index ==
-                      static_cast<int>(randIdxView[rand_idx_count +
+                      static_cast<int>(rand_idx[rand_idx_count +
                       ph * pooled_width + pw]));
       }
     }
-    bottomDiffView[index] = gradient;
-  });
+    bottom_diff[index] = gradient;
+  }).wait();
 }

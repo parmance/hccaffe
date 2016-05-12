@@ -13,70 +13,50 @@ void BNLLBackward(const int n, Dtype* in_diff,
 
 template <>
 void BNLLForward(const int n, float* in, float* out) {
-  hc::array_view<float, 1> inView =
-    *((hc::array_view<float, 1>*)(in));
-  hc::array_view<float, 1> outView =
-    *((hc::array_view<float, 1>*)(out));
   hc::extent<1> e(n);
     parallel_for_each(e,
       [=](hc::index<1> idx) __attribute__((hc, cpu)){
-      outView[idx] = inView[idx] > 0 ?
-        inView[idx] +
+      out[idx[0]] = in[idx[0]] > 0 ?
+        in[idx[0]] +
         hc::fast_math::log(1. +
-          hc::fast_math::exp(-inView[idx])) :
+          hc::fast_math::exp(-in[idx[0]])) :
         hc::fast_math::log(1. +
-          hc::fast_math::exp(inView[idx]));
-    });
+          hc::fast_math::exp(in[idx[0]]));
+    }).wait();
 }
 template <>
 void BNLLForward(const int n, double* in, double* out) {
-  hc::array_view<double, 1> inView =
-    *((hc::array_view<double, 1>*)(in));
-  hc::array_view<double, 1> outView =
-    *((hc::array_view<double, 1>*)(out));
   hc::extent<1> e(n);
   parallel_for_each(e,
     [=](hc::index<1> idx) __attribute__((hc, cpu)){
-    outView[idx] = inView[idx] > 0 ?
-    inView[idx] +
+    out[idx[0]] = in[idx[0]] > 0 ?
+    in[idx[0]] +
     hc::fast_math::log(1. +
-      hc::fast_math::exp(-inView[idx])) :
+      hc::fast_math::exp(-in[idx[0]])) :
       hc::fast_math::log(1. +
-      hc::fast_math::exp(inView[idx]));
-  });
+      hc::fast_math::exp(in[idx[0]]));
+  }).wait();
 }
 template <>
 void BNLLBackward(const int n,  float* in_diff,
   float* in_data, float* out_diff) {
-  hc::array_view<float, 1> inDiffView =
-    *((hc::array_view<float, 1>*)(in_diff));
-  hc::array_view<float, 1> inDataView =
-    *((hc::array_view<float, 1>*)(in_data));
-  hc::array_view<float, 1> outDiffView =
-    *((hc::array_view<float, 1>*)(out_diff));
   hc::extent<1> e(n);
   parallel_for_each(e,
     [=](hc::index<1> idx) __attribute__((hc, cpu)){
     float expval = hc::fast_math::
-      exp(hc::fast_math::fmin(inDataView[idx], kBNLL_THRESHOLD));
-    outDiffView[idx] = inDiffView[idx] * expval / (expval + 1.);
-    });
+      exp(hc::fast_math::fmin(in_data[idx[0]], kBNLL_THRESHOLD));
+    out_diff[idx[0]] = in_diff[idx[0]] * expval / (expval + 1.);
+    }).wait();
 }
 template <>
 void BNLLBackward(const int n, double* in_diff,
   double* in_data, double* out_diff) {
-  hc::array_view<double, 1> inDiffView =
-    *((hc::array_view<double, 1>*)(in_diff));
-  hc::array_view<double, 1> inDataView =
-    *((hc::array_view<double, 1>*)(in_data));
-  hc::array_view<double, 1> outDiffView =
-    *((hc::array_view<double, 1>*)(out_diff));
   hc::extent<1> e(n);
   parallel_for_each(e,
   [=](hc::index<1> idx) __attribute__((hc, cpu)){
   double expval = hc::fast_math::exp
-    (hc::fast_math::fmin(inDataView[idx], kBNLL_THRESHOLD));
-  outDiffView[idx] = inDiffView[idx] * expval / (expval + 1.);
-  });
+    (hc::fast_math::fmin(in_data[idx[0]], kBNLL_THRESHOLD));
+  out_diff[idx[0]] = in_diff[idx[0]] * expval / (expval + 1.);
+  }).wait();
 }
 

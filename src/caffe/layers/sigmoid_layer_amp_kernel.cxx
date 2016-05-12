@@ -1,4 +1,5 @@
-#include <hc.hpp>
+#include "hc.hpp"
+#include "hc_am.hpp"
 #include <algorithm>
 #include <cmath>
 #include <vector>
@@ -16,64 +17,64 @@ void SigmoidBackward(const int N, Dtype* in_diff,
 
 template <>
 void SigmoidForward<float>(const int N, float* in, float* out) {
-  hc::array_view<float, 1> inView =
-    *((hc::array_view<float, 1>*)(in));
-  hc::array_view<float, 1> outView =
-    *((hc::array_view<float, 1>*)(out));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo outInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&outInfo, out);
+  long numOutElts = outInfo._sizeBytes/sizeof(float);
+  hc::extent<1> grdExt(numOutElts);
   parallel_for_each(
-     outView.get_extent(),
+     grdExt,
      [=](hc::index<1> idx) __attribute__((hc, cpu)) {
-       outView[idx] = 1. / (1. + hc::fast_math::exp(-inView[idx]));
-     });
+       out[idx[0]] = 1. / (1. + hc::fast_math::exp(-in[idx[0]]));
+     }).wait();
 }
 
 template <>
 void SigmoidForward<double>(const int N, double* in, double* out) {
-  hc::array_view<double, 1> inView =
-    *((hc::array_view<double, 1>*)(in));
-  hc::array_view<double, 1> outView =
-    *((hc::array_view<double, 1>*)(out));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo outInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&outInfo, out);
+  long numOutElts = outInfo._sizeBytes/sizeof(double);
+  hc::extent<1> grdExt(numOutElts);
   parallel_for_each(
-     outView.get_extent(),
+     grdExt,
      [=](hc::index<1> idx) __attribute__((hc, cpu)) {
-       outView[idx] =
-         1. / (1. + hc::fast_math::exp(-inView[idx]));
-     });
+       out[idx[0]] =
+         1. / (1. + hc::fast_math::exp(-in[idx[0]]));
+   }).wait();
 }
 
 
 template <>
 void SigmoidBackward<float>(const int N, float* in_diff,
                             float* out_data, float* out_diff) {
-  hc::array_view<float, 1> in_diffView =
-    *((hc::array_view<float, 1>*)(in_diff));
-  hc::array_view<float, 1> out_dataView =
-    *((hc::array_view<float, 1>*)(out_data));
-  hc::array_view<float, 1> out_diffView =
-    *((hc::array_view<float, 1>*)(out_diff));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo outDiffInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&outDiffInfo, out_diff);
+  long numOutDiffElts = outDiffInfo._sizeBytes/sizeof(float);
+  hc::extent<1> grdExt(numOutDiffElts);
   parallel_for_each(
-    out_diffView.get_extent(),
+    grdExt,
     [=](hc::index<1> idx) __attribute__((hc, cpu)) {
-      const float sigmoid_x = out_dataView[idx];
-      out_diffView[idx] =
-        in_diffView[idx] * sigmoid_x * (1 - sigmoid_x);
+      const float sigmoid_x = out_data[idx[0]];
+      out_diff[idx[0]] =
+        in_diff[idx[0]] * sigmoid_x * (1 - sigmoid_x);
     });
 }
 
 template <>
 void SigmoidBackward<double>(const int N, double* in_diff,
                              double* out_data, double* out_diff) {
-  hc::array_view<double, 1> in_diffView =
-    *((hc::array_view<double, 1>*)(in_diff));
-  hc::array_view<double, 1> out_dataView =
-    *((hc::array_view<double, 1>*)(out_data));
-  hc::array_view<double, 1> out_diffView =
-    *((hc::array_view<double, 1>*)(out_diff));
+  hc::accelerator currentAcc(L"default");
+  hc::AmPointerInfo outDiffInfo(0, 0, 0, currentAcc, 0, 0);
+  hc::am_memtracker_getinfo(&outDiffInfo, out_diff);
+  long numOutDiffElts = outDiffInfo._sizeBytes/sizeof(double);
+  hc::extent<1> grdExt(numOutDiffElts);
   parallel_for_each(
-    out_diffView.get_extent(),
+    grdExt,
     [=](hc::index<1> idx) __attribute__((hc, cpu)) {
-      const double sigmoid_x = out_dataView[idx];
-      out_diffView[idx] = in_diffView[idx] * sigmoid_x * (1 - sigmoid_x);
-    });
+      const double sigmoid_x = out_data[idx[0]];
+      out_diff[idx[0]] = in_diff[idx[0]] * sigmoid_x * (1 - sigmoid_x);
+    }).wait();
 }
 

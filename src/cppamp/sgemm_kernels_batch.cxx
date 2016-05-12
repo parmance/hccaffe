@@ -4,9 +4,9 @@
 using namespace hc::fast_math;
 
 hcblasStatus gemm_NoTransAB_batch_STEP_TS8XSS8(hc::accelerator_view &accl_view,
-					       hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-  					       hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-    					       hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+					       float* &A, long aOffset, long A_batchOffset,
+  					       float* &B, long bOffset, long B_batchOffset,
+    					       float* &C, long cOffset, long C_batchOffset,
    					       int M, int N, int K, int lda, int ldb, int ldc,
   					       float alpha, float beta, int batchSize) {
 #define TILESIZE 8
@@ -78,9 +78,9 @@ hcblasStatus gemm_NoTransAB_batch_STEP_TS8XSS8(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransAB_batch_MICRO_NBK_TS16XMTS2(hc::accelerator_view &accl_view,
-    						      hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-  						      hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-   						      hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+    						      float* &A, long aOffset, long A_batchOffset,
+  						      float* &B, long bOffset, long B_batchOffset,
+   						      float* &C, long cOffset, long C_batchOffset,
 						      int M, int N, int K, int lda, int ldb, int ldc,
  						      float alpha, float beta, int batchSize) {
 #define TILESIZE 16
@@ -159,9 +159,9 @@ hcblasStatus gemm_NoTransAB_batch_MICRO_NBK_TS16XMTS2(hc::accelerator_view &accl
 }
 
 hcblasStatus gemm_NoTransAB_batch_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_view,
- 						   hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-					           hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-					           hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+ 						   float* &A, long aOffset, long A_batchOffset,
+					           float* &B, long bOffset, long B_batchOffset,
+					           float* &C, long cOffset, long C_batchOffset,
 					           int M, int N, int K, int lda, int ldb, int ldc,
    						   float alpha, float beta, int batchSize) {
 #define TILESIZE 8
@@ -231,9 +231,9 @@ hcblasStatus gemm_NoTransAB_batch_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_vi
 }
 
 hcblasStatus gemm_NoTransAB_batch_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_view,
-   						     hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
- 						     hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-  						     hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+   						     float* &A, long aOffset, long A_batchOffset,
+ 						     float* &B, long bOffset, long B_batchOffset,
+  						     float* &C, long cOffset, long C_batchOffset,
  						     int M, int N, int K, int lda, int ldb, int ldc,
     						     float alpha, float beta, int batchSize) {
 #define TILESIZE 16
@@ -303,9 +303,9 @@ hcblasStatus gemm_NoTransAB_batch_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_
 }
 
 hcblasStatus gemm_NoTransAB_batch_MICRO_TS16XMTS2(hc::accelerator_view &accl_view,
-  						  hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-    						  hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-   					          hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+  						  float* &A, long aOffset, long A_batchOffset,
+    						  float* &B, long bOffset, long B_batchOffset,
+   					          float* &C, long cOffset, long C_batchOffset,
   						  int M, int N, int K, int lda, int ldb, int ldc,
     						  float alpha, float beta, int batchSize) {
 #define TILESIZE 16
@@ -377,9 +377,9 @@ hcblasStatus gemm_NoTransAB_batch_MICRO_TS16XMTS2(hc::accelerator_view &accl_vie
 }
 
 hcblasStatus gemm_NoTransAB_batch_largeM(hc::accelerator_view &accl_view,
- 				         hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-   					 hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-    					 hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+ 				         float* &A, long aOffset, long A_batchOffset,
+   					 float* &B, long bOffset, long B_batchOffset,
+    					 float* &C, long cOffset, long C_batchOffset,
     					 int M, int N, int K, int lda, int ldb, int ldc,
     					 float alpha, float beta, int batchSize) {
 #define MICROTILESIZE_A 2
@@ -457,9 +457,9 @@ hcblasStatus gemm_NoTransAB_batch_largeM(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransA_batch_STEP_TS8XSS8(hc::accelerator_view &accl_view,
-    					      hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-    					      hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-    					      hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+    					      float* &A, long aOffset, long A_batchOffset,
+    					      float* &B, long bOffset, long B_batchOffset,
+    					      float* &C, long cOffset, long C_batchOffset,
     					      int M, int N, int K, int lda, int ldb, int ldc,
    					      float alpha, float beta, int batchSize) {
 #define TILESIZE 8
@@ -527,9 +527,9 @@ hcblasStatus gemm_NoTransA_batch_STEP_TS8XSS8(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransA_batch_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_view,
-						    hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-   						    hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-    						    hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+						    float* &A, long aOffset, long A_batchOffset,
+   						    float* &B, long bOffset, long B_batchOffset,
+    						    float* &C, long cOffset, long C_batchOffset,
     						    int M, int N, int K, int lda, int ldb, int ldc,
     					            float alpha, float beta, int batchSize) {
 #define TILESIZE 16
@@ -608,9 +608,9 @@ hcblasStatus gemm_NoTransA_batch_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_v
 
 
 hcblasStatus gemm_NoTransA_batch_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_view,
-  						  hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-  						  hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-  						  hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+  						  float* &A, long aOffset, long A_batchOffset,
+  						  float* &B, long bOffset, long B_batchOffset,
+  						  float* &C, long cOffset, long C_batchOffset,
   						  int M, int N, int K, int lda, int ldb, int ldc,
   						  float alpha, float beta, int batchSize) {
 #define TILESIZE 8
@@ -688,9 +688,9 @@ hcblasStatus gemm_NoTransA_batch_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_vie
 }
 
 hcblasStatus gemm_NoTransA_batch_STEP_TS16XSS16(hc::accelerator_view &accl_view,
-  					        hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-    						hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-    						hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+  					        float* &A, long aOffset, long A_batchOffset,
+    						float* &B, long bOffset, long B_batchOffset,
+    						float* &C, long cOffset, long C_batchOffset,
     						int M, int N, int K, int lda, int ldb, int ldc,
     						float alpha, float beta, int batchSize) {
 #define TILESIZE 16
@@ -758,9 +758,9 @@ hcblasStatus gemm_NoTransA_batch_STEP_TS16XSS16(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransA_batch_MICRO_NBK_TS16XMTS2(hc::accelerator_view &accl_view,
-    						     hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-   						     hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-    						     hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+    						     float* &A, long aOffset, long A_batchOffset,
+   						     float* &B, long bOffset, long B_batchOffset,
+    						     float* &C, long cOffset, long C_batchOffset,
  						     int M, int N, int K, int lda, int ldb, int ldc,
                                                      float alpha, float beta, int batchSize) {
 #define TILESIZE 16
@@ -839,9 +839,9 @@ hcblasStatus gemm_NoTransA_batch_MICRO_NBK_TS16XMTS2(hc::accelerator_view &accl_
 }
 
 hcblasStatus gemm_NoTransA_batch_MICRO_TS16XMTS2(hc::accelerator_view &accl_view,
-    						 hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-   						 hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-   						 hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+    						 float* &A, long aOffset, long A_batchOffset,
+   						 float* &B, long bOffset, long B_batchOffset,
+   						 float* &C, long cOffset, long C_batchOffset,
    						 int M, int N, int K, int lda, int ldb, int ldc,
    						 float alpha, float beta, int batchSize) {
 #define TILESIZE 16
@@ -913,9 +913,9 @@ hcblasStatus gemm_NoTransA_batch_MICRO_TS16XMTS2(hc::accelerator_view &accl_view
 }
 
 hcblasStatus gemm_NoTransA_batch_largeM(hc::accelerator_view &accl_view,
-                                        hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                                        hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                                        hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+                                        float* &A, long aOffset, long A_batchOffset,
+                                        float* &B, long bOffset, long B_batchOffset,
+                                        float* &C, long cOffset, long C_batchOffset,
                                         int M, int N, int K, int lda, int ldb, int ldc,
                                         float alpha, float beta, int batchSize) {
 #define MICROTILESIZE_A 2
@@ -997,9 +997,9 @@ hcblasStatus gemm_NoTransA_batch_largeM(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransB_batch_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_view,
-   						  hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-   						  hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-    						  hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+   						  float* &A, long aOffset, long A_batchOffset,
+   						  float* &B, long bOffset, long B_batchOffset,
+    						  float* &C, long cOffset, long C_batchOffset,
   						  int M, int N, int K, int lda, int ldb, int ldc,
   						  float alpha, float beta, int batchSize) {
 #define TILESIZE 8
@@ -1078,9 +1078,9 @@ hcblasStatus gemm_NoTransB_batch_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_vie
 }
 
 hcblasStatus gemm_NoTransB_batch_STEP_TS8XSS8(hc::accelerator_view &accl_view,
-   					      hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-  					      hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-    					      hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+   					      float* &A, long aOffset, long A_batchOffset,
+  					      float* &B, long bOffset, long B_batchOffset,
+    					      float* &C, long cOffset, long C_batchOffset,
     					      int M, int N, int K, int lda, int ldb, int ldc,
     					      float alpha, float beta, int batchSize) {
 #define TILESIZE 8
@@ -1148,9 +1148,9 @@ hcblasStatus gemm_NoTransB_batch_STEP_TS8XSS8(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransB_batch_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_view,
-    						    hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-  						    hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-						    hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+    						    float* &A, long aOffset, long A_batchOffset,
+  						    float* &B, long bOffset, long B_batchOffset,
+						    float* &C, long cOffset, long C_batchOffset,
  						    int M, int N, int K, int lda, int ldb, int ldc,
  						    float alpha, float beta, int batchSize) {
 #define TILESIZE 16
@@ -1229,9 +1229,9 @@ hcblasStatus gemm_NoTransB_batch_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_v
 }
 
 hcblasStatus gemm_NoTransB_batch_MICRO_NBK_TS16XMTS2(hc::accelerator_view &accl_view,
-  						     hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-						     hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
- 						     hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+  						     float* &A, long aOffset, long A_batchOffset,
+						     float* &B, long bOffset, long B_batchOffset,
+ 						     float* &C, long cOffset, long C_batchOffset,
   						     int M, int N, int K, int lda, int ldb, int ldc,
 						     float alpha, float beta, int batchSize) {
 #define TILESIZE 16
@@ -1311,9 +1311,9 @@ hcblasStatus gemm_NoTransB_batch_MICRO_NBK_TS16XMTS2(hc::accelerator_view &accl_
 }
 
 hcblasStatus gemm_NoTransB_batch_MICRO_TS16XMTS2(hc::accelerator_view &accl_view,
-  					         hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-					         hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-   						 hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+  					         float* &A, long aOffset, long A_batchOffset,
+					         float* &B, long bOffset, long B_batchOffset,
+   						 float* &C, long cOffset, long C_batchOffset,
    						 int M, int N, int K, int lda, int ldb, int ldc,
   				 		 float alpha, float beta, int batchSize) {
 #define TILESIZE 16
@@ -1385,9 +1385,9 @@ hcblasStatus gemm_NoTransB_batch_MICRO_TS16XMTS2(hc::accelerator_view &accl_view
 }
 
 hcblasStatus gemm_NoTransB_batch_largeM(hc::accelerator_view &accl_view,
-                                        hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                                        hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                                        hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+                                        float* &A, long aOffset, long A_batchOffset,
+                                        float* &B, long bOffset, long B_batchOffset,
+                                        float* &C, long cOffset, long C_batchOffset,
                                         int M, int N, int K, int lda, int ldb, int ldc,
                                         float alpha, float beta, int batchSize) {
 #define MICROTILESIZE_A 2
@@ -1464,9 +1464,9 @@ hcblasStatus gemm_NoTransB_batch_largeM(hc::accelerator_view &accl_view,
   return HCBLAS_SUCCESS;
 }
 hcblasStatus gemm_TransAB_batch_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_view,
-   						 hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-   						 hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-    					 	 hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+   						 float* &A, long aOffset, long A_batchOffset,
+   						 float* &B, long bOffset, long B_batchOffset,
+    					 	 float* &C, long cOffset, long C_batchOffset,
    						 int M, int N, int K, int lda, int ldb, int ldc,
    						 float alpha, float beta, int batchSize) {
 #define TILESIZE 8
@@ -1533,9 +1533,9 @@ hcblasStatus gemm_TransAB_batch_STEP_NBK_TS8XSS8(hc::accelerator_view &accl_view
 }
 
 hcblasStatus gemm_TransAB_batch_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_view,
-    						   hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-   						   hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-   						   hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+    						   float* &A, long aOffset, long A_batchOffset,
+   						   float* &B, long bOffset, long B_batchOffset,
+   						   float* &C, long cOffset, long C_batchOffset,
    						   int M, int N, int K, int lda, int ldb, int ldc,
    						   float alpha, float beta, int batchSize) {
 #define TILESIZE 16
@@ -1602,9 +1602,9 @@ hcblasStatus gemm_TransAB_batch_STEP_NBK_TS16XSS16(hc::accelerator_view &accl_vi
 }
 
 hcblasStatus gemm_TransAB_batch_MICRO_TS16XMTS2(hc::accelerator_view &accl_view,
-   					        hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-  					        hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-    						hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+   					        float* &A, long aOffset, long A_batchOffset,
+  					        float* &B, long bOffset, long B_batchOffset,
+    						float* &C, long cOffset, long C_batchOffset,
     						int M, int N, int K, int lda, int ldb, int ldc,
     						float alpha, float beta, int batchSize) {
 #define TILESIZE 16
@@ -1679,9 +1679,9 @@ hcblasStatus gemm_TransAB_batch_MICRO_TS16XMTS2(hc::accelerator_view &accl_view,
 /* Inputs and outputs are double array_view containers with batch processing */
 
 hcblasStatus gemm_NoTransAB_batch_STEP_TS8XSS8_d(hc::accelerator_view &accl_view,
-					       hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-  					       hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-    					       hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+					       double* &A, long aOffset, long A_batchOffset,
+  					       double* &B, long bOffset, long B_batchOffset,
+    					       double* &C, long cOffset, long C_batchOffset,
    					       int M, int N, int K, int lda, int ldb, int ldc,
   					       double alpha, double beta, int batchSize) {
 #define TILESIZE 8
@@ -1753,9 +1753,9 @@ hcblasStatus gemm_NoTransAB_batch_STEP_TS8XSS8_d(hc::accelerator_view &accl_view
 }
 
 hcblasStatus gemm_NoTransAB_batch_MICRO_NBK_TS16XMTS2_d(hc::accelerator_view &accl_view,
-    						      hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-  						      hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-   						      hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+    						      double* &A, long aOffset, long A_batchOffset,
+  						      double* &B, long bOffset, long B_batchOffset,
+   						      double* &C, long cOffset, long C_batchOffset,
 						      int M, int N, int K, int lda, int ldb, int ldc,
  						      double alpha, double beta, int batchSize) {
 #define TILESIZE 16
@@ -1834,9 +1834,9 @@ hcblasStatus gemm_NoTransAB_batch_MICRO_NBK_TS16XMTS2_d(hc::accelerator_view &ac
 }
 
 hcblasStatus gemm_NoTransAB_batch_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_view,
- 						   hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-					           hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-					           hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+ 						   double* &A, long aOffset, long A_batchOffset,
+					           double* &B, long bOffset, long B_batchOffset,
+					           double* &C, long cOffset, long C_batchOffset,
 					           int M, int N, int K, int lda, int ldb, int ldc,
    						   double alpha, double beta, int batchSize) {
 #define TILESIZE 8
@@ -1906,9 +1906,9 @@ hcblasStatus gemm_NoTransAB_batch_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_
 }
 
 hcblasStatus gemm_NoTransAB_batch_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl_view,
-   						     hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
- 						     hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-  						     hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+   						     double* &A, long aOffset, long A_batchOffset,
+ 						     double* &B, long bOffset, long B_batchOffset,
+  						     double* &C, long cOffset, long C_batchOffset,
  						     int M, int N, int K, int lda, int ldb, int ldc,
     						     double alpha, double beta, int batchSize) {
 #define TILESIZE 16
@@ -1978,9 +1978,9 @@ hcblasStatus gemm_NoTransAB_batch_STEP_NBK_TS16XSS16_d(hc::accelerator_view &acc
 }
 
 hcblasStatus gemm_NoTransAB_batch_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_view,
-  						  hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-    						  hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-   					          hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+  						  double* &A, long aOffset, long A_batchOffset,
+    						  double* &B, long bOffset, long B_batchOffset,
+   					          double* &C, long cOffset, long C_batchOffset,
   						  int M, int N, int K, int lda, int ldb, int ldc,
     						  double alpha, double beta, int batchSize) {
 #define TILESIZE 16
@@ -2052,9 +2052,9 @@ hcblasStatus gemm_NoTransAB_batch_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_v
 }
 
 hcblasStatus gemm_NoTransAB_batch_largeM_d(hc::accelerator_view &accl_view,
- 				         hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-   					 hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-    					 hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+ 				         double* &A, long aOffset, long A_batchOffset,
+   					 double* &B, long bOffset, long B_batchOffset,
+    					 double* &C, long cOffset, long C_batchOffset,
     					 int M, int N, int K, int lda, int ldb, int ldc,
     					 double alpha, double beta, int batchSize) {
 #define MICROTILESIZE_A 2
@@ -2132,9 +2132,9 @@ hcblasStatus gemm_NoTransAB_batch_largeM_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransA_batch_STEP_TS8XSS8_d(hc::accelerator_view &accl_view,
-    					      hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-    					      hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-    					      hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+    					      double* &A, long aOffset, long A_batchOffset,
+    					      double* &B, long bOffset, long B_batchOffset,
+    					      double* &C, long cOffset, long C_batchOffset,
     					      int M, int N, int K, int lda, int ldb, int ldc,
    					      double alpha, double beta, int batchSize) {
 #define TILESIZE 8
@@ -2202,9 +2202,9 @@ hcblasStatus gemm_NoTransA_batch_STEP_TS8XSS8_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransA_batch_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl_view,
-						    hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-   						    hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-    						    hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+						    double* &A, long aOffset, long A_batchOffset,
+   						    double* &B, long bOffset, long B_batchOffset,
+    						    double* &C, long cOffset, long C_batchOffset,
     						    int M, int N, int K, int lda, int ldb, int ldc,
     					            double alpha, double beta, int batchSize) {
 #define TILESIZE 16
@@ -2283,9 +2283,9 @@ hcblasStatus gemm_NoTransA_batch_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl
 
 
 hcblasStatus gemm_NoTransA_batch_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_view,
-  						  hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-  						  hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-  						  hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+  						  double* &A, long aOffset, long A_batchOffset,
+  						  double* &B, long bOffset, long B_batchOffset,
+  						  double* &C, long cOffset, long C_batchOffset,
   						  int M, int N, int K, int lda, int ldb, int ldc,
   						  double alpha, double beta, int batchSize) {
 #define TILESIZE 8
@@ -2363,9 +2363,9 @@ hcblasStatus gemm_NoTransA_batch_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_v
 }
 
 hcblasStatus gemm_NoTransA_batch_STEP_TS16XSS16_d(hc::accelerator_view &accl_view,
-  					        hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-    						hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-    						hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+  					        double* &A, long aOffset, long A_batchOffset,
+    						double* &B, long bOffset, long B_batchOffset,
+    						double* &C, long cOffset, long C_batchOffset,
     						int M, int N, int K, int lda, int ldb, int ldc,
     						double alpha, double beta, int batchSize) {
 #define TILESIZE 16
@@ -2433,9 +2433,9 @@ hcblasStatus gemm_NoTransA_batch_STEP_TS16XSS16_d(hc::accelerator_view &accl_vie
 }
 
 hcblasStatus gemm_NoTransA_batch_MICRO_NBK_TS16XMTS2_d(hc::accelerator_view &accl_view,
-    						     hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-   						     hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-    						     hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+    						     double* &A, long aOffset, long A_batchOffset,
+   						     double* &B, long bOffset, long B_batchOffset,
+    						     double* &C, long cOffset, long C_batchOffset,
  						     int M, int N, int K, int lda, int ldb, int ldc,
                                                      double alpha, double beta, int batchSize) {
 #define TILESIZE 16
@@ -2514,9 +2514,9 @@ hcblasStatus gemm_NoTransA_batch_MICRO_NBK_TS16XMTS2_d(hc::accelerator_view &acc
 }
 
 hcblasStatus gemm_NoTransA_batch_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_view,
-    						 hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-   						 hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-   						 hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+    						 double* &A, long aOffset, long A_batchOffset,
+   						 double* &B, long bOffset, long B_batchOffset,
+   						 double* &C, long cOffset, long C_batchOffset,
    						 int M, int N, int K, int lda, int ldb, int ldc,
    						 double alpha, double beta, int batchSize) {
 #define TILESIZE 16
@@ -2588,9 +2588,9 @@ hcblasStatus gemm_NoTransA_batch_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_vi
 }
 
 hcblasStatus gemm_NoTransA_batch_largeM_d(hc::accelerator_view &accl_view,
-                                        hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                                        hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                                        hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+                                        double* &A, long aOffset, long A_batchOffset,
+                                        double* &B, long bOffset, long B_batchOffset,
+                                        double* &C, long cOffset, long C_batchOffset,
                                         int M, int N, int K, int lda, int ldb, int ldc,
                                         double alpha, double beta, int batchSize) {
 #define MICROTILESIZE_A 2
@@ -2672,9 +2672,9 @@ hcblasStatus gemm_NoTransA_batch_largeM_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransB_batch_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_view,
-   						  hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-   						  hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-    						  hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+   						  double* &A, long aOffset, long A_batchOffset,
+   						  double* &B, long bOffset, long B_batchOffset,
+    						  double* &C, long cOffset, long C_batchOffset,
   						  int M, int N, int K, int lda, int ldb, int ldc,
   						  double alpha, double beta, int batchSize) {
 #define TILESIZE 8
@@ -2753,9 +2753,9 @@ hcblasStatus gemm_NoTransB_batch_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_v
 }
 
 hcblasStatus gemm_NoTransB_batch_STEP_TS8XSS8_d(hc::accelerator_view &accl_view,
-   					      hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-  					      hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-    					      hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+   					      double* &A, long aOffset, long A_batchOffset,
+  					      double* &B, long bOffset, long B_batchOffset,
+    					      double* &C, long cOffset, long C_batchOffset,
     					      int M, int N, int K, int lda, int ldb, int ldc,
     					      double alpha, double beta, int batchSize) {
 #define TILESIZE 8
@@ -2823,9 +2823,9 @@ hcblasStatus gemm_NoTransB_batch_STEP_TS8XSS8_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransB_batch_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl_view,
-    						    hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-  						    hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-						    hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+    						    double* &A, long aOffset, long A_batchOffset,
+  						    double* &B, long bOffset, long B_batchOffset,
+						    double* &C, long cOffset, long C_batchOffset,
  						    int M, int N, int K, int lda, int ldb, int ldc,
  						    double alpha, double beta, int batchSize) {
 #define TILESIZE 16
@@ -2904,9 +2904,9 @@ hcblasStatus gemm_NoTransB_batch_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl
 }
 
 hcblasStatus gemm_NoTransB_batch_MICRO_NBK_TS16XMTS2_d(hc::accelerator_view &accl_view,
-  						     hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-						     hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
- 						     hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+  						     double* &A, long aOffset, long A_batchOffset,
+						     double* &B, long bOffset, long B_batchOffset,
+ 						     double* &C, long cOffset, long C_batchOffset,
   						     int M, int N, int K, int lda, int ldb, int ldc,
 						     double alpha, double beta, int batchSize) {
 #define TILESIZE 16
@@ -2986,9 +2986,9 @@ hcblasStatus gemm_NoTransB_batch_MICRO_NBK_TS16XMTS2_d(hc::accelerator_view &acc
 }
 
 hcblasStatus gemm_NoTransB_batch_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_view,
-  					         hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-					         hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-   						 hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+  					         double* &A, long aOffset, long A_batchOffset,
+					         double* &B, long bOffset, long B_batchOffset,
+   						 double* &C, long cOffset, long C_batchOffset,
    						 int M, int N, int K, int lda, int ldb, int ldc,
   				 		 double alpha, double beta, int batchSize) {
 #define TILESIZE 16
@@ -3060,9 +3060,9 @@ hcblasStatus gemm_NoTransB_batch_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_vi
 }
 
 hcblasStatus gemm_NoTransB_batch_largeM_d(hc::accelerator_view &accl_view,
-                                        hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                                        hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                                        hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+                                        double* &A, long aOffset, long A_batchOffset,
+                                        double* &B, long bOffset, long B_batchOffset,
+                                        double* &C, long cOffset, long C_batchOffset,
                                         int M, int N, int K, int lda, int ldb, int ldc,
                                         double alpha, double beta, int batchSize) {
 #define MICROTILESIZE_A 2
@@ -3139,9 +3139,9 @@ hcblasStatus gemm_NoTransB_batch_largeM_d(hc::accelerator_view &accl_view,
   return HCBLAS_SUCCESS;
 }
 hcblasStatus gemm_TransAB_batch_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_view,
-   						 hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-   						 hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-    					 	 hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+   						 double* &A, long aOffset, long A_batchOffset,
+   						 double* &B, long bOffset, long B_batchOffset,
+    					 	 double* &C, long cOffset, long C_batchOffset,
    						 int M, int N, int K, int lda, int ldb, int ldc,
    						 double alpha, double beta, int batchSize) {
 #define TILESIZE 8
@@ -3208,9 +3208,9 @@ hcblasStatus gemm_TransAB_batch_STEP_NBK_TS8XSS8_d(hc::accelerator_view &accl_vi
 }
 
 hcblasStatus gemm_TransAB_batch_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl_view,
-    						   hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-   						   hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-   						   hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+    						   double* &A, long aOffset, long A_batchOffset,
+   						   double* &B, long bOffset, long B_batchOffset,
+   						   double* &C, long cOffset, long C_batchOffset,
    						   int M, int N, int K, int lda, int ldb, int ldc,
    						   double alpha, double beta, int batchSize) {
 #define TILESIZE 16
@@ -3277,9 +3277,9 @@ hcblasStatus gemm_TransAB_batch_STEP_NBK_TS16XSS16_d(hc::accelerator_view &accl_
 }
 
 hcblasStatus gemm_TransAB_batch_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_view,
-   					        hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-  					        hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-    						hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+   					        double* &A, long aOffset, long A_batchOffset,
+  					        double* &B, long bOffset, long B_batchOffset,
+    						double* &C, long cOffset, long C_batchOffset,
     						int M, int N, int K, int lda, int ldb, int ldc,
     						double alpha, double beta, int batchSize) {
 #define TILESIZE 16
@@ -3352,9 +3352,9 @@ hcblasStatus gemm_TransAB_batch_MICRO_TS16XMTS2_d(hc::accelerator_view &accl_vie
 
 
 hcblasStatus gemm_NoTransAB(hc::accelerator_view &accl_view,
-                            hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                            hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                            hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+                            float* &A, long aOffset, long A_batchOffset,
+                            float* &B, long bOffset, long B_batchOffset,
+                            float* &C, long cOffset, long C_batchOffset,
                             int M, int N, int K, int lda, int ldb, int ldc,
                             float alpha, float beta, int batchSize) {
   if (M > 10000 && N < 500) {
@@ -3376,9 +3376,9 @@ hcblasStatus gemm_NoTransAB(hc::accelerator_view &accl_view,
 
 
 hcblasStatus gemm_NoTransA(hc::accelerator_view &accl_view,
-                           hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                           hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                           hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+                           float* &A, long aOffset, long A_batchOffset,
+                           float* &B, long bOffset, long B_batchOffset,
+                           float* &C, long cOffset, long C_batchOffset,
                            int M, int N, int K, int lda, int ldb, int ldc,
                            float alpha, float beta, int batchSize) {
   if (M > 10000 && N < 500) {
@@ -3399,9 +3399,9 @@ hcblasStatus gemm_NoTransA(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransB(hc::accelerator_view &accl_view,
-                           hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                           hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                           hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+                           float* &A, long aOffset, long A_batchOffset,
+                           float* &B, long bOffset, long B_batchOffset,
+                           float* &C, long cOffset, long C_batchOffset,
                            int M, int N, int K, int lda, int ldb, int ldc,
                            float alpha, float beta, int batchSize) {
   if (M > 10000 && N < 500) {
@@ -3420,9 +3420,9 @@ hcblasStatus gemm_NoTransB(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_TransAB(hc::accelerator_view &accl_view,
-                          hc::array_view<float, 1> &A, long aOffset, long A_batchOffset,
-                          hc::array_view<float, 1> &B, long bOffset, long B_batchOffset,
-                          hc::array_view<float, 1> &C, long cOffset, long C_batchOffset,
+                          float* &A, long aOffset, long A_batchOffset,
+                          float* &B, long bOffset, long B_batchOffset,
+                          float* &C, long cOffset, long C_batchOffset,
                           int M, int N, int K, int lda, int ldb, int ldc,
                           float alpha, float beta, int batchSize) {
   if ((M < 600 && N < 600 && K < 10) || (M < 1800 && N < 600 && K < 600)) {
@@ -3435,9 +3435,9 @@ hcblasStatus gemm_TransAB(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransAB_d(hc::accelerator_view &accl_view,
-                            hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                            hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                            hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+                            double* &A, long aOffset, long A_batchOffset,
+                            double* &B, long bOffset, long B_batchOffset,
+                            double* &C, long cOffset, long C_batchOffset,
                             int M, int N, int K, int lda, int ldb, int ldc,
                             double alpha, double beta, int batchSize) {
   if (M > 10000 && N < 500) {
@@ -3458,9 +3458,9 @@ hcblasStatus gemm_NoTransAB_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransA_d(hc::accelerator_view &accl_view,
-                           hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                           hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                           hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+                           double* &A, long aOffset, long A_batchOffset,
+                           double* &B, long bOffset, long B_batchOffset,
+                           double* &C, long cOffset, long C_batchOffset,
                            int M, int N, int K, int lda, int ldb, int ldc,
                            double alpha, double beta, int batchSize) {
   if (M > 10000 && N < 500) {
@@ -3481,9 +3481,9 @@ hcblasStatus gemm_NoTransA_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_NoTransB_d(hc::accelerator_view &accl_view,
-                           hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                           hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                           hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+                           double* &A, long aOffset, long A_batchOffset,
+                           double* &B, long bOffset, long B_batchOffset,
+                           double* &C, long cOffset, long C_batchOffset,
                            int M, int N, int K, int lda, int ldb, int ldc,
                            double alpha, double beta, int batchSize) {
   if (M > 10000 && N < 500) {
@@ -3502,9 +3502,9 @@ hcblasStatus gemm_NoTransB_d(hc::accelerator_view &accl_view,
 }
 
 hcblasStatus gemm_TransAB_d(hc::accelerator_view &accl_view,
-                          hc::array_view<double, 1> &A, long aOffset, long A_batchOffset,
-                          hc::array_view<double, 1> &B, long bOffset, long B_batchOffset,
-                          hc::array_view<double, 1> &C, long cOffset, long C_batchOffset,
+                          double* &A, long aOffset, long A_batchOffset,
+                          double* &B, long bOffset, long B_batchOffset,
+                          double* &C, long cOffset, long C_batchOffset,
                           int M, int N, int K, int lda, int ldb, int ldc,
                           double alpha, double beta, int batchSize) {
   if ((M < 600 && N < 600 && K < 10) || (M < 1800 && N < 600 && K < 600)) {
