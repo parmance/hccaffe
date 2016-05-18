@@ -1,181 +1,160 @@
-# Caffe
+# ** HCC backend Implementation for Caffe ** #
 
-Caffe is a deep learning framework made with expression, speed, and modularity in mind.
-It is developed by the Berkeley Vision and Learning Center ([BVLC](http://bvlc.eecs.berkeley.edu)) and community contributors.
+##Introduction: ##
 
-Check out the [project site](http://caffe.berkeleyvision.org) for all the details like
+This repository hosts the HCC backend implementation project for  [Caffe](https://github.com/BVLC/caffe). To know what HCC is please refer [here](https://bitbucket.org/multicoreware/hcc/wiki/Home). Caffe framework currently has a CUDA backend support targeting NVidia devices.  The goal of this project is to develop  HCC counterparts targeting modern AMD devices. This project mainly targets the linux platform and makes use of the linux-based HCC compiler implementation hosted [here](https://bitbucket.org/multicoreware/hcc/wiki/Home). 
 
-- [DIY Deep Learning for Vision with Caffe](https://docs.google.com/presentation/d/1UeKXVgRvvxg9OUdh_UiC5G71UMscNPlvArsWER41PsU/edit#slide=id.p)
-- [Tutorial Documentation](http://caffe.berkeleyvision.org/tutorial/)
-- [BVLC reference models](http://caffe.berkeleyvision.org/model_zoo.html) and the [community model zoo](https://github.com/BVLC/caffe/wiki/Model-Zoo)
-- [Installation instructions](http://caffe.berkeleyvision.org/installation.html)
+##Prerequisites: ##
 
-and step-by-step examples.
+**Hardware Requirements:**
 
-[![Join the chat at https://gitter.im/BVLC/caffe](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/BVLC/caffe?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+* CPU: mainstream brand, Better if with >=4 Cores Intel Haswell based CPU 
+* System Memory >= 4GB (Better if >10GB for NN application over multiple GPUs)
+* Hard Drive > 200GB (Better if SSD or NVMe driver  for NN application over multiple GPUs)
+* Minimum GPU Memory (Global) > 2GB
 
-Please join the [caffe-users group](https://groups.google.com/forum/#!forum/caffe-users) or [gitter chat](https://gitter.im/BVLC/caffe) to ask questions and talk about methods and models.
-Framework development discussions and thorough bug reports are collected on [Issues](https://github.com/BVLC/caffe/issues).
+**GPU SDK and driver Requirements:**
 
-Happy brewing!
+* dGPUs: AMD R9 Fury X, R9 Fury, R9 Nano
+* APUs: AMD APU Kaveri or Carrizo
 
-## License and Citation
+**System software requirements:**
 
-Caffe is released under the [BSD 2-Clause license](https://github.com/BVLC/caffe/blob/master/LICENSE).
-The BVLC reference models are released for unrestricted use.
+* Ubuntu 14.04 trusty
+* GCC 4.6 and later
+* CPP 4.6 and later (come with GCC package)
+* python 2.7 and later
+* HCC 0.9 from [here](https://bitbucket.org/multicoreware/hcc/downloads/hcc-0.9.16041-0be508d-ff03947-5a1009a-Linux.deb)
 
-Please cite Caffe in your publications if it helps your research:
 
-    @article{jia2014caffe,
-      Author = {Jia, Yangqing and Shelhamer, Evan and Donahue, Jeff and Karayev, Sergey and Long, Jonathan and Girshick, Ross and Guadarrama, Sergio and Darrell, Trevor},
-      Journal = {arXiv preprint arXiv:1408.5093},
-      Title = {Caffe: Convolutional Architecture for Fast Feature Embedding},
-      Year = {2014}
-    }
+**Tools and Misc Requirements:**
 
+* git 1.9 and later
+* cmake 2.6 and later (2.6 and 2.8 are tested)
 
 
 
-# Installation #
+**Ubuntu Packages requirements:**
 
-## Install Caffe Prerequisites
-
-* BLAS via ATLAS, MKL, or OpenBLAS.
-* Boost >= 1.55
-* OpenCV >= 2.4 including 3.0
-* protobuf, glog, gflags
-* IO libraries hdf5, leveldb, snappy, lmdb
-
-reference to http://caffe.berkeleyvision.org/installation.html
-
-## Install HCC
-* Download HCC
-[hcc binary packages](https://bitbucket.org/multicoreware/hcc/downloads) : Ubuntu x86-64 debian package, or x86-64 .tar.gz tarballs are available.
-      
-
-* Install Ubuntu binary packages for x86-64
-
-      By default, HCC would be installed to /opt/hcc.
-      To install HCC, download hcc DEB files from links above, and then: 
-
-      
-```
-#!shell
-
-sudo dpkg -i hcc-<version>-Linux.deb
-```
+* libc6-dev-i386
+* liblapack-dev
+* graphicsmagick
+* libboost-all-dev
+* lua5.1
 
 
+## Tested Environment so far: 
 
-*       You can also choose to download hcc tar.gz files from links above, and then:
+This section enumerates the list of tested combinations of Hardware and system software
 
+**GPU Cards tested:**
 
-```
-#!shell
+* Radeon R9 Nano
+* Radeon R9 FuryX 
+* Radeon R9 Fury 
+* Kaveri and Carizo APU
 
-sudo tar zxvf hcc-<vers```ion>-Linux.tar.gz
-```
+**Driver versions tested**  
 
+* Boltzmann Early Release Driver for dGPU
 
+   ROCM 1.0 Release : https://github.com/RadeonOpenCompute/ROCm/blob/master/README.md
+     
+* Traditional HSA driver for APU (Kaveri)
 
-*  Setting up environment variables
-      Use the following command to set up environment variables needed for HCC and add it into PA#!shellTH:
+**Desktop System Tested**
 
+* Supermicro SYS-7048GR-TR  Tower 4 R9 Nano
+* ASUS X99-E WS motherboard with 4 R9 Nano
+* Gigabyte GA-X79S 2 AMD R9 Nano
 
-```
-#!shell
+**Server System Tested**
 
-      export HCC_HOME=/opt/hcc
-      export PATH=$H```CC_HOME/bin:$PATH
-```
-
-
-
-   
-* You can also install from source code or binary tarballs, please reference to https://bitbucket.org/multicoreware/hcc/wiki/Home
-
-## HCC Support
-
-* Clone Caffe from bitbucket.org.
-
-```
-#!shell
-
-git clone https://bitbucket.org/multicoreware/hccaffe.git
-```
-* Checkout c++amp branch which contain code of support CPP AMP
-
-
-```
-#!shell
-
-#checkout c++amp branch
-git checkout -b c++amp origin/c++amp
-```
+* Supermicro SYS 2028GR-THT  6 R9 NANO
+* Supermicro SYS-1028GQ-TRT 4 R9 NANO
+* Supermicro SYS-7048GR-TR Tower 4 R9 NANO
  
 
-* If you want build Caffe with CPP AMP support, please add “USE_CPPAMP” macro to Makefile.config.example file. The make command compiles the CPP AMP code when set USE_CPPAMP := 1 and CPU_ONLY := 0.
+## Installation Flow: 
 
-```
-#!Makefile
-# CPU-only switch (uncomment to build without GPU support).
-CPU_ONLY := 0
-# C++AMP acceleration switch (uncomment to build with C++AMP).
-USE_CPPAMP := 1
+A. ROCM 1.0 Installation (If not done so far)
 
-```
-* The original CUDA code can also work if set USE_CPPAMP := 0 and CPU_ONLY := 0.
+B. Pre-requisites Installation
 
-```
-#!Makefile
-# CPU-only switch (uncomment to build without GPU support).
-CPU_ONLY := 0
-# C++AMP acceleration switch (uncomment to build with C++AMP).
-USE_CPPAMP := 0
+C. HCCaffe Build
 
-```
-
-* Rename Makefile.config.example to Makefile.config
+D. Unit Testing
 
 
-```
-#!shell
+## Installation Steps in detail:
 
-cp Makefile.config.example Makefile.config
-```
+### A. ROCM 1.0 Installation: 
+
+  To Know more about ROCM  refer https://github.com/RadeonOpenCompute/ROCm/blob/master/README.md
+
+  a. Installing Debian ROCM repositories
+     
+  Before proceeding, make sure to completely uninstall any pre-release ROCm packages
+     
+  Refer https://github.com/RadeonOpenCompute/ROCm#removing-pre-release-packages for instructions to remove pre-release ROCM packages
+     
+  Steps to install rocm package are 
+     
+      * wget -qO - http://packages.amd.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
+      
+      * sudo sh -c 'echo deb [arch=amd64] http://packages.amd.com/rocm/apt/debian/ trusty main > /etc/apt/sources.list.d/rocm.list'
+     
+      * sudo apt-get update
+      
+      * sudo apt-get install rocm
+      
+      * Reboot the system
+      
+  b. Once Reboot, verify the installation
+    
+  To verify that the ROCm stack completed successfully you can execute to HSA vector_copy sample application:
+
+       * cd /opt/rocm/hsa/sample
+        
+       * make
+       
+       * ./vector_copy
+
+### B. Pre-requisites Installation: 
+
+          sudo apt-get install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler libatlas-base-dev libblas-dev libgflags-dev libgoogle-glog-dev liblmdb-dev
+      
+### C. Hccaffe Build Steps:
+
+HcCaffe currently could be built in one of the following two ways
+
+i) Using prebuilt hcc-hsail compiler under /opt/rocm/hcc-hsail
+        
+                      (or)
+ii) Using hcc-hsail built from source
+
+
+**(i) Using Prebuild hcc-hsail**:
+
+    (Assumption /opt/rocm/hcc-hsail hosts the compiler)
+   
+    * make
+
+    * make test
+
+**(ii) Using HCC built from source*:
+
+   * export MCWHCCBUILD=<path to HCC build>
+
+   * make -f Makefile.BuildHCC
+
+   * make test -f Makefile.BuildHCC
 
 
 
 
-## Build Caffe with HCC support
+## D. Unit Testing ##
 
-* If you installed the binary package of HCC, then you can build Caffe directly by running 
+After done with A, B and C, Now its time to test. Run the following commands to perform unit testing of different components of Caffe.
 
-```
-#!shell
-
-
-make
-make test
-```
-
-* If you build HCC from source code, please modify Makefile.BuildKalmar file first, you need set you build folder of HCC to CLAMP_PREFIX. And then build AMP Caffe with 
-
-```
-#!shell
-
-make -f Makefie.BuildKalmar
-make test -f Makefile.BuildKalmar
-```
-
-
-* The last step is verifying the correctness.
-
-```
-#!Shell
-
-
-make all
-make test
-make runtest
-```
+             ./build/test/test_all.testbin
