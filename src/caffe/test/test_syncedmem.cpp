@@ -85,7 +85,7 @@ TEST_F(SyncedMemoryTest, TestGPURead) {
 #ifndef USE_CPPAMP
   caffe_gpu_memcpy(TEST_SIZE, gpu_data, recovered_value);
 #else
-  caffe_amp_D2H(const_cast<void*>(gpu_data),
+  caffe_amp_D2H(TEST_SIZE, const_cast<void*>(gpu_data),
       static_cast<void*>(recovered_value), sizeof(float), false);
 #endif
   for (int i = 0; i < mem.size(); ++i) {
@@ -104,7 +104,7 @@ TEST_F(SyncedMemoryTest, TestGPURead) {
 #ifndef USE_CPPAMP
   caffe_gpu_memcpy(TEST_SIZE, gpu_data, recovered_value);
 #else
-  caffe_amp_D2H(const_cast<void*>(gpu_data),
+  caffe_amp_D2H(TEST_SIZE, const_cast<void*>(gpu_data),
       static_cast<void*>(recovered_value), sizeof(float), false);
 #endif
   for (int i = 0; i < mem.size(); ++i) {

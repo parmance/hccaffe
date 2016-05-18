@@ -134,14 +134,10 @@ void caffe_amp_free(void* ptr, size_t element_size, bool is_int) {
   }
 }
 
-void caffe_amp_D2H(void* src, void* dst, size_t element_size, bool is_int) {
+void caffe_amp_D2H(size_t size, void* src, void* dst, size_t element_size, bool is_int) {
   if (src == NULL || dst == NULL) {
     LOG(FATAL) << "Wrong source or destination for caffe_amp_D2H.";
   }
-  hc::accelerator currentAcc(L"default");
-  hc::AmPointerInfo dstInfo(0, 0, 0, currentAcc, 0, 0);
-  hc::am_memtracker_getinfo(&dstInfo, dst);
-  size_t size = dstInfo._sizeBytes;
   
   if (is_int) {
     if (element_size == sizeof(int)) {
@@ -1017,10 +1013,10 @@ void caffe_gpu_rng_gaussian(const int N, const double mu,
   }).wait();
 }
 
-/*template <>
+template <>
 uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
                                   const float* y) {
-  array_view<float, 1> axView =
+/*  array_view<float, 1> axView =
     *(static_cast<hc::array_view<float, 1>*>(
           (static_cast<void*>(const_cast<float*>(x)))));
   array_view<float, 1> ay =
@@ -1062,13 +1058,13 @@ uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
   free(result);
   free(ax);
   free(ay);
-  return sum;
+  return sum;*/
 }
 
 template <>
 uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
                                    const double* y) {
-  array_view<double, 1> axView =
+/*  array_view<double, 1> axView =
     *(static_cast<hc::array_view<double, 1>*>(
           (static_cast<void*>(const_cast<double*>(x)))));
   array_view<double, 1> ay =
@@ -1107,12 +1103,12 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
   free(result);
   free(ax);
   free(ay);
-  return sum;
+  return sum;*/
 }
 
 void caffe_gpu_memcpy(const size_t N, const void *X, void *Y) {
   LOG(FATAL) << "Instead of caffe_gpu_memcpy with caffe_amp_X2X.";
-}*/
+}
 
 }  // namespace caffe
 
