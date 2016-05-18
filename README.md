@@ -1,5 +1,6 @@
 # ** HCC backend Implementation for Caffe ** #
 
+
 ##Introduction: ##
 
 This repository hosts the HCC backend implementation project for  [Caffe](https://github.com/BVLC/caffe). To know what HCC is please refer [here](https://bitbucket.org/multicoreware/hcc/wiki/Home). Caffe framework currently has a CUDA backend support targeting NVidia devices.  The goal of this project is to develop  HCC counterparts targeting modern AMD devices. This project mainly targets the linux platform and makes use of the linux-based HCC compiler implementation hosted [here](https://bitbucket.org/multicoreware/hcc/wiki/Home). 
