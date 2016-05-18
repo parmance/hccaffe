@@ -16,7 +16,7 @@ else
   OTHER_BUILD_DIR := $(DEBUG_BUILD_DIR)
 endif
 
-HCC_PREFIX=/opt/rocm/hcc
+HCC_PREFIX=/opt/rocm/hcc-hsail
 # All of the directories containing code.
 SRC_DIRS := $(shell find * -type d -exec bash -c "find {} -maxdepth 1 \
 	\( -name '*.cpp' -o -name '*.proto' \) | grep -q ." \; -print)
