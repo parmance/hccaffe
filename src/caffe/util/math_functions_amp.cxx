@@ -250,15 +250,11 @@ void caffe_amp_copy_H2D(int N, void* src, void* dst, int dstOffset) {
   hc::am_memtracker_getinfo(&dstInfo, dst);
   size_t numDestElts = dstInfo._sizeBytes/sizeof(Dtype);
   Dtype* dstt = static_cast<Dtype*>(dst);
-  Dtype* srct = static_cast<Dtype*>(src);
   if (src == NULL || dst == NULL ||
       N > numDestElts - dstOffset) {
     LOG(FATAL) << "Wrong Parameters for caffe_amp_copy_H2D.";
   }
-  hc::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
-    dstt[dstOffset + idx[0]] = srct[idx[0]];
-  }).wait();
+  hc::am_copy(dstt + dstOffset, src, N * sizeof(Dtype));
 }
 
 template void caffe_amp_copy_H2D<int>(int N, void* src, void* dst,
