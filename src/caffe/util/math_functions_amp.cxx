@@ -273,18 +273,15 @@ void caffe_amp_copy_D2H(int N, void* src, void* dst, int srcOffset) {
   hc::accelerator currentAcc(L"default");
   hc::AmPointerInfo srcInfo(0, 0, 0, currentAcc, 0, 0);
   hc::am_memtracker_getinfo(&srcInfo, src);
-  Dtype* dstt = static_cast<Dtype*>(dst);
-  Dtype* srct = static_cast<Dtype*>(src);
   size_t numSrcElts = srcInfo._sizeBytes/sizeof(Dtype);
   if (src == NULL || dst == NULL ||
       N > numSrcElts - srcOffset) {
     LOG(FATAL) << "Wrong Parameters for caffe_amp_copy_D2H.";
   }
-  hc::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
-    dstt[idx[0]] = srct[srcOffset + idx[0]];
-  }).wait();
+  Dtype* srct = static_cast<Dtype*>(src);
+  hc::am_copy(dst, srct + srcOffset, N * sizeof(Dtype));
 }
+
 
 template void caffe_amp_copy_D2H<int>(int N, void* src, void* dst,
     int srcOffset);
