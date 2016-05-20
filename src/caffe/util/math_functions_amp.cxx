@@ -1006,94 +1006,63 @@ void caffe_gpu_rng_gaussian(const int N, const double mu,
 template <>
 uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
                                   const float* y) {
-/*  array_view<float, 1> axView =
-    *(static_cast<hc::array_view<float, 1>*>(
-          (static_cast<void*>(const_cast<float*>(x)))));
-  array_view<float, 1> ay =
-    *(static_cast<hc::array_view<float, 1>*>(
-          (static_cast<void*>(const_cast<float*>(y)))));
-
-  uint32_t* result = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
-  uint32_t* ax = static_cast<uint32_t*>(
-      malloc(sizeof(uint32_t) * axView.get_extent().size()));
-  uint32_t* ay = static_cast<uint32_t*>(
-      malloc(sizeof(uint32_t) * ay.get_extent().size()));
-
-  for (int i = 0; i < n; ++i) {
-    ax[i] = static_cast<uint32_t>(axView[i]);
-    ay[i] = static_cast<uint32_t>(ay[i]);
-  }
-
-  array_view<uint32_t, 1> resultView(n, result);
-  array_view<uint32_t, 1> xView(axView.get_extent().size(), ax);
-  array_view<uint32_t, 1> y(ay.get_extent().size(), ay);
-
+  hc::accelerator currentAcc(L"default");
+  uint32_t* dresult = hc::am_alloc(n * sizeof(uint32_t), currentAcc, 0);
+  uint32_t* result = (uint32_t*)(malloc(sizeof(uint32_t) * n));
   hc::extent<1> e(n);
-  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
+  hc::parallel_for_each(e, [=] (hc::index<1>& idx) __attribute__((hc, cpu)) {
     uint32_t ret = 0;
-    uint32_t u = xView[idx] ^ y[idx];
+    int ux = x[idx[0]];
+    int uy = y[idx[0]];
+    uint32_t u = ux ^ uy;
     while (u) {
       u = u & (u - 1);
       ret++;
     }
-    resultView[idx] = ret;
-  });
-  resultView.synchronize();
-  xView.synchronize();
-  y.synchronize();
+    dresult[idx[0]] = ret;
+  }).wait();
+
+  // Copy Result back to CPU  
+  hc::am_copy(result, dresult,  n * sizeof(uint32_t));
+
   uint32_t sum = 0;
   for (int i = 0; i < n; ++i) {
     sum+=result[i];
   }
+  hc::am_free(dresult);
   free(result);
-  free(ax);
-  free(ay);
-  return sum;*/
+  return sum;
 }
 
 template <>
 uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
                                    const double* y) {
-/*  array_view<double, 1> axView =
-    *(static_cast<hc::array_view<double, 1>*>(
-          (static_cast<void*>(const_cast<double*>(x)))));
-  array_view<double, 1> ay =
-    *(static_cast<hc::array_view<double, 1>*>(
-          (static_cast<void*>(const_cast<double*>(y)))));
-
-  uint32_t* result = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
-  uint64_t* ax = static_cast<uint64_t*>(
-      malloc(sizeof(uint64_t) * axView.get_extent().size()));
-  uint64_t* ay = static_cast<uint64_t*>(
-      malloc(sizeof(uint64_t) * ay.get_extent().size()));
-  for (int i = 0; i < n; ++i) {
-    ax[i] = static_cast<uint64_t>(axView[i]);
-    ay[i] = static_cast<uint64_t>(ay[i]);
-  }
-  array_view<uint32_t, 1> resultView(n, result);
-  array_view<uint64_t, 1> xView(axView.get_extent().size(), ax);
-  array_view<uint64_t, 1> y(ay.get_extent().size(), ay);
+  hc::accelerator currentAcc(L"default");
+  uint32_t* dresult = hc::am_alloc(n * sizeof(uint64_t), currentAcc, 0);
+  uint32_t* result = (uint32_t*)(malloc(sizeof(uint64_t) * n));
   hc::extent<1> e(n);
-  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
-    uint32_t ret = 0;
-    uint64_t u = xView[idx] ^ y[idx];
+  hc::parallel_for_each(e, [=] (hc::index<1>& idx) __attribute__((hc, cpu)) {
+    uint64_t ret = 0;
+    long ux = x[idx[0]];
+    long uy = y[idx[0]];
+    uint64_t u = ux ^ uy;
     while (u) {
       u = u & (u - 1);
       ret++;
     }
-    resultView[idx] = ret;
-  });
-  resultView.synchronize();
-  xView.synchronize();
-  y.synchronize();
+    dresult[idx[0]] = ret;
+  }).wait();
+
+  // Copy Result back to CPU  
+  hc::am_copy(result, dresult,  n * sizeof(uint32_t));
+
   uint32_t sum = 0;
   for (int i = 0; i < n; ++i) {
     sum+=result[i];
   }
+  hc::am_free(dresult);
   free(result);
-  free(ax);
-  free(ay);
-  return sum;*/
+  return sum;
 }
 
 void caffe_gpu_memcpy(const size_t N, const void *X, void *Y) {
