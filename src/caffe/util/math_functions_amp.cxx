@@ -229,10 +229,7 @@ void caffe_amp_copy(int N, void* src, void* dst,
       N <= numDestElts) {
     caffe_amp_D2D(src, dst, sizeof(Dtype), boost::is_same<Dtype, int>::value);
   } else {
-    hc::extent<1> e(N);
-    parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
-      dstt[dstOffset + idx[0]] = srct[srcOffset + idx[0]];
-    }).wait();
+     hc::am_copy(dstt + dstOffset, srct + srcOffset, N * sizeof(Dtype));
   }
 }
 
