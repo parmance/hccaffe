@@ -1054,9 +1054,9 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
   }).wait();
 
   // Copy Result back to CPU  
-  hc::am_copy(result, dresult,  n * sizeof(uint32_t));
+  hc::am_copy(result, dresult,  n * sizeof(uint64_t));
 
-  uint32_t sum = 0;
+  uint64_t sum = 0;
   for (int i = 0; i < n; ++i) {
     sum+=result[i];
   }
