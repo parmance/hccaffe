@@ -409,7 +409,7 @@ void sub_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
   hc::extent<1> e(N);
   parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
     y[idx[0]] = (a[idx[0]] - b[idx[0]]);
-  });
+  }).wait();
 }
 
 template <>

@@ -59,7 +59,7 @@ void SigmoidBackward<float>(const int N, float* in_diff,
       const float sigmoid_x = out_data[idx[0]];
       out_diff[idx[0]] =
         in_diff[idx[0]] * sigmoid_x * (1 - sigmoid_x);
-    });
+    }).wait();
 }
 
 template <>
