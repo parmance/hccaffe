@@ -46,7 +46,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     }
 #ifdef USE_CPPAMP
     caffe_gpu_gemm<TypeParam>(CblasNoTrans, CblasNoTrans, 2, 4, 3, 1.,
-        A.gpu_data(), 0, B.gpu_data(), 0,
+        const_cast<TypeParam*>(A.gpu_data()), 0, const_cast<TypeParam*>(B.gpu_data()), 0,
         0., C.mutable_gpu_data(), 0);
 #else
     caffe_gpu_gemm<TypeParam>(CblasNoTrans, CblasNoTrans, 2, 4, 3, 1.,
@@ -74,7 +74,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     }
 #ifdef USE_CPPAMP
     caffe_gpu_gemm<TypeParam>(CblasTrans, CblasNoTrans, 2, 4, 3, 1.,
-        A.gpu_data(), 0,  B.gpu_data(), 0,
+        const_cast<TypeParam*>(A.gpu_data()), 0,  const_cast<TypeParam*>(B.gpu_data()), 0,
         0., C.mutable_gpu_data(), 0);
 #else
     caffe_gpu_gemm<TypeParam>(CblasTrans, CblasNoTrans, 2, 4, 3, 1.,
@@ -100,7 +100,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     }
 #ifdef USE_CPPAMP
     caffe_gpu_gemm<TypeParam>(CblasTrans, CblasTrans, 2, 4, 3, 1.,
-        A.gpu_data(), 0, B.gpu_data(), 0, 0.,
+        const_cast<TypeParam*>(A.gpu_data()), 0, const_cast<TypeParam*>(B.gpu_data()), 0, 0.,
         C.mutable_gpu_data(), 0);
 #else
     caffe_gpu_gemm<TypeParam>(CblasTrans, CblasTrans, 2, 4, 3, 1.,
@@ -126,7 +126,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     }
 #ifdef USE_CPPAMP
     caffe_gpu_gemm<TypeParam>(CblasNoTrans, CblasTrans, 2, 4, 3, 1.,
-        A.gpu_data(), 0, B.gpu_data(), 0, 0.,
+        const_cast<TypeParam*>(A.gpu_data()), 0, const_cast<TypeParam*>(B.gpu_data()), 0, 0.,
         C.mutable_gpu_data(), 0);
 #else
     caffe_gpu_gemm<TypeParam>(CblasNoTrans, CblasTrans, 2, 4, 3, 1.,
@@ -170,8 +170,8 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
       EXPECT_EQ(y.cpu_data()[i], result_2[i]);
     }
 #ifdef USE_CPPAMP
-    caffe_gpu_gemv<TypeParam>(CblasNoTrans, 2, 3, 1., A.gpu_data(), 0,
-        x.gpu_data(), 0, 0., y.mutable_gpu_data(), 0);
+    caffe_gpu_gemv<TypeParam>(CblasNoTrans, 2, 3, 1., const_cast<TypeParam*>(A.gpu_data()), 0,
+        const_cast<TypeParam*>(x.gpu_data()), 0, 0., y.mutable_gpu_data(), 0);
 #else
     caffe_gpu_gemv<TypeParam>(CblasNoTrans, 2, 3, 1., A.gpu_data(),
         x.gpu_data(), 0., y.mutable_gpu_data());
@@ -193,8 +193,8 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
       EXPECT_EQ(x.cpu_data()[i], result_3[i]);
     }
 #ifdef USE_CPPAMP
-    caffe_gpu_gemv<TypeParam>(CblasTrans, 2, 3, 1., A.gpu_data(), 0,
-        y.gpu_data(), 0, 0., x.mutable_gpu_data(), 0);
+    caffe_gpu_gemv<TypeParam>(CblasTrans, 2, 3, 1., const_cast<TypeParam*>(A.gpu_data()), 0,
+        const_cast<TypeParam*>(y.gpu_data()), 0, 0., x.mutable_gpu_data(), 0);
 #else
     caffe_gpu_gemv<TypeParam>(CblasTrans, 2, 3, 1., A.gpu_data(),
         y.gpu_data(), 0., x.mutable_gpu_data());
