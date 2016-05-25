@@ -133,7 +133,7 @@ inline void SyncedMemory::to_cpu() {
       CaffeMallocHost(&cpu_ptr_, size_);
       own_cpu_data_ = true;
     }
-    caffe_amp_D2H(gpu_ptr_, cpu_ptr_, element_size_, is_integer_);
+    caffe_amp_D2H(size_, gpu_ptr_, cpu_ptr_, element_size_, is_integer_);
     head_ = SYNCED;
     break;
   case HEAD_AT_CPU:

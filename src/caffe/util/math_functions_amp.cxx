@@ -134,14 +134,10 @@ void caffe_amp_free(void* ptr, size_t element_size, bool is_int) {
   }
 }
 
-void caffe_amp_D2H(void* src, void* dst, size_t element_size, bool is_int) {
+void caffe_amp_D2H(size_t size, void* src, void* dst, size_t element_size, bool is_int) {
   if (src == NULL || dst == NULL) {
     LOG(FATAL) << "Wrong source or destination for caffe_amp_D2H.";
   }
-  hc::accelerator currentAcc(L"default");
-  hc::AmPointerInfo dstInfo(0, 0, 0, currentAcc, 0, 0);
-  hc::am_memtracker_getinfo(&dstInfo, dst);
-  size_t size = dstInfo._sizeBytes;
   
   if (is_int) {
     if (element_size == sizeof(int)) {
@@ -233,10 +229,7 @@ void caffe_amp_copy(int N, void* src, void* dst,
       N <= numDestElts) {
     caffe_amp_D2D(src, dst, sizeof(Dtype), boost::is_same<Dtype, int>::value);
   } else {
-    hc::extent<1> e(N);
-    parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
-      dstt[dstOffset + idx[0]] = srct[srcOffset + idx[0]];
-    }).wait();
+     hc::am_copy(dstt + dstOffset, srct + srcOffset, N * sizeof(Dtype));
   }
 }
 
@@ -254,15 +247,11 @@ void caffe_amp_copy_H2D(int N, void* src, void* dst, int dstOffset) {
   hc::am_memtracker_getinfo(&dstInfo, dst);
   size_t numDestElts = dstInfo._sizeBytes/sizeof(Dtype);
   Dtype* dstt = static_cast<Dtype*>(dst);
-  Dtype* srct = static_cast<Dtype*>(src);
   if (src == NULL || dst == NULL ||
       N > numDestElts - dstOffset) {
     LOG(FATAL) << "Wrong Parameters for caffe_amp_copy_H2D.";
   }
-  hc::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
-    dstt[dstOffset + idx[0]] = srct[idx[0]];
-  }).wait();
+  hc::am_copy(dstt + dstOffset, src, N * sizeof(Dtype));
 }
 
 template void caffe_amp_copy_H2D<int>(int N, void* src, void* dst,
@@ -277,18 +266,15 @@ void caffe_amp_copy_D2H(int N, void* src, void* dst, int srcOffset) {
   hc::accelerator currentAcc(L"default");
   hc::AmPointerInfo srcInfo(0, 0, 0, currentAcc, 0, 0);
   hc::am_memtracker_getinfo(&srcInfo, src);
-  Dtype* dstt = static_cast<Dtype*>(dst);
-  Dtype* srct = static_cast<Dtype*>(src);
   size_t numSrcElts = srcInfo._sizeBytes/sizeof(Dtype);
   if (src == NULL || dst == NULL ||
       N > numSrcElts - srcOffset) {
     LOG(FATAL) << "Wrong Parameters for caffe_amp_copy_D2H.";
   }
-  hc::extent<1> e(N);
-  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
-    dstt[idx[0]] = srct[srcOffset + idx[0]];
-  }).wait();
+  Dtype* srct = static_cast<Dtype*>(src);
+  hc::am_copy(dst, srct + srcOffset, N * sizeof(Dtype));
 }
+
 
 template void caffe_amp_copy_D2H<int>(int N, void* src, void* dst,
     int srcOffset);
@@ -423,7 +409,7 @@ void sub_kernel(const int N, Dtype* a, Dtype* b, Dtype* y) {
   hc::extent<1> e(N);
   parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
     y[idx[0]] = (a[idx[0]] - b[idx[0]]);
-  });
+  }).wait();
 }
 
 template <>
@@ -651,6 +637,24 @@ void caffe_gpu_dot<double>(const int n, const double* x, const double* y,
   // 2nd pass reduction
   std::vector<double> host_buffer(global_buffer);
   *out = *std::max_element(host_buffer.begin(), host_buffer.end());
+}
+
+void hc_axpy(int N, float alpha, float* x, float* y) {
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
+  int i = idx[0];
+  if (i < N) 
+     y[i] = alpha * x[i] + y[i];
+  }).wait();
+}
+
+void hc_axpy(int N, double alpha, double* x, double* y) {
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
+  int i = idx[0];
+  if (i < N)
+     y[i] = alpha * x[i] + y[i];
+  }).wait();
 }
 
 template <>
@@ -1017,102 +1021,71 @@ void caffe_gpu_rng_gaussian(const int N, const double mu,
   }).wait();
 }
 
-/*template <>
+template <>
 uint32_t caffe_gpu_hamming_distance<float>(const int n, const float* x,
                                   const float* y) {
-  array_view<float, 1> axView =
-    *(static_cast<hc::array_view<float, 1>*>(
-          (static_cast<void*>(const_cast<float*>(x)))));
-  array_view<float, 1> ay =
-    *(static_cast<hc::array_view<float, 1>*>(
-          (static_cast<void*>(const_cast<float*>(y)))));
-
-  uint32_t* result = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
-  uint32_t* ax = static_cast<uint32_t*>(
-      malloc(sizeof(uint32_t) * axView.get_extent().size()));
-  uint32_t* ay = static_cast<uint32_t*>(
-      malloc(sizeof(uint32_t) * ay.get_extent().size()));
-
-  for (int i = 0; i < n; ++i) {
-    ax[i] = static_cast<uint32_t>(axView[i]);
-    ay[i] = static_cast<uint32_t>(ay[i]);
-  }
-
-  array_view<uint32_t, 1> resultView(n, result);
-  array_view<uint32_t, 1> xView(axView.get_extent().size(), ax);
-  array_view<uint32_t, 1> y(ay.get_extent().size(), ay);
-
+  hc::accelerator currentAcc(L"default");
+  uint32_t* dresult = hc::am_alloc(n * sizeof(uint32_t), currentAcc, 0);
+  uint32_t* result = (uint32_t*)(malloc(sizeof(uint32_t) * n));
   hc::extent<1> e(n);
-  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
+  hc::parallel_for_each(e, [=] (hc::index<1>& idx) __attribute__((hc, cpu)) {
     uint32_t ret = 0;
-    uint32_t u = xView[idx] ^ y[idx];
+    int ux = x[idx[0]];
+    int uy = y[idx[0]];
+    uint32_t u = ux ^ uy;
     while (u) {
       u = u & (u - 1);
       ret++;
     }
-    resultView[idx] = ret;
-  });
-  resultView.synchronize();
-  xView.synchronize();
-  y.synchronize();
+    dresult[idx[0]] = ret;
+  }).wait();
+
+  // Copy Result back to CPU  
+  hc::am_copy(result, dresult,  n * sizeof(uint32_t));
+
   uint32_t sum = 0;
   for (int i = 0; i < n; ++i) {
     sum+=result[i];
   }
+  hc::am_free(dresult);
   free(result);
-  free(ax);
-  free(ay);
   return sum;
 }
 
 template <>
 uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
                                    const double* y) {
-  array_view<double, 1> axView =
-    *(static_cast<hc::array_view<double, 1>*>(
-          (static_cast<void*>(const_cast<double*>(x)))));
-  array_view<double, 1> ay =
-    *(static_cast<hc::array_view<double, 1>*>(
-          (static_cast<void*>(const_cast<double*>(y)))));
-
-  uint32_t* result = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * n));
-  uint64_t* ax = static_cast<uint64_t*>(
-      malloc(sizeof(uint64_t) * axView.get_extent().size()));
-  uint64_t* ay = static_cast<uint64_t*>(
-      malloc(sizeof(uint64_t) * ay.get_extent().size()));
-  for (int i = 0; i < n; ++i) {
-    ax[i] = static_cast<uint64_t>(axView[i]);
-    ay[i] = static_cast<uint64_t>(ay[i]);
-  }
-  array_view<uint32_t, 1> resultView(n, result);
-  array_view<uint64_t, 1> xView(axView.get_extent().size(), ax);
-  array_view<uint64_t, 1> y(ay.get_extent().size(), ay);
+  hc::accelerator currentAcc(L"default");
+  uint32_t* dresult = hc::am_alloc(n * sizeof(uint64_t), currentAcc, 0);
+  uint32_t* result = (uint32_t*)(malloc(sizeof(uint64_t) * n));
   hc::extent<1> e(n);
-  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
-    uint32_t ret = 0;
-    uint64_t u = xView[idx] ^ y[idx];
+  hc::parallel_for_each(e, [=] (hc::index<1>& idx) __attribute__((hc, cpu)) {
+    uint64_t ret = 0;
+    long ux = x[idx[0]];
+    long uy = y[idx[0]];
+    uint64_t u = ux ^ uy;
     while (u) {
       u = u & (u - 1);
       ret++;
     }
-    resultView[idx] = ret;
-  });
-  resultView.synchronize();
-  xView.synchronize();
-  y.synchronize();
-  uint32_t sum = 0;
+    dresult[idx[0]] = ret;
+  }).wait();
+
+  // Copy Result back to CPU  
+  hc::am_copy(result, dresult,  n * sizeof(uint64_t));
+
+  uint64_t sum = 0;
   for (int i = 0; i < n; ++i) {
     sum+=result[i];
   }
+  hc::am_free(dresult);
   free(result);
-  free(ax);
-  free(ay);
   return sum;
 }
 
 void caffe_gpu_memcpy(const size_t N, const void *X, void *Y) {
   LOG(FATAL) << "Instead of caffe_gpu_memcpy with caffe_amp_X2X.";
-}*/
+}
 
 }  // namespace caffe
 

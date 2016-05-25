@@ -296,6 +296,6 @@ void LRNComputeDiff<double>(const int N, double *bottom_data,
         step] * accum_ratio;
       ++head;
     }
-  });
+  }).wait();
 }
 

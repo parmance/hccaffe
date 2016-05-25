@@ -56,7 +56,7 @@ void ReLUForward(const int N, double* in, double* out,
     grdExt,
     [=](hc::index<1> idx) __attribute__((hc, cpu)){
     out[idx[0]] = in[idx[0]] > 0 ? in[idx[0]] : in[idx[0]] * negative_slope;
-  });
+  }).wait();
 }
 
 template <>
