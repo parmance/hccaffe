@@ -639,6 +639,24 @@ void caffe_gpu_dot<double>(const int n, const double* x, const double* y,
   *out = *std::max_element(host_buffer.begin(), host_buffer.end());
 }
 
+void hc_axpy(int N, float alpha, float* x, float* y) {
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
+  int i = idx[0];
+  if (i < N) 
+     y[i] = alpha * x[i] + y[i];
+  }).wait();
+}
+
+void hc_axpy(int N, double alpha, double* x, double* y) {
+  hc::extent<1> e(N);
+  parallel_for_each(e, [=](index<1> idx) __attribute__((hc, cpu)) {
+  int i = idx[0];
+  if (i < N)
+     y[i] = alpha * x[i] + y[i];
+  }).wait();
+}
+
 template <>
 void caffe_gpu_axpy<float>(const int N, const float alpha, const float* X,
         float* Y) {
