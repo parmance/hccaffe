@@ -161,7 +161,7 @@ TYPED_TEST(SliceLayerTest, TestSliceAcrossChannels) {
   }
 }
 
-/*TYPED_TEST(SliceLayerTest, TestGradientAcrossNum) {
+TYPED_TEST(SliceLayerTest, TestGradientAcrossNum) {
   typedef typename TypeParam::Dtype Dtype;
   // Gradient checks are slow; reduce blob size.
   this->ReduceBottomBlobSize();
@@ -172,8 +172,8 @@ TYPED_TEST(SliceLayerTest, TestSliceAcrossChannels) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
     this->blob_top_vec_0_);
 }
-*/
-/*TYPED_TEST(SliceLayerTest, TestGradientAcrossChannels) {
+
+TYPED_TEST(SliceLayerTest, TestGradientAcrossChannels) {
   typedef typename TypeParam::Dtype Dtype;
   // Gradient checks are slow; reduce blob size.
   this->ReduceBottomBlobSize();
@@ -185,5 +185,5 @@ TYPED_TEST(SliceLayerTest, TestSliceAcrossChannels) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
     this->blob_top_vec_0_);
 }
-*/
+
 }  // namespace caffe
