@@ -91,6 +91,7 @@ TYPED_TEST(InnerProductLayerTest, TestForward) {
   }
 }
 
+#ifdef GRAD_CHECK
 TYPED_TEST(InnerProductLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   bool IS_VALID_CUDA = false;
@@ -119,5 +120,6 @@ TYPED_TEST(InnerProductLayerTest, TestGradient) {
     LOG(ERROR) << "Skipping test due to old architecture.";
   }
 }
+#endif
 
 }  // namespace caffe

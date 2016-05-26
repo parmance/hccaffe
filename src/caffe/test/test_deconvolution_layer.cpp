@@ -137,6 +137,8 @@ TYPED_TEST(DeconvolutionLayerTest, TestSimpleDeconvolution) {
   }
 }
 
+#ifdef GRAD_CHECK
+
 TYPED_TEST(DeconvolutionLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
@@ -154,5 +156,7 @@ TYPED_TEST(DeconvolutionLayerTest, TestGradient) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
 }
+
+#endif
 
 }  // namespace caffe

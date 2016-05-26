@@ -106,6 +106,7 @@ TYPED_TEST(SigmoidCrossEntropyLossLayerTest, TestSigmoidCrossEntropyLoss) {
   this->TestForward();
 }
 
+#ifdef GRAD_CHECK
 TYPED_TEST(SigmoidCrossEntropyLossLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
@@ -117,6 +118,6 @@ TYPED_TEST(SigmoidCrossEntropyLossLayerTest, TestGradient) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_, 0);
 }
-
+#endif
 
 }  // namespace caffe

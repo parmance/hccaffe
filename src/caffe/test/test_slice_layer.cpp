@@ -161,6 +161,7 @@ TYPED_TEST(SliceLayerTest, TestSliceAcrossChannels) {
   }
 }
 
+#ifdef GRAD_CHECK
 TYPED_TEST(SliceLayerTest, TestGradientAcrossNum) {
   typedef typename TypeParam::Dtype Dtype;
   // Gradient checks are slow; reduce blob size.
@@ -185,5 +186,5 @@ TYPED_TEST(SliceLayerTest, TestGradientAcrossChannels) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
     this->blob_top_vec_0_);
 }
-
+#endif
 }  // namespace caffe

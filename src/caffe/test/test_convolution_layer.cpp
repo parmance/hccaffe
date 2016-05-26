@@ -368,6 +368,7 @@ TYPED_TEST(ConvolutionLayerTest, TestSobelConvolution) {
   }
 }
 
+#ifdef GRAD_CHECK
 TYPED_TEST(ConvolutionLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
@@ -420,6 +421,7 @@ TYPED_TEST(ConvolutionLayerTest, TestGradientGroup) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
 }
+#endif
 
 #ifdef USE_CUDNN
 

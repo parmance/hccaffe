@@ -453,6 +453,7 @@ TYPED_TEST(PoolingLayerTest, TestForwardMaxTopMask) {
   this->TestForwardRectWide();
 }
 
+#ifdef GRAD_CHECK
 TYPED_TEST(PoolingLayerTest, TestGradientMax) {
   typedef typename TypeParam::Dtype Dtype;
   for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
@@ -471,6 +472,7 @@ TYPED_TEST(PoolingLayerTest, TestGradientMax) {
     }
   }
 }
+#endif
 
 TYPED_TEST(PoolingLayerTest, TestForwardMaxPadded) {
   typedef typename TypeParam::Dtype Dtype;
@@ -517,6 +519,7 @@ TYPED_TEST(PoolingLayerTest, TestForwardMaxPadded) {
   EXPECT_NEAR(this->blob_top_->cpu_data()[8], 1, epsilon);
 }
 
+#ifdef GRAD_CHECK
 TYPED_TEST(PoolingLayerTest, TestGradientMaxTopMask) {
   typedef typename TypeParam::Dtype Dtype;
   for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
@@ -536,6 +539,7 @@ TYPED_TEST(PoolingLayerTest, TestGradientMaxTopMask) {
     }
   }
 }
+#endif
 
 TYPED_TEST(PoolingLayerTest, TestForwardAve) {
   typedef typename TypeParam::Dtype Dtype;
@@ -569,6 +573,7 @@ TYPED_TEST(PoolingLayerTest, TestForwardAve) {
   EXPECT_NEAR(this->blob_top_->cpu_data()[8], 8.0 / 9, epsilon);
 }
 
+#ifdef GRAD_CHECK
 TYPED_TEST(PoolingLayerTest, TestGradientAve) {
   typedef typename TypeParam::Dtype Dtype;
   for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
@@ -605,7 +610,7 @@ TYPED_TEST(PoolingLayerTest, TestGradientAvePadded) {
     }
   }
 }
-
+#endif
 #ifdef USE_CUDNN
 template <typename Dtype>
 class CuDNNPoolingLayerTest : public ::testing::Test {

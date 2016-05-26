@@ -137,6 +137,7 @@ TYPED_TEST(MVNLayerTest, TestForwardAcrossChannels) {
   }
 }
 
+#ifdef GRAD_CHECK
 TYPED_TEST(MVNLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
@@ -165,5 +166,6 @@ TYPED_TEST(MVNLayerTest, TestGradientAcrossChannels) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
 }
+#endif
 
 }  // namespace caffe

@@ -71,6 +71,7 @@ TYPED_TEST(SoftmaxLayerTest, TestForward) {
   }
 }
 
+#ifdef GRAD_CHECK
 TYPED_TEST(SoftmaxLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
@@ -79,6 +80,7 @@ TYPED_TEST(SoftmaxLayerTest, TestGradient) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
 }
+#endif
 
 #ifdef USE_CUDNN
 template <typename Dtype>

@@ -51,7 +51,7 @@ class HingeLossLayerTest : public MultiDeviceTest<TypeParam> {
 
 TYPED_TEST_CASE(HingeLossLayerTest, TestDtypesAndDevices);
 
-
+#ifdef GRAD_CHECK
 TYPED_TEST(HingeLossLayerTest, TestGradientL1) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
@@ -72,5 +72,5 @@ TYPED_TEST(HingeLossLayerTest, TestGradientL2) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_, 0);
 }
-
+#endif
 }  // namespace caffe

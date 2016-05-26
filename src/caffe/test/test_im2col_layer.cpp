@@ -68,6 +68,7 @@ TYPED_TEST(Im2colLayerTest, TestForward) {
   }
 }
 
+#ifdef GRAD_CHECK
 TYPED_TEST(Im2colLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
@@ -80,7 +81,7 @@ TYPED_TEST(Im2colLayerTest, TestGradient) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
 }
-
+#endif
 
 TYPED_TEST(Im2colLayerTest, TestRect) {
   typedef typename TypeParam::Dtype Dtype;
@@ -100,7 +101,7 @@ TYPED_TEST(Im2colLayerTest, TestRect) {
   }
 }
 
-
+#ifdef GRAD_CHECK
 TYPED_TEST(Im2colLayerTest, TestRectGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
@@ -114,5 +115,6 @@ TYPED_TEST(Im2colLayerTest, TestRectGradient) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
 }
+#endif
 
 }  // namespace caffe

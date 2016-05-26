@@ -53,6 +53,7 @@ class SoftmaxWithLossLayerTest : public MultiDeviceTest<TypeParam> {
 
 TYPED_TEST_CASE(SoftmaxWithLossLayerTest, TestDtypesAndDevices);
 
+#ifdef GRAD_CHECK
 TYPED_TEST(SoftmaxWithLossLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
@@ -62,6 +63,7 @@ TYPED_TEST(SoftmaxWithLossLayerTest, TestGradient) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_, 0);
 }
+#endif
 
 TYPED_TEST(SoftmaxWithLossLayerTest, TestForwardIgnoreLabel) {
   typedef typename TypeParam::Dtype Dtype;
@@ -86,6 +88,7 @@ TYPED_TEST(SoftmaxWithLossLayerTest, TestForwardIgnoreLabel) {
   EXPECT_NEAR(4 * full_loss, accum_loss, 1e-4);
 }
 
+#ifdef GRAD_CHECK
 TYPED_TEST(SoftmaxWithLossLayerTest, TestGradientIgnoreLabel) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
@@ -106,5 +109,6 @@ TYPED_TEST(SoftmaxWithLossLayerTest, TestGradientUnnormalized) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_, 0);
 }
+#endif
 
 }  // namespace caffe

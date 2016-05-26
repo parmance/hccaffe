@@ -76,6 +76,7 @@ TYPED_TEST(EuclideanLossLayerTest, TestForward) {
   this->TestForward();
 }
 
+#ifdef GRAD_CHECK
 TYPED_TEST(EuclideanLossLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
@@ -87,5 +88,6 @@ TYPED_TEST(EuclideanLossLayerTest, TestGradient) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
 }
+#endif
 
 }  // namespace caffe

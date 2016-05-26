@@ -86,6 +86,8 @@ TYPED_TEST(ContrastiveLossLayerTest, TestForward) {
   EXPECT_NEAR(this->blob_top_loss_->cpu_data()[0], loss, 1e-6);
 }
 
+#ifdef GRAD_CHECK 
+
 TYPED_TEST(ContrastiveLossLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
@@ -98,5 +100,6 @@ TYPED_TEST(ContrastiveLossLayerTest, TestGradient) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_, 1);
 }
+#endif
 
 }  // namespace caffe

@@ -48,7 +48,7 @@ class MultinomialLogisticLossLayerTest : public ::testing::Test {
 
 TYPED_TEST_CASE(MultinomialLogisticLossLayerTest, TestDtypes);
 
-
+#ifdef GRAD_CHECK
 TYPED_TEST(MultinomialLogisticLossLayerTest, TestGradientCPU) {
   LayerParameter layer_param;
   Caffe::set_mode(Caffe::CPU);
@@ -58,5 +58,5 @@ TYPED_TEST(MultinomialLogisticLossLayerTest, TestGradientCPU) {
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_, 0);
 }
-
+#endif
 }  // namespace caffe
