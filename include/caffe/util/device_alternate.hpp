@@ -30,7 +30,7 @@ void classname<Dtype>::funcname##_##gpu(const vector<Blob<Dtype>*>& top, \
     const vector<Blob<Dtype>*>& bottom) { NO_GPU; } \
 
 #else  // Normal GPU + CPU Caffe.
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
 #include <cublas_v2.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -96,7 +96,7 @@ inline int CAFFE_GET_BLOCKS(const int N) {
 }
 
 }  // namespace caffe
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND
 #endif  // CPU_ONLY
 
 #endif  // CAFFE_UTIL_DEVICE_ALTERNATE_H_

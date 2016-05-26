@@ -128,7 +128,7 @@ class Caffe {
     return *(Get().random_generator_);
   }
 #ifndef CPU_ONLY
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
   inline static cublasHandle_t cublas_handle() { return Get().cublas_handle_; }
   inline static curandGenerator_t curand_generator() {
     return Get().curand_generator_;
@@ -154,7 +154,7 @@ class Caffe {
 
  protected:
 #ifndef CPU_ONLY
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
   cublasHandle_t cublas_handle_;
   curandGenerator_t curand_generator_;
 #endif
@@ -170,7 +170,7 @@ class Caffe {
 
   DISABLE_COPY_AND_ASSIGN(Caffe);
 };
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 #define multi_process 1
 #define global_packing_N 16
 #endif

@@ -4,7 +4,7 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
 
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 template <typename Dtype>
 void LRNFillScale(const int N, Dtype* in,
   const int num, const int channels, const int height,
@@ -103,4 +103,4 @@ INSTANTIATE_LAYER_GPU_FUNCS(LRNLayer);
 
 }  // namespace caffe
 
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND

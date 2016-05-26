@@ -6,7 +6,7 @@
 
 namespace caffe {
 
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
 SyncedMemory::~SyncedMemory() {
   if (cpu_ptr_ && own_cpu_data_) {
     CaffeFreeHost(cpu_ptr_);
@@ -109,7 +109,7 @@ void* SyncedMemory::mutable_gpu_data() {
 #endif
 }
 
-#else  // !USE_CPPAMP
+#else  // !HCC_BACKEND
 
 SyncedMemory::~SyncedMemory() {
   if (gpu_ptr_) {
@@ -204,6 +204,6 @@ void* CreateAmpBuffer(size_t size, size_t element_size) {
     return gpu_ptr;
 }
 
-#endif  // !USE_CPPAMP
+#endif  // !HCC_BACKEND
 
 }  // namespace caffe

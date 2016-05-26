@@ -1,4 +1,4 @@
-#include "cppamp/hcblaslib.h"
+#include "hcblas/hcblaslib.h"
 #include "hc_math.hpp"
 #include "hc_am.hpp"
 #define BLOCK_SIZE 256

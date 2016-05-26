@@ -7,7 +7,7 @@
 #include "caffe/util/im2col.hpp"
 
 
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 template <typename Dtype>
 void im2col_amp_kernel(const int N,
     Dtype* data_im,
@@ -183,4 +183,4 @@ template void im2col_gpu_opt<double>(const double* data_im,
     int optnum);
 
 }  // namespace caffe
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND

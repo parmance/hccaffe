@@ -4,7 +4,7 @@
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 template <typename Dtype>
 void MaxPoolForward(int top_count, int boottom_count, Dtype* bottom_data,
                     const int num, const int channels,

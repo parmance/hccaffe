@@ -32,7 +32,7 @@ void Blob<Dtype>::Reshape(const vector<int>& shape) {
   }
   if (count_ > capacity_) {
     capacity_ = count_;
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
     data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype), sizeof(Dtype),
           boost::is_same<Dtype, int>::value));
     diff_.reset(new SyncedMemory(capacity_ * sizeof(Dtype), sizeof(Dtype),
@@ -40,7 +40,7 @@ void Blob<Dtype>::Reshape(const vector<int>& shape) {
 #else
     data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
     diff_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND
   }
 }
 
@@ -417,7 +417,7 @@ void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape) {
   switch (Caffe::mode()) {
   case Caffe::GPU:
     if (copy_diff) {
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
       caffe_amp_D2D(static_cast<void*>(const_cast<Dtype*>(source.gpu_diff())),
           static_cast<void*>(diff_->mutable_gpu_data()), sizeof(Dtype), false);
 #else
@@ -426,7 +426,7 @@ void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape) {
 #endif
 
     } else {
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
       caffe_amp_D2D(static_cast<void*>(const_cast<Dtype*>(source.gpu_data())),
           static_cast<void*>(data_->mutable_gpu_data()), sizeof(Dtype), false);
 #else

@@ -2,7 +2,7 @@
 #include <vector>
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 template <typename Dtype>
 void PReLUForward(const int n, const int channels, const int dim,
   Dtype* in, Dtype* out, Dtype* slope_data,

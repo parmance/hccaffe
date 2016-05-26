@@ -7,7 +7,7 @@
 #include "caffe/syncedmem.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 template <typename Dtype>
 void DropoutForward(int n, Dtype* in, unsigned int* mask,
     int threshold, float scale, Dtype* out);

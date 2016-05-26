@@ -148,7 +148,7 @@ void caffe_cpu_scale(const int n, const Dtype alpha, const Dtype *x, Dtype* y);
 // Decaf gpu gemm provides an interface that is almost the same as the cpu
 // gemm function - following the c convention and calling the fortran-order
 // gpu code under the hood.
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 template <typename Dtype>
 void transform_gpu(void* src, void* dst, int top_offset,
   int N_, int M_, int packing_num);
@@ -198,7 +198,7 @@ void caffe_gpu_memcpy(const size_t N, const void *X, void *Y);
 template <typename Dtype>
 void caffe_gpu_set(const int N, const Dtype alpha, Dtype *X);
 
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
 inline void caffe_gpu_memset(const size_t N, const int alpha, void* X) {
 #ifndef CPU_ONLY
   CUDA_CHECK(cudaMemset(X, alpha, N));  // NOLINT(caffe/alt_fn)
@@ -206,7 +206,7 @@ inline void caffe_gpu_memset(const size_t N, const int alpha, void* X) {
   NO_GPU;
 #endif  // !CPU_ONLY
 }
-#else  // !USE_CPPAMP
+#else  // !HCC_BACKEND
 inline void caffe_gpu_memset(const size_t N, const int alpha, void* X) {
   // caffe_memset(N, alpha, X);
   LOG(FATAL) << "Invalid invoke of caffe_gpu_memset.";
@@ -234,7 +234,7 @@ void caffe_amp_copy_H2D(int N, void* src, void* dst, int dstOffset);
 template <typename Dtype>
 void caffe_amp_copy_D2H(int N, void* src, void* dst, int srcOffset);
 
-#endif  // !USE_CPPAMP
+#endif  // !HCC_BACKEND
 
 template <typename Dtype>
 void caffe_gpu_add_scalar(const int N, const Dtype alpha, Dtype *X);
@@ -304,7 +304,7 @@ void caffe_gpu_fabs(const int n, const Dtype* x, Dtype* y);
 template <typename Dtype>
 void caffe_gpu_scale(const int n, const Dtype alpha, const Dtype *x, Dtype* y);
 
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
 #define DEFINE_AND_INSTANTIATE_GPU_UNARY_FUNC(name, operation) \
 template<typename Dtype> \
 __global__ void name##_kernel(const int n, const Dtype* x, Dtype* y) { \

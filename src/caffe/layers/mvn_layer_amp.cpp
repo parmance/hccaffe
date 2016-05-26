@@ -4,7 +4,7 @@
 #include "caffe/common_layers.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 namespace caffe {
   template <typename Dtype>
   void MVNLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*> &bottom,
@@ -166,4 +166,4 @@ namespace caffe {
 
 }  // namespace caffe
 
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND

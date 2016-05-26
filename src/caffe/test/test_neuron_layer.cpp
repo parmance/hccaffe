@@ -496,7 +496,7 @@ TYPED_TEST(NeuronLayerTest, TestPReLUConsistencyReLU) {
   FillerParameter filler_param;
   GaussianFiller<Dtype> filler(filler_param);
   filler.Fill(tmp_blob.get());
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
   // NOLINT_NEXT_LINE(caffe/alt_fn)
   memcpy(this->blob_top_->mutable_cpu_diff(), tmp_blob->cpu_data(),
       sizeof(Dtype) * blob_top_2->count());
@@ -548,7 +548,7 @@ TYPED_TEST(NeuronLayerTest, TestPReLUInPlace) {
   prelu.SetUp(this->blob_top_vec_, this->blob_top_vec_);
   ip2.SetUp(blob_bottom_vec_2, blob_middle_vec_2);
   prelu2.SetUp(blob_middle_vec_2, blob_top_vec_2);
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
   // NOLINT_NEXT_LINE(caffe/alt_fn)
   memcpy(ip2.blobs()[0]->mutable_cpu_data(), ip.blobs()[0]->cpu_data(),
       sizeof(Dtype) * ip2.blobs()[0]->count());
@@ -576,7 +576,7 @@ TYPED_TEST(NeuronLayerTest, TestPReLUInPlace) {
   FillerParameter filler_param;
   GaussianFiller<Dtype> filler(filler_param);
   filler.Fill(tmp_blob.get());
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
   // NOLINT_NEXT_LINE(caffe/alt_fn)
   memcpy(this->blob_top_->mutable_cpu_diff(), tmp_blob->cpu_data(),
       sizeof(Dtype) * blob_top_2->count());

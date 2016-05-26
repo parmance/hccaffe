@@ -4,7 +4,7 @@
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 template <typename Dtype>
 void kernel_channel_max(int count, const int N, const int channels,
   const int spatial_dim, Dtype* data, Dtype* out);
@@ -82,4 +82,4 @@ void SoftmaxLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
 
 INSTANTIATE_LAYER_GPU_FUNCS(SoftmaxLayer);
 }  // namespace caffe
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND

@@ -45,18 +45,18 @@ class SyncedMemory {
         own_cpu_data_(false) {}
   explicit SyncedMemory(size_t size)
       : cpu_ptr_(NULL), gpu_ptr_(NULL), size_(size), head_(UNINITIALIZED),
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
       own_cpu_data_(false) {}
 #else
       own_cpu_data_(false), element_size_(sizeof(float)), is_integer_(false) {}
 #endif
 
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
   explicit SyncedMemory(size_t size, size_t element_size, bool is_integer)
       : cpu_ptr_(NULL), gpu_ptr_(NULL), size_(size),
         head_(UNINITIALIZED), own_cpu_data_(false),
         element_size_(element_size), is_integer_(is_integer) {}
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND
   ~SyncedMemory();
   const void* cpu_data();
   void set_cpu_data(void* data);
@@ -75,10 +75,10 @@ class SyncedMemory {
   size_t size_;
   SyncedHead head_;
   bool own_cpu_data_;
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
   size_t element_size_;
   bool is_integer_;
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND
   DISABLE_COPY_AND_ASSIGN(SyncedMemory);
 };  // class SyncedMemory
 

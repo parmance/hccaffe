@@ -7,7 +7,7 @@
 #include "hc.hpp"
 #include "caffe/common.hpp"
 #include "caffe/util/math_functions.hpp"
-#include "cppamp/hcblaslib.h"
+#include "hcblas/hcblaslib.h"
 #include "hc_math.hpp"
 #include "hc_am.hpp"
 using namespace hc::fast_math;

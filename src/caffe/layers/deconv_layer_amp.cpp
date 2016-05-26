@@ -6,7 +6,7 @@
 #include "caffe/vision_layers.hpp"
 
 namespace caffe {
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 template <typename Dtype>
 void DeconvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
@@ -71,5 +71,5 @@ void DeconvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
 }
 
 INSTANTIATE_LAYER_GPU_FUNCS(DeconvolutionLayer);
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND
 }  // namespace caffe

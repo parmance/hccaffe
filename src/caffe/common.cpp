@@ -83,7 +83,7 @@ void* Caffe::RNG::generator() {
 }
 
 #else  // Normal GPU + CPU Caffe.
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 Caffe::Caffe()
     : random_generator_(), mode_(Caffe::CPU) { }
 
@@ -305,7 +305,7 @@ const char* curandGetErrorString(curandStatus_t error) {
   }
   return "Unknown curand status";
 }
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND
 #endif  // CPU_ONLY
 
 }  // namespace caffe

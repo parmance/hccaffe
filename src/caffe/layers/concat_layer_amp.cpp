@@ -4,7 +4,7 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
 
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 
 namespace caffe {
 

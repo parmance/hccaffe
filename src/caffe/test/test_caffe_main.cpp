@@ -6,14 +6,14 @@
 
 namespace caffe {
 #ifndef CPU_ONLY
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
   cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 #endif
 #endif
 }
 
 #ifndef CPU_ONLY
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
 using caffe::CAFFE_TEST_CUDA_PROP;
 #endif
 #endif
@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   caffe::GlobalInit(&argc, &argv);
 #ifndef CPU_ONLY
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
   // Before starting testing, let's first print out a few cuda defice info.
   int device;
   cudaGetDeviceCount(&device);
@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
   cudaGetDevice(&device);
   cout << "Current device id: " << device << endl;
   cudaGetDeviceProperties(&CAFFE_TEST_CUDA_PROP, device);
-#endif   // USE_CPPAMP
+#endif   // HCC_BACKEND
 #endif
   // invoke the test.
   return RUN_ALL_TESTS();

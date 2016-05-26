@@ -1,4 +1,4 @@
-#include "cppamp/sgemm_kernels.h"
+#include "hcblas/sgemm_kernels.h"
 #include "hc_math.hpp"
 
 using namespace hc::fast_math;

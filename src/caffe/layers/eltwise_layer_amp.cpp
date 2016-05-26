@@ -4,7 +4,7 @@
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 
 template <typename Dtype>
 void MaxForward(const int N, Dtype* a, Dtype* b, const int blob_idx, Dtype* y,
@@ -110,4 +110,4 @@ INSTANTIATE_LAYER_GPU_FUNCS(EltwiseLayer);
 
 }  // namespace caffe
 
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND

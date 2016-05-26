@@ -48,7 +48,7 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   void backward_cpu_bias(Dtype* bias, const Dtype* input);
 
 #ifndef CPU_ONLY
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
   void amp_setup();
   void backward_gpu_bias(Dtype* bias, const Dtype* input, const int offset);
   void forward_gpu_gemm(int N1, int N2, const Dtype* col_input,
@@ -83,7 +83,7 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   void backward_gpu_bias(Dtype* bias, const Dtype* input);
 
 
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND
 #endif  // CPU_ONLY
 
   // reverse_dimensions should return true iff we are implementing deconv, so
@@ -115,7 +115,7 @@ class BaseConvolutionLayer : public Layer<Dtype> {
         kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, data);
   }
 #ifndef CPU_ONLY
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
   inline void conv_im2col_gpu(const Dtype* data,
       const int offset_in, Dtype* col_buff, const int offset_out) {
     im2col_gpu(data, conv_in_channels_,
@@ -157,7 +157,7 @@ class BaseConvolutionLayer : public Layer<Dtype> {
         kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, data);
 }
 
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND
 #endif  // CPU_ONLY
 
  private:
@@ -169,7 +169,7 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   int kernel_dim_;
   Blob<Dtype> col_buffer_;
   Blob<Dtype> bias_multiplier_;
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 
  protected:
 #endif
@@ -177,7 +177,7 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   int col_offset_;
   int output_offset_;
 
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 
  protected:
   int opt_num2;

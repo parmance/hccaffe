@@ -5,7 +5,7 @@
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
 
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 template <typename Dtype>
 void SigmoidForward(const int N, Dtype* in, Dtype* out);
 
@@ -42,4 +42,4 @@ void SigmoidLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
 INSTANTIATE_LAYER_GPU_FUNCS(SigmoidLayer);
 
 }  // namespace caffe
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND

@@ -4,7 +4,7 @@
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 namespace caffe {
 
 template <typename Dtype>
@@ -43,4 +43,4 @@ INSTANTIATE_LAYER_GPU_FUNCS(ExpLayer);
 
 }  // namespace caffe
 
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND

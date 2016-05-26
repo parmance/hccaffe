@@ -1,4 +1,4 @@
-#include "cppamp/sgemm_kernels.h"
+#include "hcblas/sgemm_kernels.h"
 
 // Sgemm Wrapper routine that invokes the appropriate kernel routines depending on the input dimension M N and K
 hcblasStatus gemm_HC(hc::accelerator_view &accl_view,

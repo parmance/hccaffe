@@ -153,7 +153,7 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     caffe_set(bias_multiplier_.count(), Dtype(1),
         bias_multiplier_.mutable_cpu_data());
   }
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 #if multi_process
   amp_setup();
 #endif
@@ -228,7 +228,7 @@ void BaseConvolutionLayer<Dtype>::backward_cpu_bias(Dtype* bias,
 }
 
 #ifndef CPU_ONLY
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 extern void* CreateAmpBuffer(size_t size, size_t element_size);
 template <typename Dtype>
   size_t BaseConvolutionLayer<Dtype>::subtop_mem_size = 0;
@@ -490,7 +490,7 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_bias(Dtype* bias,
   caffe_gpu_emv<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_, 1.,
       input, bias_multiplier_.gpu_data(), 1., bias);
 }
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND
 #endif  // !CPU_ONLY
 
 INSTANTIATE_CLASS(BaseConvolutionLayer);

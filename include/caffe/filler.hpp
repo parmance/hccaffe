@@ -83,12 +83,12 @@ class GaussianFiller : public Filler<Dtype> {
       CHECK_GE(blob->num_axes(), 1);
       const int num_outputs = blob->shape(0);
       Dtype non_zero_probability = Dtype(sparse) / Dtype(num_outputs);
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
       rand_vec_.reset(new SyncedMemory(blob->count() * sizeof(int)));
 #else
       rand_vec_.reset(new SyncedMemory(blob->count() * sizeof(Dtype),
             sizeof(Dtype), boost::is_same<Dtype, int>::value));
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND
       int* mask = reinterpret_cast<int*>(rand_vec_->mutable_cpu_data());
       caffe_rng_bernoulli(blob->count(), non_zero_probability, mask);
       for (int i = 0; i < blob->count(); ++i) {

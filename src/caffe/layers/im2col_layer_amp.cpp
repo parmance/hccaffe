@@ -4,7 +4,7 @@
 #include "caffe/util/im2col.hpp"
 #include "caffe/vision_layers.hpp"
 
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 namespace caffe {
 
 template <typename Dtype>
@@ -40,4 +40,4 @@ INSTANTIATE_LAYER_GPU_FUNCS(Im2colLayer);
 
 }  // namespace caffe
 
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND

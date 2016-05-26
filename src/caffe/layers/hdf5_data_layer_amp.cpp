@@ -14,7 +14,7 @@ TODO:
 #include "caffe/layer.hpp"
 #include "caffe/util/io.hpp"
 
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 
 namespace caffe {
 

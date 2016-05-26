@@ -4,7 +4,7 @@
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 template <typename Dtype>
 void SoftmaxLossForwardGPU(int N, const int nthreads,
                            Dtype* prob_data, Dtype* label, Dtype* loss,
@@ -90,4 +90,4 @@ void SoftmaxWithLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
 INSTANTIATE_LAYER_GPU_FUNCS(SoftmaxWithLossLayer);
 
 }  // namespace caffe
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND

@@ -7,7 +7,7 @@
 #include "gtest/gtest.h"
 
 namespace caffe {
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 #endif
 template <typename TypeParam>
@@ -23,7 +23,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
   TypeParam A_reshape_data[6] = {1, 4, 2, 5, 3, 6};
   TypeParam B_reshape_data[12] = {1, 5, 9, 2, 6, 10, 3, 7, 11, 4, 8, 12};
   TypeParam result[8] = {38, 44, 50, 56, 83, 98, 113, 128};
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
   // NOLINT_NEXT_LINE(caffe/alt_fn)
   memcpy(A.mutable_cpu_data(), data, 6 * sizeof(TypeParam));
   // NOLINT_NEXT_LINE(caffe/alt_fn)
@@ -33,7 +33,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
   caffe_copy(12, data, B.mutable_cpu_data());
 #endif
 
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
   if (1) {
 #else
   if (sizeof(TypeParam) == 4 || CAFFE_TEST_CUDA_PROP.major >= 2) {
@@ -44,7 +44,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     for (int i = 0; i < 8; ++i) {
       EXPECT_EQ(C.cpu_data()[i], result[i]);
     }
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
     caffe_gpu_gemm<TypeParam>(CblasNoTrans, CblasNoTrans, 2, 4, 3, 1.,
         const_cast<TypeParam*>(A.gpu_data()), 0, const_cast<TypeParam*>(B.gpu_data()), 0,
         0., C.mutable_gpu_data(), 0);
@@ -61,7 +61,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
 
     // Test when we have a transposed A
     A.Reshape(1, 1, 3, 2);
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
     // NOLINT_NEXT_LINE(caffe/alt_fn)
     memcpy(A.mutable_cpu_data(), A_reshape_data, 6 * sizeof(TypeParam));
 #else
@@ -72,7 +72,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     for (int i = 0; i < 8; ++i) {
       EXPECT_EQ(C.cpu_data()[i], result[i]);
     }
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
     caffe_gpu_gemm<TypeParam>(CblasTrans, CblasNoTrans, 2, 4, 3, 1.,
         const_cast<TypeParam*>(A.gpu_data()), 0,  const_cast<TypeParam*>(B.gpu_data()), 0,
         0., C.mutable_gpu_data(), 0);
@@ -87,7 +87,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
 
     // Test when we have a transposed A and a transposed B too
     B.Reshape(1, 1, 4, 3);
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
     // NOLINT_NEXT_LINE(caffe/alt_fn)
     memcpy(B.mutable_cpu_data(), B_reshape_data, 12 * sizeof(TypeParam));
 #else
@@ -98,7 +98,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     for (int i = 0; i < 8; ++i) {
       EXPECT_EQ(C.cpu_data()[i], result[i]);
     }
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
     caffe_gpu_gemm<TypeParam>(CblasTrans, CblasTrans, 2, 4, 3, 1.,
         const_cast<TypeParam*>(A.gpu_data()), 0, const_cast<TypeParam*>(B.gpu_data()), 0, 0.,
         C.mutable_gpu_data(), 0);
@@ -113,7 +113,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
 
     // Test when we have a transposed B
     A.Reshape(1, 1, 2, 3);
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
     // NOLINT_NEXT_LINE(caffe/alt_fn)
     memcpy(A.mutable_cpu_data(), data, 6 * sizeof(TypeParam));
 #else
@@ -124,7 +124,7 @@ TYPED_TEST(GemmTest, TestGemmCPUGPU) {
     for (int i = 0; i < 8; ++i) {
       EXPECT_EQ(C.cpu_data()[i], result[i]);
     }
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
     caffe_gpu_gemm<TypeParam>(CblasNoTrans, CblasTrans, 2, 4, 3, 1.,
         const_cast<TypeParam*>(A.gpu_data()), 0, const_cast<TypeParam*>(B.gpu_data()), 0, 0.,
         C.mutable_gpu_data(), 0);
@@ -149,7 +149,7 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
   TypeParam data[6] = {1, 2, 3, 4, 5, 6};
   TypeParam result_2[2] = {14, 32};
   TypeParam result_3[3] = {9, 12, 15};
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
   // NOLINT_NEXT_LINE(caffe/alt_fn)
   memcpy(A.mutable_cpu_data(), data, 6 * sizeof(TypeParam));
   // NOLINT_NEXT_LINE(caffe/alt_fn)
@@ -159,7 +159,7 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
   caffe_copy(3, data, x.mutable_cpu_data());
 #endif
 
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
   if (1) {
 #else
   if (sizeof(TypeParam) == 4 || CAFFE_TEST_CUDA_PROP.major >= 2) {
@@ -169,7 +169,7 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
     for (int i = 0; i < 2; ++i) {
       EXPECT_EQ(y.cpu_data()[i], result_2[i]);
     }
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
     caffe_gpu_gemv<TypeParam>(CblasNoTrans, 2, 3, 1., const_cast<TypeParam*>(A.gpu_data()), 0,
         const_cast<TypeParam*>(x.gpu_data()), 0, 0., y.mutable_gpu_data(), 0);
 #else
@@ -181,7 +181,7 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
     }
 
     // Test transpose case
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
     // NOLINT_NEXT_LINE(caffe/alt_fn)
     memcpy(y.mutable_cpu_data(), data, 2 * sizeof(TypeParam));
 #else
@@ -192,7 +192,7 @@ TYPED_TEST(GemmTest, TestGemvCPUGPU) {
     for (int i = 0; i < 3; ++i) {
       EXPECT_EQ(x.cpu_data()[i], result_3[i]);
     }
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
     caffe_gpu_gemv<TypeParam>(CblasTrans, 2, 3, 1., const_cast<TypeParam*>(A.gpu_data()), 0,
         const_cast<TypeParam*>(y.gpu_data()), 0, 0., x.mutable_gpu_data(), 0);
 #else

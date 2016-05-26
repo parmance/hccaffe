@@ -15,7 +15,7 @@ void col2im_cpu(const Dtype* data_col, const int channels,
     const int pad_h, const int pad_w, const int stride_h,
     const int stride_w, Dtype* data_im);
 
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 template <typename Dtype>
 void im2col_gpu(const Dtype* data_im,
     const int channels,
@@ -56,7 +56,7 @@ void col2im_gpu(const Dtype* data_col, const int channels,
     const int pad_h, const int pad_w, const int stride_h,
     const int stride_w, Dtype* data_im);
 
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND
 }  // namespace caffe
 
 #endif  // CAFFE_UTIL_IM2COL_HPP_

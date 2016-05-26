@@ -15,7 +15,7 @@ Timer::Timer()
 Timer::~Timer() {
   if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
     CUDA_CHECK(cudaEventDestroy(start_gpu_));
     CUDA_CHECK(cudaEventDestroy(stop_gpu_));
 #endif
@@ -29,7 +29,7 @@ void Timer::Start() {
   if (!running()) {
     if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
       start_gpu_ = boost::posix_time::microsec_clock::local_time();
 #else
       CUDA_CHECK(cudaEventRecord(start_gpu_, 0));
@@ -49,7 +49,7 @@ void Timer::Stop() {
   if (running()) {
     if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
       stop_gpu_ = boost::posix_time::microsec_clock::local_time();
 #else
       CUDA_CHECK(cudaEventRecord(stop_gpu_, 0));
@@ -76,7 +76,7 @@ float Timer::MicroSeconds() {
   }
   if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
     elapsed_microseconds_ = (stop_gpu_ - start_gpu_).total_microseconds();
 #else
     CUDA_CHECK(cudaEventElapsedTime(&elapsed_milliseconds_, start_gpu_,
@@ -103,12 +103,12 @@ float Timer::MilliSeconds() {
   }
   if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
     elapsed_milliseconds_ = (stop_gpu_ - start_gpu_).total_milliseconds();
 #else
     CUDA_CHECK(cudaEventElapsedTime(&elapsed_milliseconds_, start_gpu_,
                                     stop_gpu_));
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND
 #else
       NO_GPU;
 #endif
@@ -126,7 +126,7 @@ void Timer::Init() {
   if (!initted()) {
     if (Caffe::mode() == Caffe::GPU) {
 #ifndef CPU_ONLY
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
       CUDA_CHECK(cudaEventCreate(&start_gpu_));
       CUDA_CHECK(cudaEventCreate(&stop_gpu_));
 #endif

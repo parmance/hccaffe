@@ -1,5 +1,5 @@
 #ifndef CPU_ONLY
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
 #include <cstdio>
 #include <cstdlib>
 
@@ -53,5 +53,5 @@ TEST_F(PlatformTest, TestInitialization) {
 }
 
 }  // namespace caffe
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND
 #endif  // CPU_ONLY

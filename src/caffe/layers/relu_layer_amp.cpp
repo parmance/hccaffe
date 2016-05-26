@@ -4,7 +4,7 @@
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
 
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 
 template <typename Dtype>
 void ReLUForward(const int N, Dtype* in, Dtype* out,

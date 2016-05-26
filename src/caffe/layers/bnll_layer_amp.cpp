@@ -2,7 +2,7 @@
 #include <vector>
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 template <typename Dtype>
 void BNLLForward(const int n, Dtype* in, Dtype* out);
 template <typename Dtype>
@@ -36,4 +36,4 @@ void BNLLLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
 INSTANTIATE_LAYER_GPU_FUNCS(BNLLLayer);
 
 }  // namespace caffe
-#endif  // USE_CPPAMP
+#endif  // HCC_BACKEND

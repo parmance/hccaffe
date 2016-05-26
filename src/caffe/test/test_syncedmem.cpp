@@ -9,7 +9,7 @@
 #include "caffe/util/math_functions.hpp"
 
 #include "caffe/test/test_caffe_main.hpp"
-#ifdef USE_CPPAMP
+#ifdef HCC_BACKEND
 #define TEST_SIZE 12
 #else
 #define TEST_SIZE 10
@@ -82,7 +82,7 @@ TEST_F(SyncedMemoryTest, TestGPURead) {
   EXPECT_EQ(mem.head(), SyncedMemory::SYNCED);
   // check if values are the same
   char* recovered_value = new char[TEST_SIZE];
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
   caffe_gpu_memcpy(TEST_SIZE, gpu_data, recovered_value);
 #else
   caffe_amp_D2H(TEST_SIZE, const_cast<void*>(gpu_data),
@@ -101,7 +101,7 @@ TEST_F(SyncedMemoryTest, TestGPURead) {
   gpu_data = mem.gpu_data();
   EXPECT_EQ(mem.head(), SyncedMemory::SYNCED);
   // check if values are the same
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
   caffe_gpu_memcpy(TEST_SIZE, gpu_data, recovered_value);
 #else
   caffe_amp_D2H(TEST_SIZE, const_cast<void*>(gpu_data),
@@ -117,7 +117,7 @@ TEST_F(SyncedMemoryTest, TestGPUWrite) {
   SyncedMemory mem(TEST_SIZE);
   void* gpu_data = mem.mutable_gpu_data();
   EXPECT_EQ(mem.head(), SyncedMemory::HEAD_AT_GPU);
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
   caffe_gpu_memset(mem.size(), 1, gpu_data);
 #else
   int* temp = new int[TEST_SIZE/sizeof(int)];
@@ -132,7 +132,7 @@ TEST_F(SyncedMemoryTest, TestGPUWrite) {
 
   gpu_data = mem.mutable_gpu_data();
   EXPECT_EQ(mem.head(), SyncedMemory::HEAD_AT_GPU);
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
   caffe_gpu_memset(mem.size(), 2, gpu_data);
 #else
   memset(temp, 2, TEST_SIZE);  // NOLINT(caffe/alt_fn)

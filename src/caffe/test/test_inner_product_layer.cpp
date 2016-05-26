@@ -14,7 +14,7 @@
 namespace caffe {
 
 #ifndef CPU_ONLY
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 #endif
 #endif
@@ -61,7 +61,7 @@ TYPED_TEST(InnerProductLayerTest, TestForward) {
   typedef typename TypeParam::Dtype Dtype;
   bool IS_VALID_CUDA = false;
 #ifndef CPU_ONLY
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
   IS_VALID_CUDA = CAFFE_TEST_CUDA_PROP.major >= 2;
 #else
   IS_VALID_CUDA = true;
@@ -95,7 +95,7 @@ TYPED_TEST(InnerProductLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   bool IS_VALID_CUDA = false;
 #ifndef CPU_ONLY
-#ifndef USE_CPPAMP
+#ifndef HCC_BACKEND
   IS_VALID_CUDA = CAFFE_TEST_CUDA_PROP.major >= 2;
 #else
   IS_VALID_CUDA = true;
