@@ -62,98 +62,72 @@ template void opttrans<double>(void* data_im, int im_offset, int channels,
 
 
 // The size is the total memory size
+// Allocate raw device memory 
 void caffe_hcc_malloc(void** ptr, size_t size, size_t element_size,
     bool is_int) {
   // Use default device
   hc::accelerator currentAcc(L"default");
   if (is_int) {
-    if (element_size == sizeof(int)) {
-      int* data = hc::am_alloc(size, currentAcc, 0);
-      *ptr = static_cast<void*>(data);
-    } else {
+    if (element_size != sizeof(int)) {
       LOG(FATAL) << "Wrong element size for caffe_hcc_malloc.";
     }
   } else {
-    if (element_size == sizeof(float)) {
-      float* data = hc::am_alloc(size, currentAcc, 0);
-      *ptr = static_cast<void*>(data);
-    } else if (element_size == sizeof(double)) {
-      double* data = hc::am_alloc(size, currentAcc, 0);
-      *ptr = static_cast<void*>(data);
-    } else {
+    if (element_size != sizeof(float) || element_size != sizeof(double)){
       LOG(FATAL) << "Wrong element size for caffe_hcc_malloc.";
     }
   }
+  *ptr = static_cast<void*>(hc::am_alloc(size, currentAcc, 0));
 }
 
+// Allocate raw device memory and copy into it  the contents of passed device pointer
 void caffe_hcc_malloc(void** ptr, void* src, size_t size, size_t element_size,
     bool is_int) {
   // Use default device
   hc::accelerator currentAcc(L"default");
   if (is_int) {
-    if (element_size == sizeof(int)) {
-      int* data = hc::am_alloc(size, currentAcc, 0);
-       hc::am_copy(data,src,size);
-      *ptr = static_cast<void*>(data);
-    } else {
+    if (element_size != sizeof(int)) {
       LOG(FATAL) << "Wrong element size for caffe_hcc_malloc.";
     }
   } else {
-       float* data = hc::am_alloc(size, currentAcc, 0);
-       hc::am_copy(data,src,size);
-      *ptr = static_cast<void*>(data);
-    if (element_size == sizeof(float)) {
-    } else if (element_size == sizeof(double)) {
-       double* data = hc::am_alloc(size, currentAcc, 0);
-       hc::am_copy(data,src,size);
-      *ptr = static_cast<void*>(data);
-    } else {
+    if (element_size != sizeof(float) || element_size != sizeof(double)){
       LOG(FATAL) << "Wrong element size for caffe_hcc_malloc.";
     }
   }
+  *ptr = static_cast<void*>(hc::am_alloc(size, currentAcc, 0));
+   hc::am_copy(*ptr, src, size);
 }
 
+// Free up device memory resources
 void caffe_hcc_free(void* ptr, size_t element_size, bool is_int) {
-  if (ptr) {
-    if (is_int) {
-      if (element_size == sizeof(int)) {
-        hc::am_free(ptr);
-      } else {
-        LOG(FATAL) << "Wrong element size for caffe_hcc_free.";
-      }
-    } else {
-      if (element_size == sizeof(float)) {
-        hc::am_free(ptr);
-      } else if (element_size == sizeof(double)) {
-        hc::am_free(ptr);
-      } else {
-        LOG(FATAL) << "Wrong element size for caffe_hcc_free.";
-      }
+  if (is_int) {
+    if (element_size != sizeof(int)) {
+      LOG(FATAL) << "Wrong element size for caffe_hcc_free.";
     }
-    ptr = NULL;
+  } else {
+    if (element_size != sizeof(float) || element_size != sizeof(double)){
+      LOG(FATAL) << "Wrong element size for caffe_hcc_free.";
+    }
   }
+  hc::am_free(ptr);
+  ptr = NULL;
 }
 
+// Device to Host copy
 void caffe_hcc_D2H(size_t size, void* src, void* dst, size_t element_size, bool is_int) {
   if (src == NULL || dst == NULL) {
     LOG(FATAL) << "Wrong source or destination for caffe_hcc_D2H.";
   }
-  
+   
   if (is_int) {
-    if (element_size == sizeof(int)) {
-       hc::am_copy(dst, src, size);
-    } else {
+    if (element_size != sizeof(int)) {
       LOG(FATAL) << "Wrong element size for caffe_hcc_D2H.";
     }
   } else {
-    if (element_size == sizeof(float)) {
-       hc::am_copy(dst, src, size);
-    } else if (element_size == sizeof(double)) {
-       hc::am_copy(dst, src, size);
-    } else {
+    if (element_size != sizeof(float) || element_size != sizeof(double)){
       LOG(FATAL) << "Wrong element size for caffe_hcc_D2H.";
     }
   }
+  hc::am_copy(dst, src, size);
 }
 
 void caffe_hcc_H2D(void* src, void* dst, size_t element_size, bool is_int) {
@@ -165,20 +139,15 @@ void caffe_hcc_H2D(void* src, void* dst, size_t element_size, bool is_int) {
   hc::am_memtracker_getinfo(&dstInfo, dst);
   size_t size = dstInfo._sizeBytes;
   if (is_int) {
-    if (element_size == sizeof(int)) {
-       hc::am_copy(dst, src, size);
-    } else {
+    if (element_size != sizeof(int)) {
       LOG(FATAL) << "Wrong element size for caffe_hcc_H2D.";
     }
   } else {
-    if (element_size == sizeof(float)) {
-       hc::am_copy(dst, src, size);
-    } else if (element_size == sizeof(double)) {
-       hc::am_copy(dst, src, size);
-    } else {
+    if (element_size != sizeof(float) || element_size != sizeof(double)){
       LOG(FATAL) << "Wrong element size for caffe_hcc_H2D.";
     }
   }
+  hc::am_copy(dst, src, size);
 }
 
 void caffe_hcc_D2D(void* src, void* dst, size_t element_size, bool is_int) {
@@ -190,20 +159,15 @@ void caffe_hcc_D2D(void* src, void* dst, size_t element_size, bool is_int) {
   hc::am_memtracker_getinfo(&dstInfo, dst);
   size_t size = dstInfo._sizeBytes;
   if (is_int) {
-    if (element_size == sizeof(int)) {
-       hc::am_copy(dst, src, size);
-    } else {
+    if (element_size != sizeof(int)) {
       LOG(FATAL) << "Wrong element size for caffe_hcc_D2D.";
     }
   } else {
-    if (element_size == sizeof(float)) {
-       hc::am_copy(dst, src, size);
-    } else if (element_size == sizeof(double)) {
-       hc::am_copy(dst, src, size);
-    } else {
+    if (element_size != sizeof(float) || element_size != sizeof(double)){
       LOG(FATAL) << "Wrong element size for caffe_hcc_D2D.";
     }
   }
+  hc::am_copy(dst, src, size);
 }
 
 template <typename Dtype>
