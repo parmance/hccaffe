@@ -29,7 +29,7 @@ void PReLULayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   const int div_factor = channel_shared_ ? channels : 1;
   // For in-place computation
   if (top[0] == bottom[0]) {
-    caffe_amp_D2D(static_cast<void*>(const_cast<Dtype*>(bottom_data)),
+    caffe_hcc_D2D(static_cast<void*>(const_cast<Dtype*>(bottom_data)),
     static_cast<void*>(const_cast<Dtype*>(
     bottom_memory_.mutable_gpu_data())),
     sizeof(Dtype), boost::is_same<Dtype, int>::value);

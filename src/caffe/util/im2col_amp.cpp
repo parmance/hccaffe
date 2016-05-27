@@ -9,7 +9,7 @@
 
 #ifdef HCC_BACKEND
 template <typename Dtype>
-void im2col_amp_kernel(const int N,
+void im2col_hcc_kernel(const int N,
     Dtype* data_im,
     const int height, const int width,
     const int kernel_h, const int kernel_w,
@@ -20,7 +20,7 @@ void im2col_amp_kernel(const int N,
 
 
 template <typename Dtype>
-void col2im_amp_kernel(const int N, Dtype* data_col,
+void col2im_hcc_kernel(const int N, Dtype* data_col,
   const int height, const int width, const int channels,
   const int patch_h, const int patch_w,
   const int pad_h, const int pad_w,
@@ -29,14 +29,14 @@ void col2im_amp_kernel(const int N, Dtype* data_col,
   Dtype* data_im, const int col_offset, const int im_offset);
 
 template <typename Dtype>
-void im2col_amp_kernel_opt(const int n, Dtype* data_im,
+void im2col_hcc_kernel_opt(const int n, Dtype* data_im,
   const int channels, const int img_offset, const int height, const int width,
   const int kernel_h, const int kernel_w, const int pad_h, const int pad_w,
   const int stride_h, const int stride_w, const int height_col,
   const int width_col, Dtype* data_col, const int col_offset,
   const int optnum);
 template <typename Dtype>
-void col2im_amp_kernel_opt(const int n, Dtype* data_col, const int col_offset,
+void col2im_hcc_kernel_opt(const int n, Dtype* data_col, const int col_offset,
   const int height, const int width, const int channels, const int kernel_h,
   const int kernel_w, const int pad_h, const int pad_w,
   const int stride_h, const int stride_w, const int height_col,
@@ -58,7 +58,7 @@ void im2col_gpu(const Dtype* data_im,
   int num_kernels = channels * height_col * width_col;
   Dtype* data_im_amp = const_cast<Dtype*>(data_im);
   // NOLINT_NEXT_LINE(whitespace/operators)
-  im2col_amp_kernel(num_kernels,
+  im2col_hcc_kernel(num_kernels,
       data_im_amp,
       height, width,
       kernel_h, kernel_w,
@@ -101,7 +101,7 @@ void col2im_gpu(const Dtype* data_col, const int channels,
   // To avoid involving atomic operations, we will launch one kernel per
   // bottom dimension, and then in the kernel add up the top dimensions.
   // NOLINT_NEXT_LINE(whitespace/operators)
-  col2im_amp_kernel(num_kernels, data_col_amp,
+  col2im_hcc_kernel(num_kernels, data_col_amp,
       height, width, channels, patch_h, patch_w,
       pad_h, pad_w, stride_h, stride_w,
       height_col, width_col, data_im,
@@ -135,7 +135,7 @@ void col2im_gpu_opt(const Dtype* data_col, const int col_offset,
       int num_kernels = channels * height * width  * optnum;
       Dtype * data_col_amp = const_cast<Dtype*>(data_col);
 
-      col2im_amp_kernel_opt(num_kernels, data_col_amp, col_offset,
+      col2im_hcc_kernel_opt(num_kernels, data_col_amp, col_offset,
         height, width, channels, kernel_h, kernel_w, pad_h,
         pad_w, stride_h, stride_w, height_col, width_col,
         data_im, img_offset, optnum);
@@ -165,7 +165,7 @@ void im2col_gpu_opt(const Dtype* data_im, const int img_offset,
       int width_col = (width + 2 * pad_w - kernel_w) / stride_w + 1;
       int num_kernels = optnum * channels * height_col * width_col;
       Dtype* data_im_amp = const_cast<Dtype*>(data_im);
-      im2col_amp_kernel_opt(num_kernels, data_im_amp, channels, img_offset,
+      im2col_hcc_kernel_opt(num_kernels, data_im_amp, channels, img_offset,
         height, width, kernel_h, kernel_w, pad_h, pad_w, stride_h,
         stride_w, height_col, width_col, data_col, col_offset, optnum);
 }

@@ -85,7 +85,7 @@ TEST_F(SyncedMemoryTest, TestGPURead) {
 #ifndef HCC_BACKEND
   caffe_gpu_memcpy(TEST_SIZE, gpu_data, recovered_value);
 #else
-  caffe_amp_D2H(TEST_SIZE, const_cast<void*>(gpu_data),
+  caffe_hcc_D2H(TEST_SIZE, const_cast<void*>(gpu_data),
       static_cast<void*>(recovered_value), sizeof(float), false);
 #endif
   for (int i = 0; i < mem.size(); ++i) {
@@ -104,7 +104,7 @@ TEST_F(SyncedMemoryTest, TestGPURead) {
 #ifndef HCC_BACKEND
   caffe_gpu_memcpy(TEST_SIZE, gpu_data, recovered_value);
 #else
-  caffe_amp_D2H(TEST_SIZE, const_cast<void*>(gpu_data),
+  caffe_hcc_D2H(TEST_SIZE, const_cast<void*>(gpu_data),
       static_cast<void*>(recovered_value), sizeof(float), false);
 #endif
   for (int i = 0; i < mem.size(); ++i) {
@@ -122,7 +122,7 @@ TEST_F(SyncedMemoryTest, TestGPUWrite) {
 #else
   int* temp = new int[TEST_SIZE/sizeof(int)];
   memset(temp, 1, TEST_SIZE);  // NOLINT(caffe/alt_fn)
-  caffe_amp_H2D(static_cast<void*>(temp), gpu_data, sizeof(float), false);
+  caffe_hcc_H2D(static_cast<void*>(temp), gpu_data, sizeof(float), false);
 #endif
   const void* cpu_data = mem.cpu_data();
   for (int i = 0; i < mem.size(); ++i) {
@@ -136,7 +136,7 @@ TEST_F(SyncedMemoryTest, TestGPUWrite) {
   caffe_gpu_memset(mem.size(), 2, gpu_data);
 #else
   memset(temp, 2, TEST_SIZE);  // NOLINT(caffe/alt_fn)
-  caffe_amp_H2D(static_cast<void*>(temp), gpu_data, sizeof(float), false);
+  caffe_hcc_H2D(static_cast<void*>(temp), gpu_data, sizeof(float), false);
   delete[] temp;
 #endif
   cpu_data = mem.cpu_data();

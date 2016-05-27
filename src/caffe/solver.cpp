@@ -536,7 +536,7 @@ void SGDSolver<Dtype>::ComputeUpdateValue() {
                 history_[param_id]->mutable_gpu_data());
       // copy
 #ifdef HCC_BACKEND
-      caffe_amp_D2D(history_[param_id]->mutable_gpu_data(),
+      caffe_hcc_D2D(history_[param_id]->mutable_gpu_data(),
           net_params[param_id]->mutable_gpu_diff(),
           sizeof(Dtype), boost::is_same<Dtype, int>::value);
 #else
@@ -641,7 +641,7 @@ void NesterovSolver<Dtype>::ComputeUpdateValue() {
     for (int param_id = 0; param_id < net_params.size(); ++param_id) {
       // save history momentum for stepping back
 #ifdef HCC_BACKEND
-      caffe_amp_D2D(this->history_[param_id]->mutable_gpu_data(),
+      caffe_hcc_D2D(this->history_[param_id]->mutable_gpu_data(),
           this->update_[param_id]->mutable_gpu_data(),
           sizeof(Dtype), boost::is_same<Dtype, int>::value);
 #else
@@ -684,7 +684,7 @@ void NesterovSolver<Dtype>::ComputeUpdateValue() {
 
       // copy
 #ifdef HCC_BACKEND
-      caffe_amp_D2D(this->update_[param_id]->mutable_gpu_data(),
+      caffe_hcc_D2D(this->update_[param_id]->mutable_gpu_data(),
           net_params[param_id]->mutable_gpu_diff(),
           sizeof(Dtype), boost::is_same<Dtype, int>::value);
 #else

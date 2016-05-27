@@ -30,7 +30,7 @@ void DropoutLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     // NOLINT_NEXT_LINE(whitespace/operators)
     DropoutForward(count, bottom_data, mask, uint_thres_, scale_, top_data);
   } else {
-    caffe_amp_D2D(static_cast<void*>(const_cast<Dtype*>(bottom_data)),
+    caffe_hcc_D2D(static_cast<void*>(const_cast<Dtype*>(bottom_data)),
                   static_cast<void*>(const_cast<Dtype*>(top_data)),
                   sizeof(Dtype), boost::is_same<Dtype, int>::value);
   }
@@ -51,7 +51,7 @@ void DropoutLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
       DropoutBackward(count, top_diff, mask, uint_thres_, scale_,
           bottom_diff);
     } else {
-    caffe_amp_D2D(static_cast<void*>(const_cast<Dtype*>(top_diff)),
+    caffe_hcc_D2D(static_cast<void*>(const_cast<Dtype*>(top_diff)),
                   static_cast<void*>(const_cast<Dtype*>(bottom_diff)),
                   sizeof(Dtype), boost::is_same<Dtype, int>::value);
     }

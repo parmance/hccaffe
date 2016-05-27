@@ -222,7 +222,7 @@ TYPED_TEST(MathFunctionsTest, TestCopyGPU) {
   TypeParam* top_data = this->blob_top_->mutable_gpu_data();
   Caffe::set_mode(Caffe::GPU);
 #ifdef HCC_BACKEND
-  caffe_amp_D2D(static_cast<void*>(const_cast<TypeParam*>(bottom_data)),
+  caffe_hcc_D2D(static_cast<void*>(const_cast<TypeParam*>(bottom_data)),
       static_cast<void*>(top_data), sizeof(TypeParam), false);
 #else
   caffe_copy(n, bottom_data, top_data);

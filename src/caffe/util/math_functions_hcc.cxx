@@ -62,7 +62,7 @@ template void opttrans<double>(void* data_im, int im_offset, int channels,
 
 
 // The size is the total memory size
-void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
+void caffe_hcc_malloc(void** ptr, size_t size, size_t element_size,
     bool is_int) {
   // Use default device
   hc::accelerator currentAcc(L"default");
@@ -71,7 +71,7 @@ void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
       int* data = hc::am_alloc(size, currentAcc, 0);
       *ptr = static_cast<void*>(data);
     } else {
-      LOG(FATAL) << "Wrong element size for caffe_amp_malloc.";
+      LOG(FATAL) << "Wrong element size for caffe_hcc_malloc.";
     }
   } else {
     if (element_size == sizeof(float)) {
@@ -81,12 +81,12 @@ void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
       double* data = hc::am_alloc(size, currentAcc, 0);
       *ptr = static_cast<void*>(data);
     } else {
-      LOG(FATAL) << "Wrong element size for caffe_amp_malloc.";
+      LOG(FATAL) << "Wrong element size for caffe_hcc_malloc.";
     }
   }
 }
 
-void caffe_amp_malloc(void** ptr, void* src, size_t size, size_t element_size,
+void caffe_hcc_malloc(void** ptr, void* src, size_t size, size_t element_size,
     bool is_int) {
   // Use default device
   hc::accelerator currentAcc(L"default");
@@ -96,7 +96,7 @@ void caffe_amp_malloc(void** ptr, void* src, size_t size, size_t element_size,
        hc::am_copy(data,src,size);
       *ptr = static_cast<void*>(data);
     } else {
-      LOG(FATAL) << "Wrong element size for caffe_amp_malloc.";
+      LOG(FATAL) << "Wrong element size for caffe_hcc_malloc.";
     }
   } else {
        float* data = hc::am_alloc(size, currentAcc, 0);
@@ -108,18 +108,18 @@ void caffe_amp_malloc(void** ptr, void* src, size_t size, size_t element_size,
        hc::am_copy(data,src,size);
       *ptr = static_cast<void*>(data);
     } else {
-      LOG(FATAL) << "Wrong element size for caffe_amp_malloc.";
+      LOG(FATAL) << "Wrong element size for caffe_hcc_malloc.";
     }
   }
 }
 
-void caffe_amp_free(void* ptr, size_t element_size, bool is_int) {
+void caffe_hcc_free(void* ptr, size_t element_size, bool is_int) {
   if (ptr) {
     if (is_int) {
       if (element_size == sizeof(int)) {
         hc::am_free(ptr);
       } else {
-        LOG(FATAL) << "Wrong element size for caffe_amp_free.";
+        LOG(FATAL) << "Wrong element size for caffe_hcc_free.";
       }
     } else {
       if (element_size == sizeof(float)) {
@@ -127,23 +127,23 @@ void caffe_amp_free(void* ptr, size_t element_size, bool is_int) {
       } else if (element_size == sizeof(double)) {
         hc::am_free(ptr);
       } else {
-        LOG(FATAL) << "Wrong element size for caffe_amp_free.";
+        LOG(FATAL) << "Wrong element size for caffe_hcc_free.";
       }
     }
     ptr = NULL;
   }
 }
 
-void caffe_amp_D2H(size_t size, void* src, void* dst, size_t element_size, bool is_int) {
+void caffe_hcc_D2H(size_t size, void* src, void* dst, size_t element_size, bool is_int) {
   if (src == NULL || dst == NULL) {
-    LOG(FATAL) << "Wrong source or destination for caffe_amp_D2H.";
+    LOG(FATAL) << "Wrong source or destination for caffe_hcc_D2H.";
   }
   
   if (is_int) {
     if (element_size == sizeof(int)) {
        hc::am_copy(dst, src, size);
     } else {
-      LOG(FATAL) << "Wrong element size for caffe_amp_D2H.";
+      LOG(FATAL) << "Wrong element size for caffe_hcc_D2H.";
     }
   } else {
     if (element_size == sizeof(float)) {
@@ -151,14 +151,14 @@ void caffe_amp_D2H(size_t size, void* src, void* dst, size_t element_size, bool 
     } else if (element_size == sizeof(double)) {
        hc::am_copy(dst, src, size);
     } else {
-      LOG(FATAL) << "Wrong element size for caffe_amp_D2H.";
+      LOG(FATAL) << "Wrong element size for caffe_hcc_D2H.";
     }
   }
 }
 
-void caffe_amp_H2D(void* src, void* dst, size_t element_size, bool is_int) {
+void caffe_hcc_H2D(void* src, void* dst, size_t element_size, bool is_int) {
   if (src == NULL || dst == NULL) {
-    LOG(FATAL) << "Wrong source or destination for caffe_amp_H2D.";
+    LOG(FATAL) << "Wrong source or destination for caffe_hcc_H2D.";
   }
   hc::accelerator currentAcc(L"default");
   hc::AmPointerInfo dstInfo(0, 0, 0, currentAcc, 0, 0);
@@ -168,7 +168,7 @@ void caffe_amp_H2D(void* src, void* dst, size_t element_size, bool is_int) {
     if (element_size == sizeof(int)) {
        hc::am_copy(dst, src, size);
     } else {
-      LOG(FATAL) << "Wrong element size for caffe_amp_H2D.";
+      LOG(FATAL) << "Wrong element size for caffe_hcc_H2D.";
     }
   } else {
     if (element_size == sizeof(float)) {
@@ -176,14 +176,14 @@ void caffe_amp_H2D(void* src, void* dst, size_t element_size, bool is_int) {
     } else if (element_size == sizeof(double)) {
        hc::am_copy(dst, src, size);
     } else {
-      LOG(FATAL) << "Wrong element size for caffe_amp_H2D.";
+      LOG(FATAL) << "Wrong element size for caffe_hcc_H2D.";
     }
   }
 }
 
-void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int) {
+void caffe_hcc_D2D(void* src, void* dst, size_t element_size, bool is_int) {
   if (src == NULL || dst == NULL) {
-    LOG(FATAL) << "Wrong source or destination for caffe_amp_D2D.";
+    LOG(FATAL) << "Wrong source or destination for caffe_hcc_D2D.";
   }
   hc::accelerator currentAcc(L"default");
   hc::AmPointerInfo dstInfo(0, 0, 0, currentAcc, 0, 0);
@@ -193,7 +193,7 @@ void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int) {
     if (element_size == sizeof(int)) {
        hc::am_copy(dst, src, size);
     } else {
-      LOG(FATAL) << "Wrong element size for caffe_amp_D2D.";
+      LOG(FATAL) << "Wrong element size for caffe_hcc_D2D.";
     }
   } else {
     if (element_size == sizeof(float)) {
@@ -201,13 +201,13 @@ void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int) {
     } else if (element_size == sizeof(double)) {
        hc::am_copy(dst, src, size);
     } else {
-      LOG(FATAL) << "Wrong element size for caffe_amp_D2D.";
+      LOG(FATAL) << "Wrong element size for caffe_hcc_D2D.";
     }
   }
 }
 
 template <typename Dtype>
-void caffe_amp_copy(int N, void* src, void* dst,
+void caffe_hcc_copy(int N, void* src, void* dst,
     int srcOffset, int dstOffset) {
   Dtype* dstt = static_cast<Dtype*>(dst);
   Dtype* srct = static_cast<Dtype*>(src);
@@ -221,27 +221,27 @@ void caffe_amp_copy(int N, void* src, void* dst,
   if (src == NULL || dst == NULL ||
       N > numSrcElts - srcOffset ||
       N > numDestElts - dstOffset) {
-    LOG(FATAL) << "Wrong Parameters for caffe_amp_copy.";
+    LOG(FATAL) << "Wrong Parameters for caffe_hcc_copy.";
   }
 
   if (srcOffset == 0 && dstOffset== 0 &&
       N == numSrcElts &&
       N <= numDestElts) {
-    caffe_amp_D2D(src, dst, sizeof(Dtype), boost::is_same<Dtype, int>::value);
+    caffe_hcc_D2D(src, dst, sizeof(Dtype), boost::is_same<Dtype, int>::value);
   } else {
      hc::am_copy(dstt + dstOffset, srct + srcOffset, N * sizeof(Dtype));
   }
 }
 
-template void caffe_amp_copy<int>(int N, void* src, void* dst,
+template void caffe_hcc_copy<int>(int N, void* src, void* dst,
     int srcOffset, int dstOffset);
-template void caffe_amp_copy<float>(int N, void* src, void* dst,
+template void caffe_hcc_copy<float>(int N, void* src, void* dst,
     int srcOffset, int dstOffset);
-template void caffe_amp_copy<double>(int N, void* src, void* dst,
+template void caffe_hcc_copy<double>(int N, void* src, void* dst,
     int srcOffset, int dstOffset);
 
 template <typename Dtype>
-void caffe_amp_copy_H2D(int N, void* src, void* dst, int dstOffset) {
+void caffe_hcc_copy_H2D(int N, void* src, void* dst, int dstOffset) {
   hc::accelerator currentAcc(L"default");
   hc::AmPointerInfo dstInfo(0, 0, 0, currentAcc, 0, 0);
   hc::am_memtracker_getinfo(&dstInfo, dst);
@@ -249,38 +249,38 @@ void caffe_amp_copy_H2D(int N, void* src, void* dst, int dstOffset) {
   Dtype* dstt = static_cast<Dtype*>(dst);
   if (src == NULL || dst == NULL ||
       N > numDestElts - dstOffset) {
-    LOG(FATAL) << "Wrong Parameters for caffe_amp_copy_H2D.";
+    LOG(FATAL) << "Wrong Parameters for caffe_hcc_copy_H2D.";
   }
   hc::am_copy(dstt + dstOffset, src, N * sizeof(Dtype));
 }
 
-template void caffe_amp_copy_H2D<int>(int N, void* src, void* dst,
+template void caffe_hcc_copy_H2D<int>(int N, void* src, void* dst,
     int dstOffset);
-template void caffe_amp_copy_H2D<float>(int N, void* src, void* dst,
+template void caffe_hcc_copy_H2D<float>(int N, void* src, void* dst,
     int dstOffset);
-template void caffe_amp_copy_H2D<double>(int N, void* srci, void* dst,
+template void caffe_hcc_copy_H2D<double>(int N, void* srci, void* dst,
     int dstOffset);
 
 template <typename Dtype>
-void caffe_amp_copy_D2H(int N, void* src, void* dst, int srcOffset) {
+void caffe_hcc_copy_D2H(int N, void* src, void* dst, int srcOffset) {
   hc::accelerator currentAcc(L"default");
   hc::AmPointerInfo srcInfo(0, 0, 0, currentAcc, 0, 0);
   hc::am_memtracker_getinfo(&srcInfo, src);
   size_t numSrcElts = srcInfo._sizeBytes/sizeof(Dtype);
   if (src == NULL || dst == NULL ||
       N > numSrcElts - srcOffset) {
-    LOG(FATAL) << "Wrong Parameters for caffe_amp_copy_D2H.";
+    LOG(FATAL) << "Wrong Parameters for caffe_hcc_copy_D2H.";
   }
   Dtype* srct = static_cast<Dtype*>(src);
   hc::am_copy(dst, srct + srcOffset, N * sizeof(Dtype));
 }
 
 
-template void caffe_amp_copy_D2H<int>(int N, void* src, void* dst,
+template void caffe_hcc_copy_D2H<int>(int N, void* src, void* dst,
     int srcOffset);
-template void caffe_amp_copy_D2H<float>(int N, void* src, void* dst,
+template void caffe_hcc_copy_D2H<float>(int N, void* src, void* dst,
     int srcOffset);
-template void caffe_amp_copy_D2H<double>(int N, void* src, void* dst,
+template void caffe_hcc_copy_D2H<double>(int N, void* src, void* dst,
     int srcOffset);
 
 template <typename Dtype>
@@ -672,7 +672,7 @@ void caffe_gpu_axpy<double>(const int N, const double alpha, const double* X,
 template <>
 void caffe_gpu_scale<float>(const int n, const float alpha, const float *x,
                                 float* y) {
-  caffe_amp_D2D(static_cast<void*>(const_cast<float*>(x)),
+  caffe_hcc_D2D(static_cast<void*>(const_cast<float*>(x)),
       static_cast<void*>(const_cast<float*>(y)), sizeof(float),
       false);
   hc_scale(n, alpha, y);
@@ -681,7 +681,7 @@ void caffe_gpu_scale<float>(const int n, const float alpha, const float *x,
 template <>
 void caffe_gpu_scale<double>(const int n, const double alpha, const double *x,
                                  double* y) {
-  caffe_amp_D2D(static_cast<void*>(const_cast<double*>(x)),
+  caffe_hcc_D2D(static_cast<void*>(const_cast<double*>(x)),
       static_cast<void*>(const_cast<double*>(y)), sizeof(double),
       false);
   hc_scale(n, alpha, y);
@@ -1084,7 +1084,7 @@ uint32_t caffe_gpu_hamming_distance<double>(const int n, const double* x,
 }
 
 void caffe_gpu_memcpy(const size_t N, const void *X, void *Y) {
-  LOG(FATAL) << "Instead of caffe_gpu_memcpy with caffe_amp_X2X.";
+  LOG(FATAL) << "Instead of caffe_gpu_memcpy with caffe_hcc_X2X.";
 }
 
 }  // namespace caffe

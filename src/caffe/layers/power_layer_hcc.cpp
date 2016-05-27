@@ -21,7 +21,7 @@ void PowerLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     return;
   }
   const Dtype* bottom_data = bottom[0]->gpu_data();
-  caffe_amp_D2D(static_cast<void *>(const_cast<Dtype*>(bottom_data)),
+  caffe_hcc_D2D(static_cast<void *>(const_cast<Dtype*>(bottom_data)),
     reinterpret_cast<void *>(top_data), sizeof(Dtype),
     boost::is_same<Dtype, int>::value);
   if (scale_ != Dtype(1)) {
@@ -58,7 +58,7 @@ void PowerLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
         caffe_gpu_div(count, top_data, bottom_data, bottom_diff);
         caffe_gpu_scal(count, power_, bottom_diff);
       } else {
-        caffe_amp_D2D(static_cast<void *>(const_cast<Dtype*>(bottom_data)),
+        caffe_hcc_D2D(static_cast<void *>(const_cast<Dtype*>(bottom_data)),
           reinterpret_cast<void *>(bottom_diff),
           sizeof(Dtype), boost::is_same<Dtype, int>::value);
         if (scale_ != Dtype(1)) {

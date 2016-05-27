@@ -8,7 +8,7 @@
 #include "caffe/vision_layers.hpp"
 
 template <typename Dtype>
-void im2col_amp_kernel(const int N,
+void im2col_hcc_kernel(const int N,
     Dtype* data_im,
     const int height, const int width,
     const int kernel_h, const int kernel_w,
@@ -19,7 +19,7 @@ void im2col_amp_kernel(const int N,
 
 
 template <typename Dtype>
-void col2im_amp_kernel(const int N, Dtype* data_col,
+void col2im_hcc_kernel(const int N, Dtype* data_col,
   const int height, const int width, const int channels,
   const int patch_h, const int patch_w,
   const int pad_h, const int pad_w,
@@ -28,7 +28,7 @@ void col2im_amp_kernel(const int N, Dtype* data_col,
   Dtype* data_im, const int col_offset, const int im_offset);
 
 template <>
-void im2col_amp_kernel(const int N,
+void im2col_hcc_kernel(const int N,
     float* data_im,
     const int height, const int width,
     const int kernel_h, const int kernel_w,
@@ -64,7 +64,7 @@ void im2col_amp_kernel(const int N,
 }
 
 template <>
-void im2col_amp_kernel(const int N,
+void im2col_hcc_kernel(const int N,
     double* data_im,
     const int height, const int width,
     const int kernel_h, const int kernel_w,
@@ -100,7 +100,7 @@ void im2col_amp_kernel(const int N,
 }
 
 template <>
-void col2im_amp_kernel(const int N, float* data_col,
+void col2im_hcc_kernel(const int N, float* data_col,
     const int height, const int width, const int channels,
     const int patch_h, const int patch_w,
     const int pad_h, const int pad_w,
@@ -136,7 +136,7 @@ void col2im_amp_kernel(const int N, float* data_col,
 }
 
 template <>
-void col2im_amp_kernel(const int N, double* data_col,
+void col2im_hcc_kernel(const int N, double* data_col,
     const int height, const int width, const int channels,
     const int patch_h, const int patch_w,
     const int pad_h, const int pad_w,
@@ -171,21 +171,21 @@ void col2im_amp_kernel(const int N, double* data_col,
   }).wait();
 }
 template <typename Dtype>
-void im2col_amp_kernel_opt(const int n, Dtype* data_im,
+void im2col_hcc_kernel_opt(const int n, Dtype* data_im,
   const int channels, const int img_offset, const int height, const int width,
   const int kernel_h, const int kernel_w, const int pad_h, const int pad_w,
   const int stride_h, const int stride_w, const int height_col,
   const int width_col, Dtype* data_col, const int col_offset,
   const int optnum);
 template <typename Dtype>
-void col2im_amp_kernel_opt(const int n, Dtype* data_col, const int col_offset,
+void col2im_hcc_kernel_opt(const int n, Dtype* data_col, const int col_offset,
   const int height, const int width, const int channels, const int kernel_h,
   const int kernel_w, const int pad_h, const int pad_w,
   const int stride_h, const int stride_w, const int height_col,
   const int width_col, Dtype* data_im, const int img_offset, const int optnum);
 
 template <>
-void im2col_amp_kernel_opt(const int n, float* data_im,
+void im2col_hcc_kernel_opt(const int n, float* data_im,
   const int channels, const int img_offset, const int height, const int width,
   const int kernel_h, const int kernel_w, const int pad_h, const int pad_w,
   const int stride_h, const int stride_w, const int height_col,
@@ -224,7 +224,7 @@ void im2col_amp_kernel_opt(const int n, float* data_im,
 }
 
 template <>
-void im2col_amp_kernel_opt(const int n, double* data_im,
+void im2col_hcc_kernel_opt(const int n, double* data_im,
   const int channels, const int img_offset, const int height, const int width,
   const int kernel_h, const int kernel_w, const int pad_h, const int pad_w,
   const int stride_h, const int stride_w, const int height_col,
@@ -263,7 +263,7 @@ void im2col_amp_kernel_opt(const int n, double* data_im,
   }
 
 template <>
-void col2im_amp_kernel_opt(const int n, float* data_col,
+void col2im_hcc_kernel_opt(const int n, float* data_col,
   const int col_offset, const int height, const int width,
   const int channels, const int kernel_h,
   const int kernel_w, const int pad_h, const int pad_w,
@@ -301,7 +301,7 @@ void col2im_amp_kernel_opt(const int n, float* data_col,
   }
 
 template <>
-void col2im_amp_kernel_opt(const int n, double* data_col, const int col_offset,
+void col2im_hcc_kernel_opt(const int n, double* data_col, const int col_offset,
   const int height, const int width, const int channels, const int kernel_h,
   const int kernel_w, const int pad_h, const int pad_w,
   const int stride_h, const int stride_w,

@@ -113,7 +113,7 @@ void* SyncedMemory::mutable_gpu_data() {
 
 SyncedMemory::~SyncedMemory() {
   if (gpu_ptr_) {
-    caffe_amp_free(gpu_ptr_, element_size_, is_integer_);
+    caffe_hcc_free(gpu_ptr_, element_size_, is_integer_);
   }
   if (cpu_ptr_ && own_cpu_data_) {
     CaffeFreeHost(cpu_ptr_);
@@ -133,7 +133,7 @@ inline void SyncedMemory::to_cpu() {
       CaffeMallocHost(&cpu_ptr_, size_);
       own_cpu_data_ = true;
     }
-    caffe_amp_D2H(size_, gpu_ptr_, cpu_ptr_, element_size_, is_integer_);
+    caffe_hcc_D2H(size_, gpu_ptr_, cpu_ptr_, element_size_, is_integer_);
     head_ = SYNCED;
     break;
   case HEAD_AT_CPU:
@@ -148,17 +148,17 @@ inline void SyncedMemory::to_gpu() {
     // Malloc CPU memory first
     CaffeMallocHost(&cpu_ptr_, size_);
     caffe_memset(size_, 0, cpu_ptr_);
-    caffe_amp_malloc(&gpu_ptr_, cpu_ptr_, size_, element_size_,
+    caffe_hcc_malloc(&gpu_ptr_, cpu_ptr_, size_, element_size_,
         is_integer_);
-    caffe_amp_H2D(cpu_ptr_, gpu_ptr_, element_size_, is_integer_);
+    caffe_hcc_H2D(cpu_ptr_, gpu_ptr_, element_size_, is_integer_);
     head_ = HEAD_AT_GPU;
     break;
   case HEAD_AT_CPU:
     if (gpu_ptr_ == NULL) {
-      caffe_amp_malloc(&gpu_ptr_, cpu_ptr_, size_, element_size_,
+      caffe_hcc_malloc(&gpu_ptr_, cpu_ptr_, size_, element_size_,
           is_integer_);
     }
-    caffe_amp_H2D(cpu_ptr_, gpu_ptr_, element_size_, is_integer_);
+    caffe_hcc_H2D(cpu_ptr_, gpu_ptr_, element_size_, is_integer_);
     head_ = SYNCED;
     break;
   case HEAD_AT_GPU:
@@ -200,7 +200,7 @@ void* SyncedMemory::mutable_gpu_data() {
 }
 void* CreateAmpBuffer(size_t size, size_t element_size) {
     void *gpu_ptr;
-    caffe_amp_malloc(&gpu_ptr, size, element_size, false);
+    caffe_hcc_malloc(&gpu_ptr, size, element_size, false);
     return gpu_ptr;
 }
 

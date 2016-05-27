@@ -211,28 +211,28 @@ inline void caffe_gpu_memset(const size_t N, const int alpha, void* X) {
   // caffe_memset(N, alpha, X);
   LOG(FATAL) << "Invalid invoke of caffe_gpu_memset.";
 }
-void caffe_amp_malloc(void** ptr, size_t size, size_t element_size,
+void caffe_hcc_malloc(void** ptr, size_t size, size_t element_size,
     bool is_int);
 
-void caffe_amp_malloc(void** ptr, void* src, size_t size,
+void caffe_hcc_malloc(void** ptr, void* src, size_t size,
     size_t element_size, bool is_int);
 
-void caffe_amp_free(void* ptr, size_t element_size, bool is_int);
+void caffe_hcc_free(void* ptr, size_t element_size, bool is_int);
 
-void caffe_amp_H2D(void* dst, void* src, size_t element_size, bool is_int);
+void caffe_hcc_H2D(void* dst, void* src, size_t element_size, bool is_int);
 
-void caffe_amp_D2H(size_t size, void* dst, void* src, size_t element_sizei, bool is_int);
+void caffe_hcc_D2H(size_t size, void* dst, void* src, size_t element_sizei, bool is_int);
 
-void caffe_amp_D2D(void* src, void* dst, size_t element_size, bool is_int);
-
-template <typename Dtype>
-void caffe_amp_copy(int N, void* src, void* dst, int srcOffset, int dstOffset);
+void caffe_hcc_D2D(void* src, void* dst, size_t element_size, bool is_int);
 
 template <typename Dtype>
-void caffe_amp_copy_H2D(int N, void* src, void* dst, int dstOffset);
+void caffe_hcc_copy(int N, void* src, void* dst, int srcOffset, int dstOffset);
 
 template <typename Dtype>
-void caffe_amp_copy_D2H(int N, void* src, void* dst, int srcOffset);
+void caffe_hcc_copy_H2D(int N, void* src, void* dst, int dstOffset);
+
+template <typename Dtype>
+void caffe_hcc_copy_D2H(int N, void* src, void* dst, int srcOffset);
 
 #endif  // !HCC_BACKEND
 

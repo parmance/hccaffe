@@ -32,7 +32,7 @@ void SoftmaxLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   Dtype* scale_data = scale_.mutable_gpu_data();
   int count = bottom[0]->count();
   int channels = top[0]->shape(softmax_axis_);
-  caffe_amp_D2D(static_cast<void*>(const_cast<Dtype*>(bottom_data)),
+  caffe_hcc_D2D(static_cast<void*>(const_cast<Dtype*>(bottom_data)),
       static_cast<void*>(top_data), sizeof(Dtype), false);
   // We need to subtract the max to avoid numerical issues, compute the exp,
   // and then normalize.
@@ -66,7 +66,7 @@ void SoftmaxLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
   Dtype* scale_data = scale_.mutable_gpu_data();
   int count = top[0]->count();
   int channels = top[0]->shape(softmax_axis_);
-  caffe_amp_D2D(static_cast<void*>(top_diff),
+  caffe_hcc_D2D(static_cast<void*>(top_diff),
       static_cast<void*>(bottom_diff), sizeof(Dtype), false);
 
   // Compute inner1d(top_diff, top_data) and subtract them from the bottom diff.

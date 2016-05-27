@@ -242,14 +242,14 @@ template <typename Dtype>
 void Alloc_public_tmp_mem(size_t subtop_size, size_t trans_size) {
   if (subtop_size > BaseConvolutionLayer < Dtype > ::subtop_mem_size) {
     ConvolutionLayer<Dtype>::subtop_mem_size = subtop_size;
-    caffe_amp_free(ConvolutionLayer<Dtype>::subTopMem,
+    caffe_hcc_free(ConvolutionLayer<Dtype>::subTopMem,
       sizeof(Dtype), false);
     ConvolutionLayer<Dtype>::subTopMem = CreateAmpBuffer(subtop_size,
       sizeof(Dtype));
   }
   if (trans_size > ConvolutionLayer < Dtype > ::trans_mem_size) {
     ConvolutionLayer<Dtype>::trans_mem_size =  trans_size;
-    caffe_amp_free(ConvolutionLayer<Dtype>::transMem, sizeof(Dtype), false);
+    caffe_hcc_free(ConvolutionLayer<Dtype>::transMem, sizeof(Dtype), false);
     ConvolutionLayer<Dtype>::transMem = CreateAmpBuffer(trans_size,
       sizeof(Dtype));
   }
@@ -257,12 +257,12 @@ void Alloc_public_tmp_mem(size_t subtop_size, size_t trans_size) {
   int *temp = NULL;
   temp = new int[ConvolutionLayer<Dtype>::subtop_mem_size/sizeof(int)];
   caffe_memset(ConvolutionLayer<Dtype>::subtop_mem_size, 0, temp);
-  caffe_amp_H2D(static_cast<void*>(temp), ConvolutionLayer<Dtype>::subTopMem,
+  caffe_hcc_H2D(static_cast<void*>(temp), ConvolutionLayer<Dtype>::subTopMem,
         sizeof(Dtype), false);
   delete []temp;
   temp = new int[ConvolutionLayer<Dtype>::trans_mem_size/sizeof(int)];
   caffe_memset(ConvolutionLayer<Dtype>::trans_mem_size, 0, temp);
-  caffe_amp_H2D(static_cast<void*>(temp), ConvolutionLayer<Dtype>::transMem,
+  caffe_hcc_H2D(static_cast<void*>(temp), ConvolutionLayer<Dtype>::transMem,
         sizeof(Dtype), false);
   delete []temp;*/
 }
@@ -367,7 +367,7 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_gemm_opt(const Dtype* output,
     const Dtype* weights, Dtype* input) {
   if (is_1x1_) {
     int count = height_ * width_ * conv_in_channels_ * opt_num2;
-    caffe_amp_copy<Dtype>(count, static_cast<void*>(input),
+    caffe_hcc_copy<Dtype>(count, static_cast<void*>(input),
           static_cast<void*>(transMem), 0, 0);
   }
   for (int g = 0; g < group_; ++g) {

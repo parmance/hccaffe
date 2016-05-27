@@ -15,11 +15,11 @@ void BasePrefetchingDataLayer<Dtype>::Forward_gpu(
   top[0]->Reshape(this->prefetch_data_.num(), this->prefetch_data_.channels(),
       this->prefetch_data_.height(), this->prefetch_data_.width());
   // Copy the data
-  caffe_amp_H2D(prefetch_data_.mutable_cpu_data(),
+  caffe_hcc_H2D(prefetch_data_.mutable_cpu_data(),
     top[0]->mutable_gpu_data(),
     sizeof(Dtype), boost::is_same<Dtype, int>::value);
   if (this->output_labels_) {
-    caffe_amp_H2D(prefetch_label_.mutable_cpu_data(),
+    caffe_hcc_H2D(prefetch_label_.mutable_cpu_data(),
         top[1]->mutable_gpu_data(),
         sizeof(Dtype),
         boost::is_same<Dtype, int>::value);
