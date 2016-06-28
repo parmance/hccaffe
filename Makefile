@@ -33,8 +33,8 @@ DYNAMIC_NAME := $(LIB_BUILD_DIR)/lib$(PROJECT).so
 CXX_SRCS := $(shell find src/$(PROJECT) ! -name "test_*.cpp" -name "*.cpp")
 # CU_SRCS are the cuda source files
 CU_SRCS := $(shell find src/$(PROJECT) ! -name "test_*.cu" -name "*.cu")
-# CXX AMP_SRCS are the source files excluding the test ones.
-CXXAMP_SRCS := $(shell find src -name "*.cxx")
+# CXX HCC_SRCS are the source files excluding the test ones.
+CXXHCC_SRCS := $(shell find src -name "*.cxx")
 # TEST_SRCS are the test source files
 TEST_MAIN_SRC := src/$(PROJECT)/test/test_caffe_main.cpp
 TEST_SRCS := $(shell find src/$(PROJECT) -name "test_*.cpp")
@@ -100,7 +100,7 @@ PROTO_GEN_PY := $(foreach file,${PROTO_SRCS:.proto=_pb2.py}, \
 CXX_OBJS := $(addprefix $(BUILD_DIR)/, ${CXX_SRCS:.cpp=.o})
 CU_OBJS := $(addprefix $(BUILD_DIR)/cuda/, ${CU_SRCS:.cu=.o})
 PROTO_OBJS := ${PROTO_GEN_CC:.cc=.o}
-CXXAMP_OBJS := $(addprefix $(BUILD_DIR)/, ${CXXAMP_SRCS:.cxx=.o})
+CXXHCC_OBJS := $(addprefix $(BUILD_DIR)/, ${CXXHCC_SRCS:.cxx=.o})
 OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CU_OBJS)
 # tool, example, and test objects
 TOOL_OBJS := $(addprefix $(BUILD_DIR)/, ${TOOL_SRCS:.cpp=.o})
@@ -114,7 +114,7 @@ GTEST_OBJ := $(addprefix $(BUILD_DIR)/, ${GTEST_SRC:.cpp=.o})
 EXAMPLE_OBJS := $(addprefix $(BUILD_DIR)/, ${EXAMPLE_SRCS:.cpp=.o})
 # Output files for automatic dependency generation
 DEPS := ${CXX_OBJS:.o=.d} ${CU_OBJS:.o=.d} ${TEST_CXX_OBJS:.o=.d} \
-	${TEST_CU_OBJS:.o=.d} ${CXXAMP_OBJS:.o=.d}
+	${TEST_CU_OBJS:.o=.d} ${CXXHCC_OBJS:.o=.d}
 # tool, example, and test bins
 TOOL_BINS := ${TOOL_OBJS:.o=.bin}
 EXAMPLE_BINS := ${EXAMPLE_OBJS:.o=.bin}
@@ -136,12 +136,12 @@ TEST_ALL_BIN := $(TEST_BIN_DIR)/test_all.testbin
 WARNS_EXT := warnings.txt
 CXX_WARNS := $(addprefix $(BUILD_DIR)/, ${CXX_SRCS:.cpp=.o.$(WARNS_EXT)})
 CU_WARNS := $(addprefix $(BUILD_DIR)/cuda/, ${CU_SRCS:.cu=.o.$(WARNS_EXT)})
-CXXAMP_WARNS := $(addprefix $(BUILD_DIR)/, ${CXXAMP_SRCS:.cxx=.o.$(WARNS_EXT)})
+CXXHCC_WARNS := $(addprefix $(BUILD_DIR)/, ${CXXHCC_SRCS:.cxx=.o.$(WARNS_EXT)})
 TOOL_WARNS := $(addprefix $(BUILD_DIR)/, ${TOOL_SRCS:.cpp=.o.$(WARNS_EXT)})
 EXAMPLE_WARNS := $(addprefix $(BUILD_DIR)/, ${EXAMPLE_SRCS:.cpp=.o.$(WARNS_EXT)})
 TEST_WARNS := $(addprefix $(BUILD_DIR)/, ${TEST_SRCS:.cpp=.o.$(WARNS_EXT)})
 TEST_CU_WARNS := $(addprefix $(BUILD_DIR)/cuda/, ${TEST_CU_SRCS:.cu=.o.$(WARNS_EXT)})
-ALL_CXX_WARNS := $(CXX_WARNS) $(TOOL_WARNS) $(EXAMPLE_WARNS) $(TEST_WARNS) $(CXXAMP_WARNS)
+ALL_CXX_WARNS := $(CXX_WARNS) $(TOOL_WARNS) $(EXAMPLE_WARNS) $(TEST_WARNS) $(CXXHCC_WARNS)
 ALL_CU_WARNS := $(CU_WARNS) $(TEST_CU_WARNS)
 ALL_WARNS := $(ALL_CXX_WARNS) $(ALL_CU_WARNS)
 
@@ -187,7 +187,7 @@ endif
 ALL_BUILD_DIRS := $(sort $(BUILD_DIR) $(addprefix $(BUILD_DIR)/, $(SRC_DIRS)) \
 	$(addprefix $(BUILD_DIR)/cuda/, $(SRC_DIRS)) \
 	$(LIB_BUILD_DIR) $(TEST_BIN_DIR) $(PY_PROTO_BUILD_DIR) $(LINT_OUTPUT_DIR) \
-	$(DISTRIBUTE_SUBDIRS) $(PROTO_BUILD_INCLUDE_DIR) $(BUILD_DIR)/src/hcblas/)
+	$(DISTRIBUTE_SUBDIRS) $(PROTO_BUILD_INCLUDE_DIR))
 
 ##############################
 # Set directory for Doxygen-generated documentation
@@ -265,7 +265,8 @@ endif
 #HCC Build Option
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(HCC_BACKEND), 1)
-    AMP_COMMON_FLAGS += $(shell $(HCC_PREFIX)/bin/hcc-config --install --cxxflags)
+    HCC_COMMON_FLAGS += $(shell $(HCC_PREFIX)/bin/hcc-config --install --cxxflags) 
+    HCC_COMMON_FLAGS += "-I/opt/rocm/hcblas/include"
   endif
 endif
 # Custom compiler
@@ -286,11 +287,11 @@ endif
 # Debugging
 ifeq ($(DEBUG), 1)
   COMMON_FLAGS += -DDEBUG -g -O0
-  AMP_COMMON_FLAGS += -DDEBUG -g -O0
+  HCC_COMMON_FLAGS += -DDEBUG -g -O0
   NVCCFLAGS += -G
 else
   COMMON_FLAGS += -DNDEBUG -O2
-  AMP_COMMON_FLAGS += -DNDEBUG -O2
+  HCC_COMMON_FLAGS += -DNDEBUG -O2
 endif
 
 # cuDNN acceleration configuration.
@@ -308,11 +309,11 @@ ifeq ($(CPU_ONLY), 1)
   TEST_FILTER := --gtest_filter="-*GPU*"
 else
   ifeq ($(HCC_BACKEND), 1)
-    OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CXXAMP_OBJS)
+    OBJS := $(PROTO_OBJS) $(CXX_OBJS) $(CXXHCC_OBJS)
     TEST_OBJS := $(TEST_CXX_OBJS)
     TEST_BINS := $(TEST_CXX_BINS)
     COMMON_FLAGS += -DHCC_BACKEND
-    AMP_COMMON_FLAGS += -DHCC_BACKEND
+    HCC_COMMON_FLAGS += -DHCC_BACKEND 
   endif
 endif
 
@@ -364,13 +365,13 @@ BOOST_LIB := /usr/lib/x86_64-linux-gnu
 LIBRARY_DIRS += $(BOOST_LIB)
 # Automatic dependency generation (nvcc is handled separately)
 CXXFLAGS += -MMD -MP
-AMPCXXFLAGS += -MMD -MP
+HCCCXXFLAGS += -MMD -MP
 
 # Complete build flags.
 COMMON_FLAGS += $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
-AMP_COMMON_FLAGS += $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
+HCC_COMMON_FLAGS += $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
 CXXFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
-AMPCXXFLAGS += -fPIC $(AMP_COMMON_FLAGS) $(WARNINGS)
+HCCCXXFLAGS += -fPIC $(HCC_COMMON_FLAGS) $(WARNINGS)
 NVCCFLAGS += -ccbin=$(CXX) -Xcompiler -fPIC $(COMMON_FLAGS)
 # mex may invoke an older gcc that is too liberal with -Wuninitalized
 MATLAB_CXXFLAGS := $(CXXFLAGS) -Wno-uninitialized
@@ -379,7 +380,7 @@ LINKFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(HCC_BACKEND), 1)
      LINKFLAGS += $(shell $(HCC_PREFIX)/bin/hcc-config --install --ldflags)
-     LINKFLAGS += "-lhc_am"
+     LINKFLAGS += "-lhc_am -lhcblas -L/opt/rocm/hcblas/lib"
   endif
 endif
 USE_PKG_CONFIG ?= 0
@@ -541,8 +542,8 @@ $(BUILD_DIR)/%.o: %.cpp | $(ALL_BUILD_DIRS)
 
 ifeq ($(HCC_BACKEND), 1)
 $(BUILD_DIR)/%.o: %.cxx | $(ALL_BUILD_DIRS)
-	@ echo CXXAMP $<
-	$(Q)$(CXX) $< $(AMPCXXFLAGS) -c -o $@ 2> $@.$(WARNS_EXT) \
+	@ echo CXXHCC $<
+	$(Q)$(CXX) $< $(HCCCXXFLAGS) -c -o $@ 2> $@.$(WARNS_EXT) \
 		|| (cat $@.$(WARNS_EXT); exit 1)
 	@ cat $@.$(WARNS_EXT)
 endif
