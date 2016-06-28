@@ -34,16 +34,6 @@ This repository hosts the HCC backend implementation project for  [Caffe](https:
 * cmake 2.6 and later (2.6 and 2.8 are tested)
 
 
-
-**Ubuntu Packages requirements:**
-
-* libc6-dev-i386
-* liblapack-dev
-* graphicsmagick
-* libboost-all-dev
-* lua5.1
-
-
 ## Tested Environment so far: 
 
 This section enumerates the list of tested combinations of Hardware and system software
@@ -123,7 +113,7 @@ D. Unit Testing
 
 ### B. Pre-requisites Installation: 
 
-          sudo apt-get install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler libatlas-base-dev libblas-dev libgflags-dev libgoogle-glog-dev liblmdb-dev
+          sudo apt-get install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler libatlas-base-dev libblas-dev libgflags-dev libgoogle-glog-dev liblmdb-dev libboost-dev
       
 ### C. Hccaffe Build Steps:
 
