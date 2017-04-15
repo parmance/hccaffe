@@ -174,7 +174,7 @@ ifneq ($(CPU_ONLY), 1)
 endif
 LIBRARIES += glog gflags protobuf leveldb snappy \
 	lmdb boost_system hdf5_hl hdf5 m \
-	opencv_core opencv_highgui opencv_imgproc hc_am
+	opencv_core opencv_highgui opencv_imgproc hc_am hcblas
 PYTHON_LIBRARIES := boost_python python2.7
 WARNINGS := -Wall -Wno-sign-compare
 
@@ -270,7 +270,7 @@ endif
 #HCC Build Option
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(HCC_BACKEND), 1)
-    AMP_COMMON_FLAGS += $(shell $(HCC_PREFIX)/bin/hcc-config --build --cxxflags)
+    AMP_COMMON_FLAGS += $(shell $(HCC_PREFIX)/build/Release/bin/hcc-config --build --cxxflags)
   endif
 endif
 # Custom compiler
@@ -369,7 +369,7 @@ BOOST_LIB := /usr/lib/x86_64-linux-gnu
 LIBRARY_DIRS += $(BOOST_LIB)
 # Automatic dependency generation (nvcc is handled separately)
 CXXFLAGS += -MMD -MP
-AMPCXXFLAGS += -MMD -MP
+AMPCXXFLAGS += -MMD -MP -I../hcblas/lib/include -I../hcc/include/
 
 # Complete build flags.
 COMMON_FLAGS += $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
@@ -379,11 +379,11 @@ AMPCXXFLAGS += -fPIC $(AMP_COMMON_FLAGS) $(WARNINGS)
 NVCCFLAGS += -ccbin=$(CXX) -Xcompiler -fPIC $(COMMON_FLAGS)
 # mex may invoke an older gcc that is too liberal with -Wuninitalized
 MATLAB_CXXFLAGS := $(CXXFLAGS) -Wno-uninitialized
-LINKFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
+LINKFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS) -L ../hcblas/build/lib/src
 
 ifneq ($(CPU_ONLY), 1)
   ifeq ($(HCC_BACKEND), 1)
-     LINKFLAGS += $(shell $(HCC_PREFIX)/bin/hcc-config --build --ldflags)
+     LINKFLAGS += $(shell $(HCC_PREFIX)/build/Release/bin/hcc-config --build --ldflags)
   endif
 endif
 USE_PKG_CONFIG ?= 0
